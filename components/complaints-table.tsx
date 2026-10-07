@@ -1,0 +1,189 @@
+"use client";
+
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { ArrowUpRight, Camera, ClipboardList, Download, Funnel, Search, Timer, Video } from "lucide-react";
+import { SITES, type Complaint } from "@/lib/data";
+import { STATUS_META, type StatusKey } from "@/lib/workflow";
+import { cn } from "@/lib/utils";
+import { Avatar, Button, Card, EmptyState, Input, PriorityBadge, Select, StageMeter, StatusBadge, td, th } from "@/components/ui";
+import { Tabs } from "@/components/interactive";
+
+type Bucket = "all" | "open" | "field" | "verify" | "done";
+
+const buckets: Record<Bucket, StatusKey[] | null> = {
+  all: null,
+  open: ["new", "vendor_review", "assigned_pm"],
+  field: ["worker_assigned", "in_progress", "rework"],
+  verify: ["pending_verification", "completed"],
+  done: ["closed", "rejected"],
+};
+
+export function ComplaintsTable({ complaints, showSite = true }: { complaints: Complaint[]; showSite?: boolean }) {
+  const [tab, setTab] = useState<Bucket>("all");
+  const [q, setQ] = useState("");
+  const [priority, setPriority] = useState("");
+  const [site, setSite] = useState("");
+
+  const count = (b: Bucket) => complaints.filter((c) => !buckets[b] || buckets[b]!.includes(c.status)).length;
+
+  const rows = useMemo(
+    () =>
+      complaints.filter((c) => {
+        const b = buckets[tab];
+        if (b && !b.includes(c.status)) return false;
+        if (priority && c.priority !== priority) return false;
+        if (site && c.site !== site) return false;
+        if (q) {
+          const s = q.toLowerCase();
+          return c.id.toLowerCase().includes(s) || c.title.toLowerCase().includes(s) || c.location.toLowerCase().includes(s);
+        }
+        return true;
+      }),
+    [complaints, tab, q, priority, site],
+  );
+
+  return (
+    <Card>
+      <div className="flex flex-col gap-3 border-b border-slate-100 p-4 xl:flex-row xl:items-center xl:justify-between">
+        <Tabs
+          value={tab}
+          onChange={setTab}
+          tabs={[
+            { value: "all", label: "All", count: count("all") },
+            { value: "open", label: "Open", count: count("open") },
+            { value: "field", label: "In Field", count: count("field") },
+            { value: "verify", label: "Verification", count: count("verify") },
+            { value: "done", label: "Closed", count: count("done") },
+          ]}
+        />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[200px] flex-1 xl:w-64 xl:flex-none">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ID, title, location" className="pl-9" />
+          </div>
+          <Select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-36">
+            <option value="">All priorities</option>
+            <option>Critical</option>
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+          </Select>
+          {showSite && (
+            <Select value={site} onChange={(e) => setSite(e.target.value)} className="w-48">
+              <option value="">All sites</option>
+              {SITES.map((s) => (
+                <option key={s.id}>{s.name}</option>
+              ))}
+            </Select>
+          )}
+          <Button variant="secondary" aria-label="More filters">
+            <Funnel />
+          </Button>
+          <Button variant="secondary">
+            <Download /> Export
+          </Button>
+        </div>
+      </div>
+
+      {rows.length === 0 ? (
+        <EmptyState icon={ClipboardList} title="No complaints match" text="Try a different tab, search or filter combination." />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-slate-50/70">
+              <tr>
+                <th className={th}>Complaint</th>
+                {showSite && <th className={th}>Site</th>}
+                <th className={th}>Status</th>
+                <th className={th}>Stage</th>
+                <th className={th}>Priority</th>
+                <th className={th}>Assigned</th>
+                <th className={th}>Deadline</th>
+                <th className={th}>Media</th>
+                <th className={th} />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {rows.map((c) => (
+                <tr key={c.id} className="group hover:bg-slate-50/60">
+                  <td className={cn(td, "max-w-[340px]")}>
+                    <Link href={`/complaints/${c.id}`} className="block">
+                      <span className="font-mono text-xs font-semibold text-brand-700">{c.id}</span>
+                      <span className="mt-0.5 block truncate font-semibold text-slate-900 group-hover:text-brand-700">{c.title}</span>
+                      <span className="block truncate text-xs text-slate-500">
+                        {c.category} · {c.location}
+                      </span>
+                    </Link>
+                  </td>
+                  {showSite && <td className={td}>{c.site}</td>}
+                  <td className={td}>
+                    <StatusBadge status={c.status} />
+                  </td>
+                  <td className={td}>
+                    <StageMeter status={c.status} />
+                  </td>
+                  <td className={td}>
+                    <PriorityBadge priority={c.priority} />
+                  </td>
+                  <td className={td}>
+                    {c.pm ? (
+                      <div className="flex items-center gap-2">
+                        <Avatar name={c.workers?.[0] ?? c.pm} size="xs" />
+                        <span className="text-[13px]">{c.workers?.[0] ?? c.pm}</span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-slate-400">{c.vendor ?? "Unassigned"}</span>
+                    )}
+                  </td>
+                  <td className={td}>
+                    {c.slaLeft && !["closed", "completed"].includes(c.status) ? (
+                      <span className={cn("inline-flex items-center gap-1 text-[13px] font-semibold", c.slaRisk ? "text-rose-600" : "text-slate-700")}>
+                        <Timer className="size-3.5" />
+                        {c.slaLeft}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-400">{c.deadline ?? "—"}</span>
+                    )}
+                  </td>
+                  <td className={td}>
+                    <span className="flex items-center gap-2 text-xs text-slate-500">
+                      <span className="flex items-center gap-1">
+                        <Camera className="size-3.5" />
+                        {c.media.photos}
+                      </span>
+                      {c.media.videos > 0 && (
+                        <span className="flex items-center gap-1">
+                          <Video className="size-3.5" />
+                          {c.media.videos}
+                        </span>
+                      )}
+                    </span>
+                  </td>
+                  <td className={cn(td, "text-right")}>
+                    <Link href={`/complaints/${c.id}`} className="inline-grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-white hover:text-brand-600 hover:shadow-sm" aria-label={`Open ${c.id}`}>
+                      <ArrowUpRight className="size-4" />
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
+        <span>
+          Showing <b className="text-slate-700">{rows.length}</b> of {complaints.length} complaints
+        </span>
+        <span className="hidden gap-3 sm:flex">
+          {(["new", "in_progress", "pending_verification", "closed"] as StatusKey[]).map((s) => (
+            <span key={s} className="flex items-center gap-1.5">
+              <span className={cn("size-2 rounded-full", STATUS_META[s].dot)} />
+              {STATUS_META[s].label}
+            </span>
+          ))}
+        </span>
+      </div>
+    </Card>
+  );
+}

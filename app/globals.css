@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+@theme {
+  /* Amber Electrotech brand orange */
+  --color-brand-50: #fff8ed;
+  --color-brand-100: #ffefd4;
+  --color-brand-200: #ffdba8;
+  --color-brand-300: #ffc070;
+  --color-brand-400: #ff9a37;
+  --color-brand-500: #f97c10;
+  --color-brand-600: #ea6206;
+  --color-brand-700: #c24a08;
+  --color-brand-800: #9a3b0f;
+  --color-brand-900: #7c3210;
+
+  /* Corporate navy */
+  --color-navy-50: #f1f5fb;
+  --color-navy-100: #e1e9f5;
+  --color-navy-200: #c9d7ee;
+  --color-navy-300: #a3bce1;
+  --color-navy-400: #7799d0;
+  --color-navy-500: #577bc3;
+  --color-navy-600: #4462b6;
+  --color-navy-700: #3a51a6;
+  --color-navy-800: #1f3a6e;
+  --color-navy-900: #172b52;
+  --color-navy-950: #0f1c38;
+
+  --shadow-soft: 0 1px 2px rgb(15 28 56 / 0.04), 0 6px 20px -6px rgb(15 28 56 / 0.08);
+  --shadow-lift: 0 2px 4px rgb(15 28 56 / 0.05), 0 16px 40px -12px rgb(15 28 56 / 0.18);
+
+  --animate-ping-slow: ping-slow 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-fade-in: fade-in 0.25s ease-out;
+  --animate-slide-up: slide-up 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-rise: rise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-float: float 6s ease-in-out infinite;
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @keyframes ping-slow {
+    0% { transform: scale(1); opacity: 0.6; }
+    80%, 100% { transform: scale(2.6); opacity: 0; }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+html,
+body {
+  background: #f5f7fb;
+  color: #0f172a;
+}
+
+::selection {
+  background: var(--color-brand-200);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
