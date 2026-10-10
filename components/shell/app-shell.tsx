@@ -22,6 +22,7 @@ import { ROLES, ROLE_ORDER, roleFromPath, type RoleKey } from "@/lib/roles";
 import { NOTIFICATIONS, SITES, USER_CAP_PER_SITE } from "@/lib/data";
 import { Avatar, Kbd, LiveDot } from "@/components/ui";
 import { NotificationIcon } from "@/components/notification-icon";
+import { WorkerShell } from "@/components/shell/worker-shell";
 
 const RoleContext = createContext<RoleKey>("admin");
 export const useRole = () => useContext(RoleContext);
@@ -68,6 +69,14 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const role = pathRole ?? storedRole ?? "admin";
   const def = ROLES[role];
+
+  if (role === "worker") {
+    return (
+      <RoleContext.Provider value={role}>
+        <WorkerShell pathname={pathname}>{children}</WorkerShell>
+      </RoleContext.Provider>
+    );
+  }
 
   return (
     <RoleContext.Provider value={role}>

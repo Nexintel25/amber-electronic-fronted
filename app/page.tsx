@@ -226,16 +226,16 @@ export default function LandingPage() {
         <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 overflow-hidden rounded-[2rem] bg-navy-950 px-6 py-16 text-white sm:px-12 lg:grid-cols-2 lg:px-16 lg:py-20">
           <div className="absolute -bottom-40 -left-20 size-[460px] rounded-full bg-brand-500/25 blur-3xl" />
           <div className="relative">
-            <p className="text-sm font-semibold text-brand-400">Mobile apps</p>
+            <p className="text-sm font-semibold text-brand-400">Mobile-friendly worker portal</p>
             <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">Built for technicians on the move</h2>
             <p className="mt-4 max-w-lg text-slate-300">
-              Worker, PM and Vendor apps for Android and iOS. Check in with GPS, capture before/after photos and close tasks — even without a network.
+              Workers sign in on the web from any phone — no app to install. Check in with GPS, capture before/after photos with the phone camera and submit the job to the vendor.
             </p>
             <ul className="mt-8 space-y-3">
               {[
                 { icon: MapPin, text: "GPS check-in within the site geofence" },
                 { icon: Camera, text: "Before/after photos with timestamp watermark" },
-                { icon: WifiOff, text: "Offline mode that syncs when back online" },
+                { icon: WifiOff, text: "Works on any phone browser, with an offline warning" },
               ].map((i) => (
                 <li key={i.text} className="flex items-center gap-3 text-sm text-slate-200">
                   <span className="grid size-8 place-items-center rounded-lg bg-white/10">

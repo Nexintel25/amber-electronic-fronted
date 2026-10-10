@@ -26,13 +26,13 @@ import {
   ScrollText,
   Settings,
   ShieldCheck,
-  Smartphone,
   Truck,
+  UserRound,
   Users,
   type LucideIcon,
 } from "lucide-react";
 
-export type RoleKey = "creator" | "vendor" | "pm" | "admin" | "superadmin";
+export type RoleKey = "creator" | "vendor" | "pm" | "worker" | "admin" | "superadmin";
 
 export type NavItem = { label: string; href: string; icon: LucideIcon; badge?: string };
 export type NavSection = { title: string; items: NavItem[] };
@@ -127,28 +127,27 @@ export const ROLES: Record<RoleKey, RoleDef> = {
       common,
     ],
   },
-  // worker: {
-  //   key: "worker",
-  //   label: "Worker / Technician",
-  //   panel: "Worker Mobile App",
-  //   home: "/worker",
-  //   icon: HardHat,
-  //   description: "GPS check-in, before/after photos, task completion",
-  //   user: { name: "Ramesh Kumar", email: "ramesh.k@powergridservices.in", title: "HT Electrician · Team Alpha" },
-  //   nav: [
-  //     {
-  //       title: "Mobile Apps",
-  //       items: [{ label: "Mobile App Preview", href: "/worker", icon: Smartphone }],
-  //     },
-  //     {
-  //       title: "General",
-  //       items: [
-  //         { label: "Notifications", href: "/notifications", icon: Bell, badge: "3" },
-  //         { label: "Help & Support", href: "/support", icon: LifeBuoy },
-  //       ],
-  //     },
-  //   ],
-  // },
+  worker: {
+    key: "worker",
+    label: "Worker",
+    panel: "Worker Portal",
+    home: "/worker",
+    icon: HardHat,
+    description: "Mobile-friendly web portal: my jobs, GPS check-in, before/after photos",
+    user: { name: "Ramesh Kumar", email: "ramesh.k@powergridservices.in", title: "HT Electrician · Team Alpha" },
+    // Rendered as a bottom tab bar by the mobile worker shell.
+    nav: [
+      {
+        title: "Worker",
+        items: [
+          { label: "My Jobs", href: "/worker", icon: ListChecks },
+          { label: "History", href: "/worker/history", icon: ClipboardList },
+          { label: "Alerts", href: "/notifications", icon: Bell, badge: "3" },
+          { label: "Profile", href: "/worker/profile", icon: UserRound },
+        ],
+      },
+    ],
+  },
   admin: {
     key: "admin",
     label: "Admin",
@@ -215,13 +214,13 @@ export const ROLES: Record<RoleKey, RoleDef> = {
   },
 };
 
-export const ROLE_ORDER: RoleKey[] = ["creator", "vendor", "pm", "admin", "superadmin"];
+export const ROLE_ORDER: RoleKey[] = ["creator", "vendor", "pm", "worker", "admin", "superadmin"];
 
 export function roleFromPath(pathname: string): RoleKey | null {
   if (pathname.startsWith("/creator")) return "creator";
   if (pathname.startsWith("/vendor")) return "vendor";
   if (pathname.startsWith("/pm")) return "pm";
-  // if (pathname.startsWith("/worker")) return "worker";
+  if (pathname.startsWith("/worker")) return "worker";
   if (pathname.startsWith("/admin")) return "admin";
   if (pathname.startsWith("/super-admin")) return "superadmin";
   return null;
@@ -250,6 +249,7 @@ export const CAN_CREATE: Record<RoleKey, UserRoleLabel[]> = {
   pm: ["Vendor"],
   vendor: ["Worker"],
   creator: [],
+  worker: [],
 };
 
 export const HIERARCHY_CHAIN: UserRoleLabel[] = ["Super Admin", "Admin", "Project Manager", "Vendor", "Worker"];

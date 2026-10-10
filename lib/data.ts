@@ -145,7 +145,7 @@ export const COMPLAINTS: Complaint[] = [
   {
     id: "CMP-2026-0139", title: "DG set failing to auto-start on mains failure", category: "DG / Power Backup", site: "Noida Plant", location: "DG Yard, 500 kVA Set #2", asset: "DG-500-02",
     description: "During the 6:10 AM grid outage the AMF panel did not trigger DG #2. Manual start worked. Needs AMF controller check.",
-    priority: "Critical", status: "worker_assigned", raisedBy: "Rohit Mehra", raisedAt: "23 Sep 2026, 06:25 PM", updatedAt: "25 min ago", deadline: "24 Sep 2026, 01:00 PM", vendor: "PowerGrid Services", pm: "Arjun Sharma", workers: ["Sunil Yadav"], team: "Alpha", media: { photos: 2, videos: 1 }, lat: 28.6263, lng: 77.3738, slaLeft: "1h 40m", slaRisk: true, daysOpen: 1,
+    priority: "Critical", status: "worker_assigned", raisedBy: "Rohit Mehra", raisedAt: "23 Sep 2026, 06:25 PM", updatedAt: "25 min ago", deadline: "24 Sep 2026, 01:00 PM", vendor: "PowerGrid Services", pm: "Arjun Sharma", workers: ["Ramesh Kumar", "Sunil Yadav"], team: "Alpha", media: { photos: 2, videos: 1 }, lat: 28.6263, lng: 77.3738, slaLeft: "1h 40m", slaRisk: true, daysOpen: 1,
   },
   {
     id: "CMP-2026-0138", title: "Earth leakage alarm on CNC machine #14", category: "Earthing", site: "Chennai – Sriperumbudur", location: "Machining Hall, Bay 2", asset: "CNC-14",
@@ -195,7 +195,7 @@ export const COMPLAINTS: Complaint[] = [
   {
     id: "CMP-2026-0129", title: "Emergency exit lights battery failure", category: "Lighting", site: "Noida Plant", location: "Stores Building, Stairwell A", asset: "EXL-ST-A",
     description: "Monthly drill: 5 emergency exit lights failed to illuminate on mains cut.",
-    priority: "High", status: "closed", raisedBy: "Rohit Mehra", raisedAt: "02 Sep 2026, 03:00 PM", updatedAt: "3 days ago", deadline: "20 Sep 2026, 03:00 PM", vendor: "PowerGrid Services", pm: "Arjun Sharma", workers: ["Ajay Thakur"], team: "Bravo", media: { photos: 2, videos: 0 }, lat: 28.6277, lng: 77.3716, daysOpen: 22, closedAfterDays: 17,
+    priority: "High", status: "closed", raisedBy: "Rohit Mehra", raisedAt: "02 Sep 2026, 03:00 PM", updatedAt: "3 days ago", deadline: "20 Sep 2026, 03:00 PM", vendor: "PowerGrid Services", pm: "Arjun Sharma", workers: ["Ajay Thakur", "Ramesh Kumar"], team: "Bravo", media: { photos: 2, videos: 0 }, lat: 28.6277, lng: 77.3716, daysOpen: 22, closedAfterDays: 17,
   },
   {
     id: "CMP-2026-0128", title: "Main LT panel busbar hot spot (thermography)", category: "Panel / DB Issue", site: "Dehradun – Selaqui", location: "Main LT Room, Panel LT-1", asset: "LT-1",

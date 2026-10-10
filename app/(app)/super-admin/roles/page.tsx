@@ -84,7 +84,7 @@ export default function RolesPage() {
       <PageHeader
         eyebrow="Super Admin Control Center"
         title="Roles & access"
-        description="Role-based access control across all six roles, plus authentication and API security policy."
+        description="Role-based access control across all roles, plus authentication and API security policy."
         actions={
           <Button onClick={() => toast.show("Permissions saved — active on next token refresh")}>
             <Save /> Save changes
