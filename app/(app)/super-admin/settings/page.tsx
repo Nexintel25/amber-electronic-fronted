@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, Camera, Cloud, GitBranch, Globe, GripVertical, Save, Tags, Timer, X } from "lucide-react";
+import { Bell, Camera, Cloud, GitBranch, Gavel, Globe, GripVertical, Save, Tags, Timer, X } from "lucide-react";
 import { CATEGORIES } from "@/lib/data";
-import { PRIORITY_META, WORKFLOW, type Priority } from "@/lib/workflow";
+import { PENALTY_AFTER_DAYS, PENALTY_PER_DAY, PRIORITY_META, WORKFLOW, type Priority } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 import { Button, Card, CardHeader, Field, Input, PageHeader, Select } from "@/components/ui";
 import { SwitchControl, useToast } from "@/components/interactive";
 
-type Section = "workflow" | "sla" | "photo" | "notifications" | "categories" | "storage" | "general";
+type Section = "workflow" | "penalty" | "sla" | "photo" | "notifications" | "categories" | "storage" | "general";
 
 const NAV: { key: Section; label: string; icon: typeof Bell }[] = [
   { key: "workflow", label: "Workflow stages", icon: GitBranch },
+  { key: "penalty", label: "Vendor penalty", icon: Gavel },
   { key: "sla", label: "Priorities & SLA", icon: Timer },
   { key: "photo", label: "Photo verification", icon: Camera },
   { key: "notifications", label: "Push notifications", icon: Bell },
@@ -59,7 +60,7 @@ export default function SettingsPage() {
         <div className="space-y-6">
           {sec === "workflow" && (
             <Card>
-              <CardHeader title="Complaint status workflow" subtitle="The 8 defined stages every complaint passes through. Configure owners, stage SLAs and auto-escalation." />
+              <CardHeader title="Complaint status workflow" subtitle="The 7 defined stages every complaint passes through. Configure owners, stage SLAs and auto-escalation." />
               <div className="space-y-2 px-5 pb-5">
                 {WORKFLOW.map((w) => (
                   <div key={w.step} className="flex flex-col gap-3 rounded-xl border border-slate-200 p-3 md:flex-row md:items-center">
@@ -76,7 +77,7 @@ export default function SettingsPage() {
                         <option>{w.owner}</option>
                         <option>Admin</option>
                       </Select>
-                      <Select className="h-9 w-32 text-[13px]" defaultValue={["0", "1", "1", "1", "0", "0", "2", "4"][w.step - 1]}>
+                      <Select className="h-9 w-32 text-[13px]" defaultValue={["0", "1", "1", "0", "0", "2", "0"][w.step - 1]}>
                         <option value="0">No stage SLA</option>
                         <option value="1">1 hour</option>
                         <option value="2">2 hours</option>
@@ -89,8 +90,34 @@ export default function SettingsPage() {
                   </div>
                 ))}
                 <div className="flex items-center justify-between rounded-xl bg-rose-50/70 p-3 text-[13px]">
-                  <span className="text-rose-800"><b>Rework loop:</b> Stage 7 can send the complaint back to Stage 5 (Work In Progress)</span>
+                  <span className="text-rose-800"><b>Rework loop:</b> Stage 6 can send the complaint back to the vendor, who re-assigns it to a worker (Stage 3)</span>
                   <SwitchControl defaultOn label="Allow rework loop" />
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {sec === "penalty" && (
+            <Card>
+              <CardHeader title="Vendor penalty" subtitle="A vendor that does not close a complaint within the window is charged per extra day. The clock starts when the Complaint Creator raises it." />
+              <div className="grid gap-4 px-5 pb-5 md:grid-cols-2">
+                <Field label="Completion window (days)" hint="Penalty applies after this many days"><Input type="number" defaultValue={PENALTY_AFTER_DAYS} /></Field>
+                <Field label="Penalty per extra day (₹)"><Input type="number" defaultValue={PENALTY_PER_DAY} /></Field>
+                <Field label="Penalty cap per complaint (₹)" hint="Leave empty for no cap"><Input type="number" placeholder="No cap" /></Field>
+                <Field label="Reminder before breach">
+                  <Select defaultValue="3">
+                    <option value="1">1 day before</option>
+                    <option value="3">3 days before</option>
+                    <option value="5">5 days before</option>
+                  </Select>
+                </Field>
+                <div className="flex items-center justify-between rounded-xl border border-slate-200 p-3 md:col-span-2">
+                  <span className="text-[13px] text-slate-700">Keep the clock running during rework</span>
+                  <SwitchControl defaultOn label="Clock runs during rework" />
+                </div>
+                <div className="flex items-center justify-between rounded-xl border border-slate-200 p-3 md:col-span-2">
+                  <span className="text-[13px] text-slate-700">Only Admin / Super Admin can waive a penalty</span>
+                  <SwitchControl defaultOn label="Waiver restricted" />
                 </div>
               </div>
             </Card>

@@ -8,6 +8,7 @@ import { SwitchControl, useToast } from "@/components/interactive";
 
 const ROLES = ["Super Admin", "Admin", "Creator", "Vendor", "PM", "Worker"];
 
+// Columns: 0 Super Admin, 1 Admin, 2 Creator, 3 Vendor, 4 PM, 5 Worker
 const GROUPS: { group: string; perms: { name: string; grant: number[] }[] }[] = [
   {
     group: "Complaints",
@@ -15,19 +16,40 @@ const GROUPS: { group: string; perms: { name: string; grant: number[] }[] }[] = 
       { name: "Raise complaint & upload media", grant: [0, 1, 2] },
       { name: "View own complaints", grant: [0, 1, 2, 3, 4, 5] },
       { name: "View all complaints", grant: [0, 1] },
+      { name: "Receive new complaints at creation (Vendor + Admin + PM)", grant: [0, 1, 3, 4] },
       { name: "Accept / reject complaint", grant: [0, 3] },
-      { name: "Assign PM, set priority & deadline", grant: [0, 3] },
-      { name: "Final review & closure", grant: [0, 3] },
+      { name: "Distribute work to workers", grant: [0, 3] },
+      { name: "Verify work & close complaint", grant: [0, 3] },
+      { name: "Send work back for rework", grant: [0, 3] },
     ],
   },
   {
-    group: "Field operations",
+    group: "Field operations & photos",
     perms: [
-      { name: "Allocate worker / team", grant: [0, 4] },
       { name: "GPS check-in & photo upload", grant: [5] },
       { name: "Mark task complete", grant: [5] },
-      { name: "Verify work / send for rework", grant: [0, 4] },
+      { name: "View worker photos", grant: [0, 1, 3] },
+      { name: "Raise issue on photos (goes to Vendor only)", grant: [0, 1] },
       { name: "View live tracking", grant: [0, 1, 4] },
+    ],
+  },
+  {
+    group: "Penalties",
+    perms: [
+      { name: "View penalty report — all vendors", grant: [0, 1] },
+      { name: "View penalty report — own vendors", grant: [4] },
+      { name: "View own penalties", grant: [3] },
+      { name: "Waive a penalty", grant: [0, 1] },
+    ],
+  },
+  {
+    group: "User creation (reporting chain)",
+    perms: [
+      { name: "Create Admin", grant: [0] },
+      { name: "Create Project Manager", grant: [0, 1] },
+      { name: "Create Vendor", grant: [0, 4] },
+      { name: "Create Worker", grant: [0, 3] },
+      { name: "Create Complaint Creator", grant: [0, 1] },
     ],
   },
   {

@@ -3,6 +3,7 @@ import {
   BadgeCheck,
   Bell,
   Building,
+  Camera,
   ChartColumn,
   ClipboardCheck,
   ClipboardList,
@@ -10,6 +11,7 @@ import {
   FileChartColumn,
   FilePlus,
   Gauge,
+  Gavel,
   HardHat,
   Inbox,
   SquareKanban,
@@ -19,13 +21,13 @@ import {
   ListChecks,
   Map,
   MessageSquareWarning,
+  Network,
   Radar,
   ScrollText,
   Settings,
   ShieldCheck,
   Smartphone,
   Truck,
-  UserCog,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -88,15 +90,17 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     panel: "Vendor Panel",
     home: "/vendor",
     icon: Truck,
-    description: "Review, accept/reject, assign with priority",
+    description: "Accept complaints, distribute work to workers, verify & rework",
     user: { name: "Karan Malhotra", email: "karan@powergridservices.in", title: "PowerGrid Services" },
     nav: [
       {
         title: "Vendor Panel",
         items: [
           { label: "Dashboard", href: "/vendor", icon: LayoutDashboard },
-          { label: "Review Queue", href: "/vendor/queue", icon: Inbox, badge: "4" },
-          { label: "Final Review & Closure", href: "/vendor/closure", icon: BadgeCheck, badge: "2" },
+          { label: "Review & Distribute", href: "/vendor/queue", icon: Inbox, badge: "4" },
+          { label: "Verify & Rework", href: "/vendor/verification", icon: BadgeCheck, badge: "3" },
+          { label: "My Workers", href: "/vendor/workers", icon: HardHat },
+          { label: "Penalties", href: "/vendor/penalties", icon: Gavel },
         ],
       },
       common,
@@ -108,17 +112,16 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     panel: "Project Manager Panel",
     home: "/pm",
     icon: ClipboardCheck,
-    description: "Team assignment, field monitoring, verification",
+    description: "Responsible for vendors — monitor work and penalties",
     user: { name: "Arjun Sharma", email: "arjun.sharma@powergridservices.in", title: "Project Manager · Noida" },
     nav: [
       {
         title: "PM Panel",
         items: [
           { label: "Dashboard", href: "/pm", icon: LayoutDashboard },
-          { label: "Team Assignment", href: "/pm/assignments", icon: UserCog, badge: "2" },
-          { label: "Teams & Workers", href: "/pm/teams", icon: Users },
+          { label: "My Vendors", href: "/pm/vendors", icon: Truck },
           { label: "Field Monitoring", href: "/pm/monitoring", icon: Radar },
-          { label: "Work Verification", href: "/pm/verification", icon: ShieldCheck, badge: "1" },
+          { label: "Penalties", href: "/pm/penalties", icon: Gavel },
         ],
       },
       common,
@@ -152,18 +155,24 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     panel: "Admin Monitoring Dashboard",
     home: "/admin",
     icon: Gauge,
-    description: "Live tracking, live status, analytics & reports",
+    description: "Review worker photos, raise issues to vendors, reports",
     user: { name: "Kavita Menon", email: "kavita.menon@amberelectrotech.com", title: "Operations Admin" },
     nav: [
       {
         title: "Monitoring",
         items: [
           { label: "Overview", href: "/admin", icon: LayoutDashboard },
+          { label: "Photo Review & Issues", href: "/admin/photo-review", icon: Camera, badge: "3" },
           { label: "Live Tracking", href: "/admin/live", icon: Map },
           { label: "Live Status Board", href: "/admin/board", icon: SquareKanban },
           { label: "Analytics", href: "/admin/analytics", icon: ChartColumn },
           { label: "Reports", href: "/admin/reports", icon: FileChartColumn },
+          { label: "Penalty Report", href: "/admin/penalties", icon: Gavel },
         ],
+      },
+      {
+        title: "My Team",
+        items: [{ label: "Project Managers & Creators", href: "/admin/team", icon: Network }],
       },
       common,
     ],
@@ -174,7 +183,7 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     panel: "Super Admin Control Center",
     home: "/super-admin",
     icon: ShieldCheck,
-    description: "Users, roles, configurations, audit logs",
+    description: "Full access — creates every user, roles, configurations, audit logs",
     user: { name: "Nikhil Arora", email: "nikhil.arora@amberelectrotech.com", title: "IT Head · Super Admin" },
     nav: [
       {
@@ -187,6 +196,18 @@ export const ROLES: Record<RoleKey, RoleDef> = {
           { label: "Configurations", href: "/super-admin/settings", icon: Settings },
           { label: "Audit Logs", href: "/super-admin/audit-logs", icon: ScrollText },
           { label: "Subscription", href: "/super-admin/subscription", icon: CreditCard },
+        ],
+      },
+      {
+        title: "Operations (full access)",
+        items: [
+          { label: "Role Hierarchy", href: "/super-admin/hierarchy", icon: Network },
+          { label: "Photo Review & Issues", href: "/super-admin/photo-review", icon: Camera },
+          { label: "Live Tracking", href: "/super-admin/live", icon: Map },
+          { label: "Live Status Board", href: "/super-admin/board", icon: SquareKanban },
+          { label: "Analytics", href: "/super-admin/analytics", icon: ChartColumn },
+          { label: "Reports", href: "/super-admin/reports", icon: FileChartColumn },
+          { label: "Penalty Report", href: "/super-admin/penalties", icon: Gavel },
         ],
       },
       common,
@@ -205,3 +226,30 @@ export function roleFromPath(pathname: string): RoleKey | null {
   if (pathname.startsWith("/super-admin")) return "superadmin";
   return null;
 }
+
+/* ------------------------------------------------------------------ */
+/* Reporting hierarchy: Super Admin → Admin → Project Manager → Vendor → Worker */
+/* ------------------------------------------------------------------ */
+
+export type UserRoleLabel = "Super Admin" | "Admin" | "Project Manager" | "Vendor" | "Worker" | "Complaint Creator";
+
+/** Who each role reports to (the person that created them). */
+export const PARENT_ROLE: Record<UserRoleLabel, UserRoleLabel | null> = {
+  "Super Admin": null,
+  Admin: "Super Admin",
+  "Project Manager": "Admin",
+  Vendor: "Project Manager",
+  Worker: "Vendor",
+  "Complaint Creator": "Admin",
+};
+
+/** Which roles each panel is allowed to create. The Super Admin can create every role. */
+export const CAN_CREATE: Record<RoleKey, UserRoleLabel[]> = {
+  superadmin: ["Admin", "Project Manager", "Vendor", "Worker", "Complaint Creator"],
+  admin: ["Project Manager", "Complaint Creator"],
+  pm: ["Vendor"],
+  vendor: ["Worker"],
+  creator: [],
+};
+
+export const HIERARCHY_CHAIN: UserRoleLabel[] = ["Super Admin", "Admin", "Project Manager", "Vendor", "Worker"];

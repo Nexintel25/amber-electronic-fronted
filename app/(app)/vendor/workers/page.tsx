@@ -1,31 +1,42 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, Plus, Star, Users } from "lucide-react";
+import { Phone, Plus, Star, UserPlus, Users } from "lucide-react";
 import { TEAMS, WORKERS } from "@/lib/data";
+import { CreateUserModal } from "@/components/create-user-modal";
 import { WORKER_STATUS } from "@/lib/worker-status";
 import { Avatar, Badge, Button, Card, Field, Input, PageHeader, Progress, Select, td, th } from "@/components/ui";
 import { Modal, useToast } from "@/components/interactive";
 
+const VENDOR = "PowerGrid Services";
+const myTeams = TEAMS.filter((t) => t.vendor === VENDOR);
+const myWorkers = WORKERS.filter((w) => w.vendor === VENDOR);
+
 export default function TeamsPage() {
   const [open, setOpen] = useState(false);
+  const [addWorker, setAddWorker] = useState(false);
   const toast = useToast();
 
   return (
     <>
       <PageHeader
-        eyebrow="Project Manager Panel"
-        title="Teams & workers"
-        description="Organise field workers into teams, track utilization and productivity."
+        eyebrow="Vendor Panel · PowerGrid Services"
+        title="My workers"
+        description="Create the workers who receive your jobs on the mobile app, organise them into teams and track their productivity."
         actions={
-          <Button onClick={() => setOpen(true)}>
-            <Plus /> New team
-          </Button>
+          <>
+            <Button variant="secondary" onClick={() => setOpen(true)}>
+              <Plus /> New team
+            </Button>
+            <Button onClick={() => setAddWorker(true)}>
+              <UserPlus /> Add worker
+            </Button>
+          </>
         }
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {TEAMS.map((t) => (
+        {myTeams.map((t) => (
           <Card key={t.id} className="p-5">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
@@ -59,7 +70,7 @@ export default function TeamsPage() {
               </div>
               <Progress value={t.utilization} tone={t.utilization > 85 ? "bg-rose-500" : "bg-brand-500"} />
             </div>
-            <p className="mt-3 text-xs text-slate-500">{t.site} · PM {t.pm}</p>
+            <p className="mt-3 text-xs text-slate-500">{t.site} · {t.vendor}</p>
           </Card>
         ))}
       </div>
@@ -84,7 +95,7 @@ export default function TeamsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {WORKERS.map((w) => (
+              {myWorkers.map((w) => (
                 <tr key={w.id} className="hover:bg-slate-50/60">
                   <td className={td}>
                     <div className="flex items-center gap-3">
@@ -133,7 +144,7 @@ export default function TeamsPage() {
           </Field>
           <p className="text-[13px] font-semibold text-slate-700">Members</p>
           <div className="grid gap-2 sm:grid-cols-2">
-            {WORKERS.slice(0, 6).map((w) => (
+            {myWorkers.map((w) => (
               <label key={w.id} className="flex items-center gap-2.5 rounded-lg border border-slate-200 px-3 py-2 text-[13px] has-[:checked]:border-brand-400 has-[:checked]:bg-brand-50/50">
                 <input type="checkbox" className="accent-brand-500" />
                 <Avatar name={w.name} size="xs" /> {w.name}
@@ -142,6 +153,7 @@ export default function TeamsPage() {
           </div>
         </div>
       </Modal>
+      <CreateUserModal open={addWorker} onClose={() => setAddWorker(false)} allowedRoles={["Worker"]} fixedManager="Karan Malhotra" />
       {toast.node}
     </>
   );

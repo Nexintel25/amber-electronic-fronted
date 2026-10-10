@@ -3,13 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Battery, Camera, Clock, Crosshair, MessageSquare, Navigation, Phone, Search, Signal, WifiOff } from "lucide-react";
-import { COMPLAINTS, WORKERS, type WorkerStatus } from "@/lib/data";
+import { COMPLAINTS, PMS, WORKERS as ALL_WORKERS, type WorkerStatus } from "@/lib/data";
 import { WORKER_STATUS } from "@/lib/worker-status";
 import { cn } from "@/lib/utils";
 import { Avatar, Badge, Button, Card, Input, LiveDot, PageHeader } from "@/components/ui";
 import { Tabs } from "@/components/interactive";
 import { LiveMap, MapLegend } from "@/components/live-map";
 import { GeoPhoto } from "@/components/geo-photo";
+
+/** Only the workers of the vendors this Project Manager is responsible for. */
+const WORKERS = ALL_WORKERS.filter((w) => PMS[0].vendors.includes(w.vendor));
 
 export default function MonitoringPage() {
   const [filter, setFilter] = useState<"all" | WorkerStatus>("all");
@@ -25,7 +28,7 @@ export default function MonitoringPage() {
       <PageHeader
         eyebrow="Project Manager Panel"
         title="Field monitoring"
-        description="Real-time GPS positions, check-ins and photo uploads from every worker in the field."
+        description="Real-time GPS positions and check-ins for the workers of the vendors you are responsible for."
         actions={
           <span className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
             <LiveDot /> Live · updated 5s ago
@@ -120,7 +123,7 @@ export default function MonitoringPage() {
                   <p className="text-xs text-slate-500">{task.location}</p>
                 </Link>
               ) : (
-                <p className="rounded-xl bg-slate-50 p-3 text-[13px] text-slate-500">No active task — available for allocation.</p>
+                <p className="rounded-xl bg-slate-50 p-3 text-[13px] text-slate-500">No active task — available for the vendor to assign.</p>
               )}
               <div>
                 <p className="mb-2 text-[13px] font-semibold text-slate-700">Today’s activity</p>

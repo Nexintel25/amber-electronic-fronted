@@ -32,7 +32,7 @@ const features = [
   { icon: Camera, title: "GPS-tagged photo proof", text: "Timestamped before/after photos at every task stage, locked to the site geofence." },
   { icon: Radar, title: "Live field tracking", text: "See every technician and open complaint on a live map, updated in real time." },
   { icon: Bell, title: "Instant push alerts", text: "The right people are notified the moment a complaint is raised, assigned or escalated." },
-  { icon: Clock, title: "SLA-driven priorities", text: "Critical to Low priorities with SLA timers and automatic at-risk escalation." },
+  { icon: Clock, title: "15-day penalty clock", text: "Vendors must close every complaint within 15 days or a per-day penalty is levied — with a full penalty report." },
   { icon: ChartColumn, title: "Analytics & reports", text: "Trends, resolution time and SLA compliance by site, vendor and category." },
   { icon: ShieldCheck, title: "Role-based security", text: "JWT authentication, encrypted APIs and a full audit trail of every action." },
 ];
@@ -125,7 +125,7 @@ export default function LandingPage() {
               </a>
             </div>
             <ul className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-400">
-              {["8-stage verified workflow", "Works offline in the field", "Multi-site ready"].map((t) => (
+              {["7-stage verified workflow", "Works offline in the field", "Multi-site ready"].map((t) => (
                 <li key={t} className="flex items-center gap-2">
                   <Check className="size-4 text-brand-400" /> {t}
                 </li>
@@ -178,7 +178,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
             eyebrow="How it works"
-            title="An 8-stage workflow with proof at every step"
+            title="A 7-stage workflow with proof at every step"
             text="Every complaint follows the same accountable path, so nothing gets lost between teams."
           />
           <ol className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -200,7 +200,7 @@ export default function LandingPage() {
       <section id="roles" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-24 sm:px-6 lg:px-8 lg:py-32">
         <SectionHeading
           eyebrow="Built for every role"
-          title="One platform, six tailored workspaces"
+          title="One platform, a workspace for every role"
           text="Each team member signs in to a workspace designed around exactly what they need to do."
         />
         <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

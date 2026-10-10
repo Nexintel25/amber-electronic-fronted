@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { CalendarDays, CheckCircle2, Clock, FileSpreadsheet, FileText, Mail, Star, TriangleAlert } from "lucide-react";
-import { HOURLY_TODAY, PHOTO_SETS, SITES, VENDORS, WORKERS } from "@/lib/data";
+import { HOURLY_TODAY, PHOTO_SETS, SITES, VENDORS, WORKERS, allPenalties } from "@/lib/data";
+import { PenaltyReport } from "@/components/penalty-report";
 import { cn } from "@/lib/utils";
 import { Avatar, Badge, Button, Card, CardHeader, PageHeader, Progress, Select, td, th } from "@/components/ui";
 import { Tabs } from "@/components/interactive";
 import { Bars, Legend, SERIES } from "@/components/charts";
 import { GeoPhoto } from "@/components/geo-photo";
 
-type Report = "daily" | "vendor" | "worker" | "photo";
+type Report = "daily" | "vendor" | "worker" | "photo" | "penalty";
 
 export default function ReportsPage() {
   const [tab, setTab] = useState<Report>("daily");
@@ -19,7 +20,7 @@ export default function ReportsPage() {
       <PageHeader
         eyebrow="Admin Monitoring Dashboard"
         title="Reports"
-        description="Daily, vendor performance, worker productivity and photo reports — export or schedule by email."
+        description="Daily, vendor performance, worker productivity, photo and penalty reports — export or schedule by email."
         actions={
           <>
             <Button variant="secondary">
@@ -44,6 +45,7 @@ export default function ReportsPage() {
             { value: "vendor", label: "Vendor performance" },
             { value: "worker", label: "Worker productivity" },
             { value: "photo", label: "Photo reports" },
+            { value: "penalty", label: "Penalty report" },
           ]}
         />
         <div className="flex flex-wrap gap-2">
@@ -63,6 +65,7 @@ export default function ReportsPage() {
       {tab === "vendor" && <VendorReport />}
       {tab === "worker" && <WorkerReport />}
       {tab === "photo" && <PhotoReport />}
+      {tab === "penalty" && <PenaltyReport penalties={allPenalties()} scopeLabel="All vendors" />}
 
       <Card className="mt-6 flex flex-col gap-3 p-5 sm:flex-row sm:items-center">
         <span className="grid size-10 place-items-center rounded-xl bg-navy-50 text-navy-700">

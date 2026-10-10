@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { BadgeCheck, Clock, Inbox, Star, Timer, TriangleAlert, UserCog } from "lucide-react";
-import { COMPLAINTS, PMS, VENDORS } from "@/lib/data";
+import { BadgeCheck, Clock, Gavel, HardHat, Inbox, Star } from "lucide-react";
+import { COMPLAINTS, VENDORS, WORKERS, inr, penaltyOf } from "@/lib/data";
+import { PENALTY_AFTER_DAYS } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 import { Avatar, Card, CardHeader, LinkButton, PageHeader, PriorityBadge, Progress, StatCard, StatusBadge } from "@/components/ui";
 import { Bars, Legend, SERIES } from "@/components/charts";
@@ -8,35 +9,39 @@ import { Bars, Legend, SERIES } from "@/components/charts";
 const me = VENDORS[0];
 
 export default function VendorDashboard() {
+  const mineAll = COMPLAINTS.filter((c) => c.vendor === me.name);
   const queue = COMPLAINTS.filter((c) => c.status === "new" || c.status === "vendor_review");
-  const closure = COMPLAINTS.filter((c) => c.status === "completed");
-  const atRisk = COMPLAINTS.filter((c) => c.slaRisk);
+  const field = mineAll.filter((c) => ["worker_assigned", "in_progress", "rework"].includes(c.status));
+  const verify = mineAll.filter((c) => c.status === "pending_verification" || c.status === "issue_raised");
+  const penalty = mineAll.map(penaltyOf).reduce((a, p) => a + p.amount, 0);
+  const clock = mineAll.filter((c) => c.status !== "closed" && c.status !== "rejected").sort((a, b) => b.daysOpen - a.daysOpen).slice(0, 5);
+  const workers = WORKERS.filter((w) => w.vendor === me.name);
 
   return (
     <>
       <PageHeader
         eyebrow="Vendor Panel · PowerGrid Services"
         title="Vendor dashboard"
-        description="Review incoming complaints, accept or reject them, and assign Project Managers with priority and deadline."
+        description="New complaints reach you together with the Admin and Project Manager. Distribute them to your workers, verify their photos and close within 15 days."
         actions={
           <LinkButton href="/vendor/queue">
-            <Inbox /> Open review queue
+            <Inbox /> Review & distribute
           </LinkButton>
         }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Awaiting review" value={queue.length} icon={Inbox} tone="violet" hint="new complaints" />
-        <StatCard label="Assigned to PMs" value={PMS.reduce((a, p) => a + p.active, 0)} icon={UserCog} tone="navy" hint="active across 4 PMs" />
-        <StatCard label="Pending final closure" value={closure.length} icon={BadgeCheck} tone="emerald" hint="verified by PM" />
-        <StatCard label="SLA breach risk" value={atRisk.length} icon={TriangleAlert} tone="rose" delta="1" deltaGood={false} hint="since yesterday" />
+        <StatCard label="With my workers" value={field.length} icon={HardHat} tone="amber" hint="in the field / rework" />
+        <StatCard label="To verify" value={verify.length} icon={BadgeCheck} tone="emerald" hint="worker photos & admin issues" />
+        <StatCard label="Penalty exposure" value={inr(penalty)} icon={Gavel} tone="rose" hint={`beyond ${PENALTY_AFTER_DAYS} days`} />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-2">
           <CardHeader
             title="Review queue"
-            subtitle="Accept, reject or assign — oldest first"
+            subtitle="Accept, reject or distribute to workers — oldest first"
             action={<Link href="/vendor/queue" className="text-[13px] font-semibold text-brand-600">Review all</Link>}
           />
           <ul className="divide-y divide-slate-100">
@@ -95,17 +100,17 @@ export default function VendorDashboard() {
 
         <Card className="xl:col-span-2">
           <CardHeader
-            title="Project Manager workload"
-            subtitle="Active complaints vs capacity"
-            action={<Legend items={[{ label: "Active", color: SERIES[0] }, { label: "Capacity", color: "#cbd5e1" }]} />}
+            title="Worker load today"
+            subtitle="Tasks completed vs assigned"
+            action={<Legend items={[{ label: "Completed", color: SERIES[2] }, { label: "Assigned", color: "#cbd5e1" }]} />}
           />
           <div className="px-3 pb-4">
             <Bars
-              data={PMS.map((p) => ({ name: p.name, active: p.active, capacity: p.capacity }))}
+              data={workers.map((w) => ({ name: w.name.split(" ")[0], completed: w.completed, assigned: w.tasksToday }))}
               xKey="name"
               series={[
-                { key: "active", label: "Active", color: SERIES[0] },
-                { key: "capacity", label: "Capacity", color: "#cbd5e1" },
+                { key: "completed", label: "Completed", color: SERIES[2] },
+                { key: "assigned", label: "Assigned", color: "#cbd5e1" },
               ]}
               height={240}
             />
@@ -113,25 +118,23 @@ export default function VendorDashboard() {
         </Card>
 
         <Card>
-          <CardHeader title="Deadlines approaching" icon={Clock} />
+          <CardHeader title="15-day clock" subtitle="Oldest first — penalty after day 15" icon={Clock} />
           <ul className="space-y-3 px-5 pb-5">
-            {COMPLAINTS.filter((c) => c.slaLeft && !["closed", "completed"].includes(c.status))
-              .slice(0, 5)
-              .map((c) => (
-                <li key={c.id}>
-                  <Link href={`/complaints/${c.id}`} className="flex items-center gap-3 rounded-xl p-2 -mx-2 hover:bg-slate-50">
-                    <Avatar name={c.pm ?? "PM"} size="sm" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-semibold text-slate-800">{c.title}</p>
-                      <p className="text-xs text-slate-500">{c.pm}</p>
-                    </div>
-                    <span className={cn("flex items-center gap-1 text-xs font-bold whitespace-nowrap", c.slaRisk ? "text-rose-600" : "text-slate-600")}>
-                      <Timer className="size-3.5" />
-                      {c.slaLeft}
-                    </span>
-                  </Link>
-                </li>
-              ))}
+            {clock.map((c) => (
+              <li key={c.id}>
+                <Link href={`/complaints/${c.id}`} className="-mx-2 flex items-center gap-3 rounded-xl p-2 hover:bg-slate-50">
+                  <Avatar name={c.workers?.[0] ?? me.name} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-semibold text-slate-800">{c.title}</p>
+                    <p className="text-xs text-slate-500">{c.workers?.[0] ?? "Not distributed yet"}</p>
+                  </div>
+                  <span className={cn("flex items-center gap-1 text-xs font-bold whitespace-nowrap", c.daysOpen > PENALTY_AFTER_DAYS ? "text-rose-600" : c.daysOpen >= 12 ? "text-amber-600" : "text-slate-600")}>
+                    <Gavel className="size-3.5" />
+                    Day {c.daysOpen}/{PENALTY_AFTER_DAYS}
+                  </span>
+                </Link>
+              </li>
+            ))}
           </ul>
         </Card>
       </div>

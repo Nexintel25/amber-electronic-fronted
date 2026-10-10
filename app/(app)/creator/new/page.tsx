@@ -53,7 +53,7 @@ export default function RaiseComplaintPage() {
       <PageHeader
         eyebrow="Complaint Creator Portal"
         title="Raise a complaint"
-        description="Describe the issue, attach photos or videos and we’ll route it to the right vendor instantly."
+        description="Describe the issue and attach photos or videos. It reaches the Vendor, Admin and Project Manager at the same moment."
       />
 
       <form
@@ -241,6 +241,9 @@ export default function RaiseComplaintPage() {
             <Button variant="ghost" className="mt-2 w-full">
               Save as draft
             </Button>
+            <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2.5 text-[12px] leading-relaxed text-amber-800">
+              <b>15-day commitment:</b> the vendor must complete this within 15 days. If they don’t, a per-day penalty is applied to the vendor.
+            </p>
           </Card>
 
           <Card className="p-5">

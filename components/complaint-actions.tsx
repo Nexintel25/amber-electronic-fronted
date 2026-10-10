@@ -5,24 +5,22 @@ import {
   BadgeCheck,
   CircleX,
   Download,
+  Flag,
   MessageSquare,
   RotateCcw,
-  ShieldCheck,
   Siren,
-  Smartphone,
-  UserCog,
   UserPlus,
 } from "lucide-react";
 import type { Complaint } from "@/lib/data";
-import { PMS, TEAMS, WORKERS } from "@/lib/data";
+import { VENDORS, WORKERS } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import type { Priority } from "@/lib/workflow";
 import { PRIORITY_META } from "@/lib/workflow";
-import { Button, Field, Input, LinkButton, Select, Textarea } from "@/components/ui";
+import { Button, Field, Select, Textarea } from "@/components/ui";
 import { Modal, useToast } from "@/components/interactive";
 import { useRole } from "@/components/shell/app-shell";
 
-type Dialog = null | "assignPm" | "reject" | "assignWorker" | "verify" | "rework" | "close" | "comment" | "escalate";
+type Dialog = null | "distribute" | "reject" | "rework" | "close" | "issue" | "comment" | "escalate";
 
 export function PrioritySelector({ value, onChange }: { value: Priority; onChange: (p: Priority) => void }) {
   return (
@@ -59,55 +57,50 @@ export function ComplaintActions({ complaint: c }: { complaint: Complaint }) {
   };
 
   const s = c.status;
+  const vendorName = c.vendor ?? VENDORS[0].name;
+  const vendorWorkers = WORKERS.filter((w) => w.vendor === vendorName);
   const buttons: React.ReactNode[] = [];
 
-  if (role === "vendor") {
+  // Vendor (and Super Admin, who has every access): accept, distribute to workers, verify, rework.
+  if (role === "vendor" || role === "superadmin") {
     if (s === "new" || s === "vendor_review") {
       buttons.push(
         <Button key="rej" variant="secondary" onClick={() => setDialog("reject")}>
           <CircleX /> Reject
         </Button>,
-        <Button key="acc" onClick={() => setDialog("assignPm")}>
-          <UserCog /> Accept & Assign PM
+        <Button key="acc" onClick={() => setDialog("distribute")}>
+          <UserPlus /> Accept & Distribute to Workers
         </Button>,
       );
-    } else if (s === "completed") {
-      buttons.push(
-        <Button key="close" variant="success" onClick={() => setDialog("close")}>
-          <BadgeCheck /> Final Review & Close
-        </Button>,
-      );
-    }
-  }
-  if (role === "pm") {
-    if (s === "assigned_pm" || s === "rework") {
-      buttons.push(
-        <Button key="aw" onClick={() => setDialog("assignWorker")}>
-          <UserPlus /> Assign Worker / Team
-        </Button>,
-      );
-    } else if (s === "pending_verification") {
+    } else if (s === "pending_verification" || s === "issue_raised") {
       buttons.push(
         <Button key="rw" variant="secondary" onClick={() => setDialog("rework")}>
-          <RotateCcw /> Send Back for Rework
+          <RotateCcw /> Send for Rework
         </Button>,
-        <Button key="ver" variant="success" onClick={() => setDialog("verify")}>
-          <ShieldCheck /> Verify & Approve
+        <Button key="close" variant="success" onClick={() => setDialog("close")}>
+          <BadgeCheck /> Verify & Close
+        </Button>,
+      );
+    } else if (s === "rework") {
+      buttons.push(
+        <Button key="re" onClick={() => setDialog("distribute")}>
+          <UserPlus /> Assign Rework to Workers
         </Button>,
       );
     }
   }
-  if (role === "worker") {
+  // Admin (and Super Admin): reviews the worker photos and raises an issue that only the vendor sees.
+  if ((role === "admin" || role === "superadmin") && (s === "pending_verification" || s === "issue_raised")) {
     buttons.push(
-      <LinkButton key="app" href="/worker">
-        <Smartphone /> Open in Mobile App
-      </LinkButton>,
+      <Button key="iss" variant="secondary" onClick={() => setDialog("issue")}>
+        <Flag /> Raise Issue to Vendor
+      </Button>,
     );
   }
-  if ((role === "admin" || role === "superadmin" || role === "creator") && s !== "closed") {
+  if ((role === "admin" || role === "superadmin" || role === "creator" || role === "pm") && s !== "closed" && s !== "rejected") {
     buttons.push(
       <Button key="esc" variant="secondary" onClick={() => setDialog("escalate")}>
-        <Siren /> Escalate
+        <Siren /> {role === "pm" ? "Chase Vendor" : "Escalate"}
       </Button>,
     );
   }
@@ -121,50 +114,6 @@ export function ComplaintActions({ complaint: c }: { complaint: Complaint }) {
         <MessageSquare /> Comment
       </Button>
       {buttons}
-
-      <Modal
-        open={dialog === "assignPm"}
-        onClose={() => setDialog(null)}
-        title="Accept & assign Project Manager"
-        description={`${c.id} · ${c.title}`}
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setDialog(null)}>Cancel</Button>
-            <Button onClick={() => done("Complaint accepted and assigned to Project Manager")}>Assign & Notify</Button>
-          </>
-        }
-      >
-        <div className="space-y-5">
-          <Field label="Project Manager" required>
-            <Select defaultValue={PMS[0].id}>
-              {PMS.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} — {p.site} ({p.active}/{p.capacity} active)
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Priority" required>
-            <PrioritySelector value={priority} onChange={setPriority} />
-          </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Deadline" required hint={`Auto-suggested from ${priority} SLA (${PRIORITY_META[priority].sla})`}>
-              <Input type="datetime-local" defaultValue="2026-09-24T17:00" />
-            </Field>
-            <Field label="Estimated effort">
-              <Select defaultValue="2">
-                <option value="1">~1 hour</option>
-                <option value="2">2–4 hours</option>
-                <option value="3">Half day</option>
-                <option value="4">Full day or more</option>
-              </Select>
-            </Field>
-          </div>
-          <Field label="Instructions for PM">
-            <Textarea placeholder="Scope notes, safety permits, spares required…" />
-          </Field>
-        </div>
-      </Modal>
 
       <Modal
         open={dialog === "reject"}
@@ -196,66 +145,75 @@ export function ComplaintActions({ complaint: c }: { complaint: Complaint }) {
       </Modal>
 
       <Modal
-        open={dialog === "assignWorker"}
+        open={dialog === "distribute"}
         onClose={() => setDialog(null)}
-        title="Allocate worker / team"
-        description={`${c.id} · ${c.site}`}
+        title={s === "rework" ? "Assign rework to workers" : "Accept & distribute to workers"}
+        description={`${c.id} · ${c.site} · ${vendorName}`}
         size="lg"
         footer={
           <>
             <Button variant="secondary" onClick={() => setDialog(null)}>Cancel</Button>
-            <Button onClick={() => done("Worker assigned — push notification sent")}>Assign & Notify</Button>
+            <Button onClick={() => done(s === "rework" ? "Rework assigned — worker app notified" : "Work distributed — push notification sent to worker app")}>Assign & Notify</Button>
           </>
         }
       >
-        <div className="space-y-4">
-          <Field label="Team">
-            <Select defaultValue={c.team ?? "Alpha"}>
-              {TEAMS.map((t) => (
-                <option key={t.id}>{t.name}</option>
-              ))}
-            </Select>
+        <div className="space-y-5">
+          <Field label="Priority" required>
+            <PrioritySelector value={priority} onChange={setPriority} />
           </Field>
-          <p className="text-[13px] font-semibold text-slate-700">Recommended workers</p>
-          <div className="space-y-2">
-            {WORKERS.filter((w) => w.status !== "Offline").slice(0, 4).map((w, i) => (
-              <label key={w.id} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3 hover:bg-slate-50 has-[:checked]:border-brand-400 has-[:checked]:bg-brand-50/50">
-                <input type="checkbox" defaultChecked={i === 0} className="size-4 accent-brand-500" />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-slate-800">{w.name}</p>
-                  <p className="text-xs text-slate-500">
-                    {w.skill} · Team {w.team} · {w.distance} away
-                  </p>
-                </div>
-                <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", w.status === "Available" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700")}>
-                  {w.status}
-                </span>
-              </label>
-            ))}
+          <div>
+            <p className="mb-2 text-[13px] font-semibold text-slate-700">Your workers</p>
+            <div className="space-y-2">
+              {vendorWorkers.filter((w) => w.status !== "Offline").map((w, i) => (
+                <label key={w.id} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3 hover:bg-slate-50 has-[:checked]:border-brand-400 has-[:checked]:bg-brand-50/50">
+                  <input type="checkbox" defaultChecked={i === 0} className="size-4 accent-brand-500" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-800">{w.name}</p>
+                    <p className="text-xs text-slate-500">
+                      {w.skill} · Team {w.team} · {w.distance} away
+                    </p>
+                  </div>
+                  <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", w.status === "Available" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700")}>
+                    {w.status}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
+          <Field label="Instructions for the field team">
+            <Textarea placeholder="Isolation steps, PPE, spares, access contact…" />
+          </Field>
+          <p className="rounded-xl bg-amber-50 px-3 py-2.5 text-[13px] text-amber-800">
+            The 15-day completion window started when the complaint was raised — {Math.max(0, 15 - c.daysOpen)} day(s) left before the per-day penalty applies.
+          </p>
         </div>
       </Modal>
 
       <Modal
-        open={dialog === "verify"}
+        open={dialog === "issue"}
         onClose={() => setDialog(null)}
-        title="Verify & approve work"
+        title="Raise issue to vendor"
+        description={`${c.id} · visible to the Vendor and Admin only`}
         size="sm"
         footer={
           <>
             <Button variant="secondary" onClick={() => setDialog(null)}>Cancel</Button>
-            <Button variant="success" onClick={() => done("Marked Completed — sent to vendor for closure")}>Approve</Button>
+            <Button variant="danger" onClick={() => done(`Issue sent to ${vendorName} only — Creator and PM are not notified`)}>Send to Vendor</Button>
           </>
         }
       >
-        <div className="space-y-2 text-sm">
-          {["Before & after photos present", "GPS within site geo-fence", "Timestamps in sequence", "Issue visibly resolved"].map((t) => (
-            <label key={t} className="flex items-center gap-2.5 rounded-lg bg-slate-50 px-3 py-2.5">
-              <input type="checkbox" defaultChecked className="size-4 accent-emerald-600" /> {t}
-            </label>
-          ))}
-          <Field label="Verification note" className="pt-2">
-            <Textarea placeholder="Optional note for the vendor" />
+        <div className="space-y-4">
+          <Field label="Issue type" required>
+            <Select>
+              <option>After-photos don’t show the fix clearly</option>
+              <option>Work incomplete</option>
+              <option>GPS location mismatch</option>
+              <option>Photos look reused / tampered</option>
+              <option>Safety / quality concern</option>
+            </Select>
+          </Field>
+          <Field label="Details" required>
+            <Textarea placeholder="Describe what looks wrong in the worker’s photos…" />
           </Field>
         </div>
       </Modal>
@@ -263,12 +221,12 @@ export function ComplaintActions({ complaint: c }: { complaint: Complaint }) {
       <Modal
         open={dialog === "rework"}
         onClose={() => setDialog(null)}
-        title="Send back for rework"
+        title="Send for rework"
         size="sm"
         footer={
           <>
             <Button variant="secondary" onClick={() => setDialog(null)}>Cancel</Button>
-            <Button variant="danger" onClick={() => done("Sent back for rework — worker notified")}>Send Back</Button>
+            <Button variant="danger" onClick={() => done("Sent back for rework — assign it to a worker again")}>Send for Rework</Button>
           </>
         }
       >
@@ -290,7 +248,7 @@ export function ComplaintActions({ complaint: c }: { complaint: Complaint }) {
       <Modal
         open={dialog === "close"}
         onClose={() => setDialog(null)}
-        title="Final review & closure"
+        title="Verify & close complaint"
         size="sm"
         footer={
           <>
@@ -300,7 +258,7 @@ export function ComplaintActions({ complaint: c }: { complaint: Complaint }) {
         }
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">The Project Manager has verified this work. Closing will notify the complaint creator and lock the record.</p>
+          <p className="text-sm text-slate-600">You have verified the worker’s photos. Closing stops the 15-day penalty clock, notifies the complaint creator and locks the record.</p>
           <Field label="Closure remarks">
             <Textarea placeholder="Root cause, parts replaced, recommendations…" />
           </Field>
@@ -330,7 +288,7 @@ export function ComplaintActions({ complaint: c }: { complaint: Complaint }) {
         footer={
           <>
             <Button variant="secondary" onClick={() => setDialog(null)}>Cancel</Button>
-            <Button variant="danger" onClick={() => done("Escalated to vendor head & admin")}>Escalate</Button>
+            <Button variant="danger" onClick={() => done("Escalated — vendor notified")}>Escalate</Button>
           </>
         }
       >

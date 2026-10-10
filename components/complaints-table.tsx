@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowUpRight, Camera, ClipboardList, Download, Funnel, Search, Timer, Video } from "lucide-react";
-import { SITES, type Complaint } from "@/lib/data";
+import { ArrowUpRight, Camera, ClipboardList, Download, Funnel, Gavel, Search, Video } from "lucide-react";
+import { SITES, inr, penaltyOf, pmOfVendor, type Complaint } from "@/lib/data";
 import { STATUS_META, type StatusKey } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 import { Avatar, Button, Card, EmptyState, Input, PriorityBadge, Select, StageMeter, StatusBadge, td, th } from "@/components/ui";
@@ -13,9 +13,9 @@ type Bucket = "all" | "open" | "field" | "verify" | "done";
 
 const buckets: Record<Bucket, StatusKey[] | null> = {
   all: null,
-  open: ["new", "vendor_review", "assigned_pm"],
+  open: ["new", "vendor_review"],
   field: ["worker_assigned", "in_progress", "rework"],
-  verify: ["pending_verification", "completed"],
+  verify: ["pending_verification", "issue_raised"],
   done: ["closed", "rejected"],
 };
 
@@ -98,8 +98,8 @@ export function ComplaintsTable({ complaints, showSite = true }: { complaints: C
                 <th className={th}>Status</th>
                 <th className={th}>Stage</th>
                 <th className={th}>Priority</th>
-                <th className={th}>Assigned</th>
-                <th className={th}>Deadline</th>
+                <th className={th}>Vendor / Worker</th>
+                <th className={th}>15-day clock</th>
                 <th className={th}>Media</th>
                 <th className={th} />
               </tr>
@@ -127,24 +127,35 @@ export function ComplaintsTable({ complaints, showSite = true }: { complaints: C
                     <PriorityBadge priority={c.priority} />
                   </td>
                   <td className={td}>
-                    {c.pm ? (
+                    {c.vendor ? (
                       <div className="flex items-center gap-2">
-                        <Avatar name={c.workers?.[0] ?? c.pm} size="xs" />
-                        <span className="text-[13px]">{c.workers?.[0] ?? c.pm}</span>
+                        <Avatar name={c.workers?.[0] ?? c.vendor} size="xs" />
+                        <div className="leading-tight">
+                          <span className="block text-[13px]">{c.workers?.[0] ?? c.vendor}</span>
+                          <span className="block text-[11px] text-slate-400">{c.workers ? c.vendor : `PM ${c.pm ?? pmOfVendor(c.vendor)}`}</span>
+                        </div>
                       </div>
                     ) : (
-                      <span className="text-xs text-slate-400">{c.vendor ?? "Unassigned"}</span>
+                      <span className="text-xs text-slate-400">Unassigned</span>
                     )}
                   </td>
                   <td className={td}>
-                    {c.slaLeft && !["closed", "completed"].includes(c.status) ? (
-                      <span className={cn("inline-flex items-center gap-1 text-[13px] font-semibold", c.slaRisk ? "text-rose-600" : "text-slate-700")}>
-                        <Timer className="size-3.5" />
-                        {c.slaLeft}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-slate-400">{c.deadline ?? "—"}</span>
-                    )}
+                    {(() => {
+                      const p = penaltyOf(c);
+                      if (c.status === "rejected") return <span className="text-xs text-slate-400">—</span>;
+                      if (p.overdueDays)
+                        return (
+                          <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-rose-600">
+                            <Gavel className="size-3.5" />
+                            {inr(p.amount)} · +{p.overdueDays}d
+                          </span>
+                        );
+                      return (
+                        <span className={cn("text-[13px] font-semibold", c.status === "closed" ? "text-emerald-600" : p.daysLeft <= 3 ? "text-amber-600" : "text-slate-700")}>
+                          {c.status === "closed" ? `Closed in ${p.days}d` : `Day ${p.days}/15`}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className={td}>
                     <span className="flex items-center gap-2 text-xs text-slate-500">

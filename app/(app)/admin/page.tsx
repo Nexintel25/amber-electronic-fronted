@@ -50,7 +50,7 @@ export default function AdminOverview() {
           </div>
           <Link href="/admin/board" className="text-[13px] font-semibold text-brand-600">Open status board →</Link>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
           {PIPELINE_COUNTS.map((p, i) => {
             const m = STATUS_META[p.key];
             return (
@@ -60,7 +60,7 @@ export default function AdminOverview() {
                   <span className={cn("size-2 rounded-full", m.dot)} />
                 </div>
                 <p className="mt-2 text-2xl font-bold text-slate-900 tabular-nums">{p.count.toLocaleString("en-IN")}</p>
-                <p className="text-[11.5px] leading-tight font-medium text-slate-500">{p.key === "completed" ? "Completed / Rework" : m.label}</p>
+                <p className="text-[11.5px] leading-tight font-medium text-slate-500">{m.label}</p>
               </Link>
             );
           })}

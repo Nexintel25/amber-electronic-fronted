@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Building, Camera, CircleCheck, CircleX, Clock, Inbox, MapPin, UserRound, Video } from "lucide-react";
-import { COMPLAINTS, PMS, type Complaint } from "@/lib/data";
-import { PRIORITY_META, type Priority } from "@/lib/workflow";
+import { COMPLAINTS, WORKERS, type Complaint } from "@/lib/data";
+import { WORKER_STATUS } from "@/lib/worker-status";
+import { PENALTY_AFTER_DAYS, PRIORITY_META, type Priority } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 import { Avatar, Button, Card, EmptyState, Field, Input, PageHeader, PriorityBadge, Select, StatusBadge, Textarea } from "@/components/ui";
 import { Tabs, useToast } from "@/components/interactive";
@@ -22,7 +23,8 @@ export default function VendorQueue() {
   const [selectedId, setSelectedId] = useState(initial[0].id);
   const [mode, setMode] = useState<"accept" | "reject">("accept");
   const [priority, setPriority] = useState<Priority>(initial[0].priority);
-  const [pm, setPm] = useState(PMS[0].id);
+  const mine = WORKERS.filter((w) => w.vendor === "PowerGrid Services");
+  const [picked, setPicked] = useState<string[]>([mine[0].id]);
   const toast = useToast();
   const selected = items.find((i) => i.id === selectedId) ?? items[0];
 
@@ -43,8 +45,8 @@ export default function VendorQueue() {
     <>
       <PageHeader
         eyebrow="Vendor Panel"
-        title="Review queue"
-        description="Review complaint details, accept or reject, then assign a Project Manager with priority and deadline."
+        title="Review & distribute"
+        description="Complaints arrive here at the same time as the Admin and Project Manager. Accept or reject, then distribute the work to your workers on the mobile app."
       />
 
       {items.length === 0 ? (
@@ -114,6 +116,9 @@ export default function VendorQueue() {
                   <span>Category: <b className="text-slate-700">{selected.category}</b></span>
                   <span>Asset: <b className="text-slate-700">{selected.asset}</b></span>
                 </div>
+                <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2.5 text-[13px] text-amber-800">
+                  Close this within <b>{PENALTY_AFTER_DAYS} days</b> of {selected.raisedAt.split(",")[0]} — every extra day is charged as a penalty.
+                </p>
                 <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-5">
                   {Array.from({ length: Math.min(selected.media.photos, 5) }).map((_, i) => (
                     <GeoPhoto key={i} kind="media" seed={i + 2} compact lat={selected.lat} lng={selected.lng} />
@@ -137,27 +142,26 @@ export default function VendorQueue() {
               {mode === "accept" ? (
                 <div className="space-y-5 p-5">
                   <div>
-                    <p className="mb-2 text-[13px] font-semibold text-slate-700">Assign Project Manager <span className="text-brand-600">*</span></p>
+                    <p className="mb-2 text-[13px] font-semibold text-slate-700">Distribute to workers <span className="text-brand-600">*</span></p>
                     <div className="grid gap-2 sm:grid-cols-2">
-                      {PMS.map((p) => {
-                        const load = p.active / p.capacity;
+                      {mine.map((w) => {
+                        const on = picked.includes(w.id);
                         return (
                           <button
-                            key={p.id}
+                            key={w.id}
                             type="button"
-                            onClick={() => setPm(p.id)}
-                            className={cn("flex items-center gap-3 rounded-xl border p-3 text-left transition", pm === p.id ? "border-brand-400 bg-brand-50/60 ring-4 ring-brand-500/10" : "border-slate-200 hover:bg-slate-50")}
+                            disabled={w.status === "Offline"}
+                            onClick={() => setPicked(on ? picked.filter((x) => x !== w.id) : [...picked, w.id])}
+                            className={cn("flex items-center gap-3 rounded-xl border p-3 text-left transition disabled:opacity-50", on ? "border-brand-400 bg-brand-50/60 ring-4 ring-brand-500/10" : "border-slate-200 hover:bg-slate-50")}
                           >
-                            <Avatar name={p.name} />
+                            <Avatar name={w.name} />
                             <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-slate-800">{p.name}</p>
-                              <p className="truncate text-xs text-slate-500">{p.site}</p>
-                              <div className="mt-1.5 flex items-center gap-2">
-                                <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-100">
-                                  <div className={cn("h-full rounded-full", load > 0.85 ? "bg-rose-500" : load > 0.6 ? "bg-amber-500" : "bg-emerald-500")} style={{ width: `${load * 100}%` }} />
-                                </div>
-                                <span className="text-[10px] font-semibold text-slate-500 tabular-nums">{p.active}/{p.capacity}</span>
-                              </div>
+                              <p className="text-sm font-semibold text-slate-800">{w.name}</p>
+                              <p className="truncate text-xs text-slate-500">{w.skill} · Team {w.team}</p>
+                              <span className={cn("mt-1 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold", WORKER_STATUS[w.status].badge)}>
+                                <span className={cn("size-1.5 rounded-full", WORKER_STATUS[w.status].dot)} />
+                                {w.status} · {w.distance}
+                              </span>
                             </div>
                           </button>
                         );
@@ -171,20 +175,20 @@ export default function VendorQueue() {
                     <Field label="Deadline" required hint={`SLA for ${priority}: ${PRIORITY_META[priority].sla}`}>
                       <Input type="datetime-local" defaultValue="2026-09-24T17:00" />
                     </Field>
-                    <Field label="Notify">
+                    <Field label="Notify" hint="Admin and Project Manager already see this complaint">
                       <Select>
-                        <option>PM + Creator (push & email)</option>
-                        <option>PM only</option>
+                        <option>Workers + Creator (push & email)</option>
+                        <option>Workers only</option>
                       </Select>
                     </Field>
                   </div>
-                  <Field label="Instructions for PM">
+                  <Field label="Instructions for workers">
                     <Textarea placeholder="Work permit, isolation, spares to carry…" />
                   </Field>
                   <div className="flex justify-end gap-2">
                     <Button variant="secondary">Save draft</Button>
-                    <Button onClick={() => resolve(`${selected.id} accepted & assigned to ${PMS.find((p) => p.id === pm)?.name}`)}>
-                      <CircleCheck /> Accept & Assign PM
+                    <Button disabled={picked.length === 0} onClick={() => resolve(`${selected.id} accepted & distributed to ${picked.length} worker(s) — pushed to the mobile app`)}>
+                      <CircleCheck /> Accept & Distribute
                     </Button>
                   </div>
                 </div>

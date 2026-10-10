@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, Clock, Crosshair, ImageIcon, MapPin, RotateCcw, ShieldCheck, TriangleAlert } from "lucide-react";
+import { CheckCircle2, Clock, Crosshair, Flag, ImageIcon, MapPin, ShieldCheck, ThumbsUp, TriangleAlert } from "lucide-react";
 import { COMPLAINTS, type Complaint } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Avatar, Button, Card, EmptyState, Field, PageHeader, PriorityBadge, Select, Textarea } from "@/components/ui";
@@ -11,16 +11,16 @@ import { GeoPhoto } from "@/components/geo-photo";
 import { LiveMap } from "@/components/live-map";
 
 const initial: Complaint[] = [
-  ...COMPLAINTS.filter((c) => c.status === "pending_verification"),
+  ...COMPLAINTS.filter((c) => c.status === "pending_verification" || c.status === "issue_raised"),
   { ...COMPLAINTS[14], id: "CMP-2026-0126", status: "pending_verification", title: "Replace damaged DB cover — Stores", workers: ["Imran Khan"], updatedAt: "8 min ago" },
 ];
 
-export default function VerificationPage() {
+export default function PhotoReviewPage() {
   const [items, setItems] = useState(initial);
   const [sel, setSel] = useState(initial[0].id);
   const [view, setView] = useState<"side" | "slider">("side");
   const [slider, setSlider] = useState(50);
-  const [rework, setRework] = useState(false);
+  const [issue, setIssue] = useState(false);
   const toast = useToast();
   const c = items.find((i) => i.id === sel) ?? items[0];
 
@@ -28,7 +28,7 @@ export default function VerificationPage() {
     const rest = items.filter((i) => i.id !== c.id);
     setItems(rest);
     if (rest[0]) setSel(rest[0].id);
-    setRework(false);
+    setIssue(false);
     toast.show(msg);
   };
 
@@ -42,20 +42,20 @@ export default function VerificationPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Project Manager Panel · Stage 7"
-        title="Work verification"
-        description="Compare GPS-tagged before/after photos, validate location & timestamps, then approve or send back for rework."
+        eyebrow="Admin Monitoring Dashboard"
+        title="Photo review & issues"
+        description="Photos uploaded by workers arrive here and with the Vendor. If something looks wrong, raise an issue — it goes to the Vendor only, who verifies or sends the job back for rework."
       />
 
       {!c ? (
         <Card>
-          <EmptyState icon={ShieldCheck} title="All caught up" text="Nothing pending verification. You’ll be notified when workers submit completed tasks." />
+          <EmptyState icon={ShieldCheck} title="All caught up" text="No worker photos to review. You’ll be notified when a worker submits completed work." />
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
           <Card className="xl:self-start">
             <div className="px-5 pt-5 pb-3">
-              <p className="text-[15px] font-semibold text-slate-900">Pending verification</p>
+              <p className="text-[15px] font-semibold text-slate-900">Photo submissions</p>
               <p className="text-[13px] text-slate-500">{items.length} submissions</p>
             </div>
             <ul className="space-y-2 px-3 pb-3">
@@ -81,6 +81,7 @@ export default function VerificationPage() {
                   <div className="flex items-center gap-2">
                     <Link href={`/complaints/${c.id}`} className="font-mono text-xs font-bold text-brand-700 hover:underline">{c.id}</Link>
                     <PriorityBadge priority={c.priority} />
+                    {c.status === "issue_raised" && <span className="inline-flex items-center gap-1 rounded-full bg-fuchsia-50 px-2.5 py-0.5 text-xs font-semibold text-fuchsia-700 ring-1 ring-fuchsia-600/15"><Flag className="size-3" />Issue already raised</span>}
                   </div>
                   <h2 className="mt-1 text-xl font-bold text-slate-900">{c.title}</h2>
                   <p className="mt-0.5 flex items-center gap-1.5 text-[13px] text-slate-500"><MapPin className="size-3.5" />{c.site} · {c.location}</p>
@@ -158,13 +159,13 @@ export default function VerificationPage() {
             </div>
 
             <Card className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-slate-600">Approving marks this <b>Completed</b> and forwards to the vendor for final closure.</p>
+              <p className="text-sm text-slate-600">An issue is sent to <b>{c.vendor}</b> only — the Creator and Project Manager are not notified. The Vendor decides to verify or send it for rework.</p>
               <div className="flex gap-2">
-                <Button variant="secondary" onClick={() => setRework(true)}>
-                  <RotateCcw /> Send back for rework
+                <Button variant="secondary" onClick={() => finish(`${c.id} reviewed — no issues found`)}>
+                  <ThumbsUp /> Looks fine
                 </Button>
-                <Button variant="success" onClick={() => finish(`${c.id} verified — forwarded to vendor for closure`)}>
-                  <ShieldCheck /> Verify & approve
+                <Button variant="danger" onClick={() => setIssue(true)}>
+                  <Flag /> Raise issue to vendor
                 </Button>
               </div>
             </Card>
@@ -173,28 +174,29 @@ export default function VerificationPage() {
       )}
 
       <Modal
-        open={rework}
-        onClose={() => setRework(false)}
-        title="Send back for rework"
-        description="The worker will get a push notification with your instructions."
+        open={issue}
+        onClose={() => setIssue(false)}
+        title="Raise issue to vendor"
+        description={`Sent to ${c?.vendor ?? "the vendor"} only.`}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setRework(false)}>Cancel</Button>
-            <Button variant="danger" onClick={() => finish(`${c?.id} sent back for rework`)}>Send back</Button>
+            <Button variant="secondary" onClick={() => setIssue(false)}>Cancel</Button>
+            <Button variant="danger" onClick={() => finish(`Issue on ${c?.id} sent to ${c?.vendor} only`)}>Send to vendor</Button>
           </>
         }
       >
         <div className="space-y-4">
-          <Field label="Reason" required>
+          <Field label="Issue type" required>
             <Select>
               <option>After-photos don’t show the fix clearly</option>
               <option>Work incomplete</option>
               <option>GPS location mismatch</option>
+              <option>Photos look reused / tampered</option>
               <option>Safety / quality concern</option>
             </Select>
           </Field>
-          <Field label="Instructions">
-            <Textarea placeholder="Describe what needs to be redone…" />
+          <Field label="Details" required>
+            <Textarea placeholder="Describe what looks wrong in the worker’s photos…" />
           </Field>
         </div>
       </Modal>

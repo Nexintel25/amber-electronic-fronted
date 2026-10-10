@@ -260,7 +260,7 @@ export function Progress({ value, className, tone = "bg-brand-500" }: { value: n
   );
 }
 
-/** Compact 8-segment bar showing where a complaint is in the workflow. */
+/** Compact segmented bar showing where a complaint is in the workflow. */
 export function StageMeter({ status }: { status: StatusKey }) {
   const m = STATUS_META[status];
   const step = m.step;
@@ -285,7 +285,7 @@ export function StageMeter({ status }: { status: StatusKey }) {
           />
         ))}
       </div>
-      <span className="text-[11px] font-medium text-slate-500 tabular-nums">{step}/8</span>
+      <span className="text-[11px] font-medium text-slate-500 tabular-nums">{step}/{WORKFLOW.length}</span>
     </div>
   );
 }

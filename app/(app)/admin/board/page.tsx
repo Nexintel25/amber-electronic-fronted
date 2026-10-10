@@ -9,7 +9,7 @@ const columns: { step: number; label: string; owner: string; statuses: StatusKey
   step: w.step,
   label: w.label,
   owner: w.owner,
-  statuses: w.key === "completed" ? ["completed", "rework"] : [w.key as StatusKey],
+  statuses: [...w.statuses] as StatusKey[],
 }));
 
 export default function StatusBoardPage() {
@@ -18,7 +18,7 @@ export default function StatusBoardPage() {
       <PageHeader
         eyebrow="Admin Monitoring Dashboard"
         title="Live status board"
-        description="Every open complaint, organised by its current stage in the 8-step workflow."
+        description="Every open complaint, organised by its current stage in the 7-step workflow."
         actions={
           <span className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
             <LiveDot /> Auto-refreshing
@@ -50,7 +50,7 @@ export default function StatusBoardPage() {
                       href={`/complaints/${c.id}`}
                       className={cn(
                         "block rounded-xl border-l-4 bg-white p-3 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift",
-                        c.status === "rework" ? "border-rose-500" : c.slaRisk ? "border-orange-500" : "border-transparent",
+                        c.status === "rework" ? "border-rose-500" : c.status === "issue_raised" ? "border-fuchsia-500" : c.daysOpen > 15 ? "border-red-600" : c.slaRisk ? "border-orange-500" : "border-transparent",
                       )}
                     >
                       <div className="flex items-center justify-between">
@@ -60,13 +60,14 @@ export default function StatusBoardPage() {
                       <p className="mt-1.5 line-clamp-2 text-[13px] leading-snug font-semibold text-slate-900">{c.title}</p>
                       <p className="mt-1 truncate text-[11px] text-slate-500">{c.site}</p>
                       {c.status === "rework" && <p className="mt-1.5 text-[11px] font-semibold text-rose-600">↺ Rework required</p>}
+                      {c.status === "issue_raised" && <p className="mt-1.5 text-[11px] font-semibold text-fuchsia-600">⚑ Admin issue → vendor</p>}
                       <div className="mt-2.5 flex items-center justify-between">
                         {c.workers ? <AvatarStack names={c.workers} /> : <span className="text-[11px] text-slate-400">{c.vendor ?? "Awaiting vendor"}</span>}
                         <div className="flex items-center gap-2 text-[11px] text-slate-500">
                           <span className="flex items-center gap-0.5"><Camera className="size-3" />{c.media.photos}</span>
-                          {c.slaLeft && (
-                            <span className={cn("flex items-center gap-0.5 font-semibold", c.slaRisk ? "text-rose-600" : "")}>
-                              <Timer className="size-3" />{c.slaLeft}
+                          {c.status !== "closed" && (
+                            <span className={cn("flex items-center gap-0.5 font-semibold", c.daysOpen > 15 ? "text-rose-600" : c.daysOpen >= 12 ? "text-amber-600" : "")}>
+                              <Timer className="size-3" />Day {c.daysOpen}/15
                             </span>
                           )}
                         </div>

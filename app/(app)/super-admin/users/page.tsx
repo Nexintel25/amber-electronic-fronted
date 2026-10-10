@@ -6,8 +6,10 @@ import { SITES, USER_CAP_PER_SITE, USERS } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Avatar, Badge, Button, Card, Field, Input, PageHeader, Progress, Select, td, th } from "@/components/ui";
 import { Modal, useToast } from "@/components/interactive";
+import { managersFor } from "@/components/create-user-modal";
+import { PARENT_ROLE, type UserRoleLabel } from "@/lib/roles";
 
-const ROLE_OPTIONS = ["Super Admin", "Admin", "Complaint Creator", "Vendor", "Project Manager", "Worker"];
+const ROLE_OPTIONS: UserRoleLabel[] = ["Super Admin", "Admin", "Project Manager", "Vendor", "Worker", "Complaint Creator"];
 
 const roleTone: Record<string, string> = {
   "Super Admin": "bg-navy-950 text-white ring-navy-900/20",
@@ -24,6 +26,8 @@ export default function UsersPage() {
   const [site, setSite] = useState("");
   const [open, setOpen] = useState(false);
   const [newSite, setNewSite] = useState(SITES[0].name);
+  const [newRole, setNewRole] = useState<UserRoleLabel>("Admin");
+  const parent = PARENT_ROLE[newRole];
   const toast = useToast();
 
   const rows = useMemo(
@@ -44,7 +48,7 @@ export default function UsersPage() {
       <PageHeader
         eyebrow="Super Admin Control Center"
         title="User management"
-        description="Create users, assign roles and sites, reset access and deactivate accounts."
+        description="The Super Admin creates every user. Chain of command: Super Admin → Admin → Project Manager → Vendor → Worker — each level then creates the level below it."
         actions={
           <Button onClick={() => setOpen(true)}>
             <UserPlus /> Add user
@@ -98,6 +102,7 @@ export default function UsersPage() {
               <tr>
                 <th className={th}>User</th>
                 <th className={th}>Role</th>
+                <th className={th}>Reports to</th>
                 <th className={th}>Site</th>
                 <th className={th}>Organisation</th>
                 <th className={th}>Status</th>
@@ -118,6 +123,7 @@ export default function UsersPage() {
                     </div>
                   </td>
                   <td className={td}><Badge className={roleTone[u.role]}>{u.role}</Badge></td>
+                  <td className={td}>{u.reportsTo}</td>
                   <td className={td}>{u.site}</td>
                   <td className={td}>{u.org}</td>
                   <td className={td}>
@@ -174,7 +180,7 @@ export default function UsersPage() {
           <Field label="Phone"><Input placeholder="+91" /></Field>
           <Field label="Email" required className="sm:col-span-2"><Input type="email" placeholder="name@company.com" /></Field>
           <Field label="Role" required>
-            <Select>{ROLE_OPTIONS.map((r) => <option key={r}>{r}</option>)}</Select>
+            <Select value={newRole} onChange={(e) => setNewRole(e.target.value as UserRoleLabel)}>{ROLE_OPTIONS.filter((r) => r !== "Super Admin").map((r) => <option key={r}>{r}</option>)}</Select>
           </Field>
           <Field label="Site" required>
             <Select value={newSite} onChange={(e) => setNewSite(e.target.value)}>
@@ -183,6 +189,11 @@ export default function UsersPage() {
               ))}
             </Select>
           </Field>
+          {parent && (
+            <Field label={`Reports to (${parent})`} required className="sm:col-span-2">
+              <Select key={newRole}>{managersFor(newRole).map((m) => <option key={m}>{m}</option>)}</Select>
+            </Field>
+          )}
           <Field label="Organisation" className="sm:col-span-2">
             <Select>
               <option>Amber Electrotech</option>

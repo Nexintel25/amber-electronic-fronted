@@ -31,7 +31,7 @@ export default function CreatorDashboard() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Open complaints" value={active.length} icon={CircleDashed} tone="sky" hint="across your sites" />
         <StatCard label="Work in progress" value={mine.filter((c) => ["worker_assigned", "in_progress", "rework"].includes(c.status)).length} icon={Hammer} tone="amber" hint="field teams on it" />
-        <StatCard label="Awaiting verification" value={mine.filter((c) => ["pending_verification", "completed"].includes(c.status)).length} icon={Hourglass} tone="violet" hint="PM / vendor review" />
+        <StatCard label="Awaiting verification" value={mine.filter((c) => ["pending_verification", "issue_raised"].includes(c.status)).length} icon={Hourglass} tone="violet" hint="vendor verification" />
         <StatCard label="Resolved this month" value={23} icon={BadgeCheck} tone="emerald" delta="18%" hint="vs last month" />
       </div>
 
@@ -86,7 +86,7 @@ export default function CreatorDashboard() {
           </Card>
 
           <Card>
-            <CardHeader title="How your complaint moves" subtitle="8 defined stages, fully traceable" />
+            <CardHeader title="How your complaint moves" subtitle="7 defined stages — vendor must finish within 15 days" />
             <ol className="space-y-3 px-5 pb-5">
               {WORKFLOW.map((w) => (
                 <li key={w.step} className="flex items-start gap-3">
