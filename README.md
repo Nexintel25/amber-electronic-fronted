@@ -45,7 +45,7 @@ Complaint stages (`lib/workflow.ts`): Raised → Vendor Review → Work Distribu
 | 7-stage complaint status workflow | `lib/workflow.ts`, `WorkflowStepper`, `/complaints/[id]`, status board |
 | GPS-tagged & timestamped before/after photo verification | `GeoPhoto`, `/admin/photo-review`, `/vendor/verification`, complaint detail |
 | Real-time push notifications (Firebase) | Top-bar bell, `/notifications`, notification matrix in Configurations |
-| Daily, vendor performance, worker productivity, photo & **penalty** reports | `/admin/reports` (5 tabs), `/admin/penalties` |
+| Daily, vendor performance, worker productivity, photo & **penalty** reports | `/admin/reports` (filter + search + PDF/Excel download), `/admin/penalties` |
 | Role-based access control with JWT & encrypted APIs | Login, `/super-admin/roles` (permission matrix, JWT and API security) |
 | Up to 20 concurrent users per site (extra users chargeable) | Sidebar meter, `/super-admin/users`, `/sites`, `/subscription` |
 | Tech stack (React, Node.js, MySQL, AWS S3, Firebase, AWS) | System health in `/super-admin`, storage settings |

@@ -1,19 +1,16 @@
-import { PMS, allPenalties } from "@/lib/data";
+import { PMS } from "@/lib/data";
 import { PageHeader } from "@/components/ui";
-import { PenaltyReport } from "@/components/penalty-report";
+import { ReportViewer } from "@/components/report-viewer";
 
-const ME = PMS[0];
-
-export default function PMPenalties() {
-  const mine = allPenalties().filter((p) => ME.vendors.includes(p.complaint.vendor ?? ""));
+export default function Page() {
   return (
     <>
       <PageHeader
         eyebrow="Project Manager Panel"
         title="Penalty report"
-        description="Late complaints for the vendors you are responsible for. A vendor that has not closed a complaint within 15 days is charged per extra day."
+        description="Late complaints for the vendors you are responsible for. Filter by date and vendor, then download."
       />
-      <PenaltyReport penalties={mine} scopeLabel={`${ME.name}’s vendors`} />
+      <ReportViewer types={["penalty"]} vendors={PMS[0].vendors} scoped={true} />
     </>
   );
 }

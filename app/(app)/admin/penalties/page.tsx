@@ -1,16 +1,16 @@
-import { allPenalties } from "@/lib/data";
+import { VENDORS } from "@/lib/data";
 import { PageHeader } from "@/components/ui";
-import { PenaltyReport } from "@/components/penalty-report";
+import { ReportViewer } from "@/components/report-viewer";
 
-export default function AdminPenalties() {
+export default function Page() {
   return (
     <>
       <PageHeader
         eyebrow="Admin Monitoring Dashboard"
         title="Penalty report"
-        description="Every vendor that has not closed a complaint within 15 days of it being raised, with the per-day penalty levied or still accruing."
+        description="Vendors that have not closed a complaint within 15 days of it being raised, with the per-day penalty. Filter by date and vendor, then download."
       />
-      <PenaltyReport penalties={allPenalties()} scopeLabel="All vendors" />
+      <ReportViewer types={["penalty"]} vendors={VENDORS.map((v) => v.name)} scoped={false} />
     </>
   );
 }
