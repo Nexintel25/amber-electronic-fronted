@@ -294,13 +294,13 @@ export const AUDIT_LOGS = [
 /* ------------------------------------------------------------------ */
 
 export const USERS = [
-  { id: "U-0201", name: "Nikhil Arora", email: "nikhil.arora@amberelectrotech.com", role: "Super Admin", site: "All Sites", org: "Amber Electrotech", reportsTo: "—", status: "Active", lastActive: "Now" },
-  { id: "U-0202", name: "Kavita Menon", email: "kavita.menon@amberelectrotech.com", role: "Admin", site: "All Sites", org: "Amber Electrotech", reportsTo: "Nikhil Arora", status: "Active", lastActive: "5 min ago" },
-  { id: "U-0210", name: "Rohit Mehra", email: "rohit.mehra@amberelectrotech.com", role: "Complaint Creator", site: "Noida Plant", org: "Amber Electrotech", reportsTo: "Kavita Menon", status: "Active", lastActive: "2 min ago" },
-  { id: "U-0211", name: "Anjali Verma", email: "anjali.verma@amberelectrotech.com", role: "Complaint Creator", site: "Noida Plant", org: "Amber Electrotech", reportsTo: "Kavita Menon", status: "Active", lastActive: "1 hr ago" },
-  { id: "U-0240", name: "Arjun Sharma", email: "arjun.sharma@amberelectrotech.com", role: "Project Manager", site: "Noida Plant", org: "Amber Electrotech", reportsTo: "Kavita Menon", status: "Active", lastActive: "Now" },
-  { id: "U-0241", name: "Priya Nair", email: "priya.nair@amberelectrotech.com", role: "Project Manager", site: "Chennai – Sriperumbudur", org: "Amber Electrotech", reportsTo: "Kavita Menon", status: "Active", lastActive: "18 min ago" },
-  { id: "U-0242", name: "Vikram Rao", email: "vikram.rao@amberelectrotech.com", role: "Project Manager", site: "Pune – Chakan", org: "Amber Electrotech", reportsTo: "Kavita Menon", status: "Active", lastActive: "50 min ago" },
+  { id: "U-0201", name: "Nikhil Arora", email: "nikhil.arora@abcd.com", role: "Super Admin", site: "All Sites", org: "abcd", reportsTo: "—", status: "Active", lastActive: "Now" },
+  { id: "U-0202", name: "Kavita Menon", email: "kavita.menon@abcd.com", role: "Admin", site: "All Sites", org: "abcd", reportsTo: "Nikhil Arora", status: "Active", lastActive: "5 min ago" },
+  { id: "U-0210", name: "Rohit Mehra", email: "rohit.mehra@abcd.com", role: "Complaint Creator", site: "Noida Plant", org: "abcd", reportsTo: "Kavita Menon", status: "Active", lastActive: "2 min ago" },
+  { id: "U-0211", name: "Anjali Verma", email: "anjali.verma@abcd.com", role: "Complaint Creator", site: "Noida Plant", org: "abcd", reportsTo: "Kavita Menon", status: "Active", lastActive: "1 hr ago" },
+  { id: "U-0240", name: "Arjun Sharma", email: "arjun.sharma@abcd.com", role: "Project Manager", site: "Noida Plant", org: "abcd", reportsTo: "Kavita Menon", status: "Active", lastActive: "Now" },
+  { id: "U-0241", name: "Priya Nair", email: "priya.nair@abcd.com", role: "Project Manager", site: "Chennai – Sriperumbudur", org: "abcd", reportsTo: "Kavita Menon", status: "Active", lastActive: "18 min ago" },
+  { id: "U-0242", name: "Vikram Rao", email: "vikram.rao@abcd.com", role: "Project Manager", site: "Pune – Chakan", org: "abcd", reportsTo: "Kavita Menon", status: "Active", lastActive: "50 min ago" },
   { id: "U-0220", name: "Karan Malhotra", email: "karan@powergridservices.in", role: "Vendor", site: "Noida Plant", org: "PowerGrid Services", reportsTo: "Arjun Sharma", status: "Active", lastActive: "12 min ago" },
   { id: "U-0221", name: "Suresh Iyer", email: "suresh@voltline.co.in", role: "Vendor", site: "Pune – Chakan", org: "Voltline Engineering", reportsTo: "Vikram Rao", status: "Active", lastActive: "40 min ago" },
   { id: "U-0231", name: "Neha Kapoor", email: "neha@sparkfacility.in", role: "Vendor", site: "Chennai – Sriperumbudur", org: "Spark Facility Solutions", reportsTo: "Priya Nair", status: "Active", lastActive: "3 hrs ago" },

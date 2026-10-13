@@ -65,7 +65,7 @@ export default function SubscriptionPage() {
                   <Sparkles className="size-3" /> Active
                 </Badge>
                 <p className="mt-3 text-2xl font-bold">Year 1 Package</p>
-                <p className="text-sm text-slate-300">Complaint Management & Monitoring Platform · PROP-AEL-2026-01</p>
+                <p className="text-sm text-slate-300">Complaint Management & Monitoring Platform · PROP-CMP-2026-01</p>
               </div>
               <div className="text-right">
                 <p className="text-xs text-slate-400">Payment terms</p>

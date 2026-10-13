@@ -1,6 +1,6 @@
-# Amber Electrotech — Complaint Management & Monitoring Platform (UI)
+# abcd — Complaint Management & Monitoring Platform (UI)
 
-UI design for proposal **PROP-AEL-2026-01** (Nexintel Synergy Pvt Ltd → Amber Electrotech Ltd).
+UI design for proposal **PROP-CMP-2026-01**.
 This is a **UI-only** Next.js app: no API and no database. Everything runs on mock data from `lib/data.ts`.
 
 ## Run

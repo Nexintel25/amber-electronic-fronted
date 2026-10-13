@@ -65,7 +65,7 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     home: "/creator",
     icon: MessageSquareWarning,
     description: "Raise complaints, upload media, track status",
-    user: { name: "Rohit Mehra", email: "rohit.mehra@amberelectrotech.com", title: "Facilities Head · Noida" },
+    user: { name: "Rohit Mehra", email: "rohit.mehra@abcd.com", title: "Facilities Head · Noida" },
     nav: [
       {
         title: "Creator Portal",
@@ -155,7 +155,7 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     home: "/admin",
     icon: Gauge,
     description: "Review worker photos, raise issues to vendors, reports",
-    user: { name: "Kavita Menon", email: "kavita.menon@amberelectrotech.com", title: "Operations Admin" },
+    user: { name: "Kavita Menon", email: "kavita.menon@abcd.com", title: "Operations Admin" },
     nav: [
       {
         title: "Monitoring",
@@ -183,7 +183,7 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     home: "/super-admin",
     icon: ShieldCheck,
     description: "Full access — creates every user, roles, configurations, audit logs",
-    user: { name: "Nikhil Arora", email: "nikhil.arora@amberelectrotech.com", title: "IT Head · Super Admin" },
+    user: { name: "Nikhil Arora", email: "nikhil.arora@abcd.com", title: "IT Head · Super Admin" },
     nav: [
       {
         title: "Control Center",

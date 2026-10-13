@@ -16,7 +16,7 @@ export function LoginForm() {
   const router = useRouter();
   const [role, setRole] = useState<RoleKey>("admin");
   const [email, setEmail] = useState(ROLES.admin.user.email);
-  const [password, setPassword] = useState("amber@2026");
+  const [password, setPassword] = useState("admin@2026");
   const [show, setShow] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState(false);

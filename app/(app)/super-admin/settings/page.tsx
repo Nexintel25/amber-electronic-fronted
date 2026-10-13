@@ -207,7 +207,7 @@ export default function SettingsPage() {
                   </tbody>
                 </table>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <Field label="Firebase project ID"><Input defaultValue="amber-cmp-prod" /></Field>
+                  <Field label="Firebase project ID"><Input defaultValue="cmp-prod" /></Field>
                   <Field label="Quiet hours (non-critical)"><Select><option>Off</option><option>10 PM – 6 AM</option></Select></Field>
                 </div>
               </div>
@@ -238,7 +238,7 @@ export default function SettingsPage() {
             <Card>
               <CardHeader title="Storage & media" subtitle="AWS S3 photo & media storage" />
               <div className="grid gap-4 px-5 pb-5 sm:grid-cols-2">
-                <Field label="S3 bucket"><Input defaultValue="amber-cmp-media-prod" /></Field>
+                <Field label="S3 bucket"><Input defaultValue="cmp-media-prod" /></Field>
                 <Field label="Region"><Select><option>ap-south-1 (Mumbai)</option></Select></Field>
                 <Field label="Media retention"><Select><option>3 years</option><option>5 years</option><option>Forever</option></Select></Field>
                 <Field label="Move to archive tier after"><Select><option>180 days</option><option>1 year</option></Select></Field>
@@ -264,7 +264,7 @@ export default function SettingsPage() {
             <Card>
               <CardHeader title="General & branding" />
               <div className="grid gap-4 px-5 pb-5 sm:grid-cols-2">
-                <Field label="Organisation name"><Input defaultValue="Amber Electrotech Ltd" /></Field>
+                <Field label="Organisation name"><Input defaultValue="abcd Ltd" /></Field>
                 <Field label="Complaint ID prefix"><Input defaultValue="CMP-2026-" /></Field>
                 <Field label="Timezone"><Select><option>Asia/Kolkata (IST, UTC+5:30)</option></Select></Field>
                 <Field label="Date format"><Select><option>DD MMM YYYY</option><option>DD/MM/YYYY</option></Select></Field>
