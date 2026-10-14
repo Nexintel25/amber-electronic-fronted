@@ -1,14 +1,16 @@
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, CircleDashed, FilePlus, Hammer, Headset, Hourglass, Sparkles } from "lucide-react";
+import { ArrowRight, BadgeCheck, CircleDashed, FilePlus, Hammer, Headset, Hourglass, Sparkles, Timer } from "lucide-react";
 import { COMPLAINTS, NOTIFICATIONS } from "@/lib/data";
 import { STATUS_META, WORKFLOW } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 import { Card, CardHeader, LinkButton, PageHeader, PriorityBadge, StageMeter, StatCard, StatusBadge } from "@/components/ui";
 import { NotificationIcon } from "@/components/notification-icon";
+import { slaRows, slaSummary } from "@/lib/sla";
 
 const mine = COMPLAINTS.filter((c) => ["Rohit Mehra", "Anjali Verma"].includes(c.raisedBy));
 
 export default function CreatorDashboard() {
+  const sla = slaSummary(slaRows());
   const active = mine.filter((c) => !["closed", "rejected"].includes(c.status));
   return (
     <>
@@ -29,7 +31,7 @@ export default function CreatorDashboard() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Open complaints" value={active.length} icon={CircleDashed} tone="sky" hint="across your sites" />
+        <StatCard label="Open complaints" value={active.length} icon={CircleDashed} tone="sky" hint="at NADT" />
         <StatCard label="Work in progress" value={mine.filter((c) => ["worker_assigned", "in_progress", "rework"].includes(c.status)).length} icon={Hammer} tone="amber" hint="field teams on it" />
         <StatCard label="Awaiting verification" value={mine.filter((c) => ["pending_verification", "issue_raised"].includes(c.status)).length} icon={Hourglass} tone="violet" hint="vendor verification" />
         <StatCard label="Resolved this month" value={23} icon={BadgeCheck} tone="emerald" delta="18%" hint="vs last month" />
@@ -74,6 +76,38 @@ export default function CreatorDashboard() {
         </Card>
 
         <div className="space-y-6">
+          <Card className="overflow-hidden">
+            <div className="flex items-center gap-4 p-5">
+              <div
+                className="grid size-20 shrink-0 place-items-center rounded-full"
+                style={{ background: `conic-gradient(${sla.compliance >= 90 ? "#10b981" : "#f43f5e"} ${sla.compliance * 3.6}deg, #e2e8f0 0deg)` }}
+                role="img"
+                aria-label={`SLA compliance ${sla.compliance}%`}
+              >
+                <span className="grid size-[62px] place-items-center rounded-full bg-white text-lg font-bold text-slate-900 tabular-nums">{sla.compliance}%</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="flex items-center gap-1.5 text-[15px] font-semibold text-slate-900"><Timer className="size-4 text-slate-400" /> SLA compliance</p>
+                <p className="text-xs text-slate-500">Jobs resolved or running inside their priority’s time. Target 90%.</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 divide-x divide-slate-100 border-t border-slate-100 text-center">
+              {[
+                { v: sla.onTrack + sla.met, l: "On time", c: "text-emerald-600" },
+                { v: sla.atRisk, l: "At risk", c: "text-amber-600" },
+                { v: sla.overdue + sla.missed, l: "Outside duration", c: "text-rose-600" },
+              ].map((x) => (
+                <div key={x.l} className="py-3">
+                  <p className={cn("text-lg font-bold tabular-nums", x.c)}>{x.v}</p>
+                  <p className="text-[11px] text-slate-500">{x.l}</p>
+                </div>
+              ))}
+            </div>
+            <Link href="/sla" className="block border-t border-slate-100 px-5 py-3 text-center text-[13px] font-semibold text-brand-600 hover:bg-brand-50">
+              Open SLA tracker →
+            </Link>
+          </Card>
+
           <Card className="overflow-hidden">
             <div className="relative bg-gradient-to-br from-brand-500 to-brand-700 p-5 text-white">
               <Sparkles className="absolute top-4 right-4 size-16 text-white/15" />

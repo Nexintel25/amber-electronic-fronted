@@ -54,7 +54,7 @@ export default function SuperAdminOverview() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Total users" value={totalUsers} icon={Users} tone="navy" hint={`${SITES.length} sites · cap ${USER_CAP_PER_SITE}/site`} />
         <StatCard label="Roles" value={6} icon={KeyRound} tone="violet" hint="role-based access control" />
-        <StatCard label="Active sites" value={SITES.length} icon={Building} tone="brand" hint="multi-site ready" />
+        <StatCard label="Active sites" value={SITES.length} icon={Building} tone="brand" hint="NADT" />
         <StatCard label="Security events (24h)" value={3} icon={ShieldCheck} tone="rose" hint="1 account locked" />
       </div>
 

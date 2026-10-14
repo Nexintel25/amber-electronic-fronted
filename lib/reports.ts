@@ -1,7 +1,8 @@
 import { COMPLAINTS, PHOTO_SETS, VENDORS, WORKERS, inr, penaltyOf, pmOfVendor, type Complaint } from "./data";
 import { PENALTY_AFTER_DAYS, STATUS_META } from "./workflow";
+import { fmtDue, slaLabel, slaOf, slaSummary } from "./sla";
 
-export type ReportKey = "complaints" | "daily" | "vendor" | "worker" | "photo" | "penalty";
+export type ReportKey = "complaints" | "sla" | "daily" | "vendor" | "worker" | "photo" | "penalty";
 
 export type ReportFilters = {
   type: ReportKey;
@@ -17,6 +18,7 @@ export type ReportResult = { title: string; columns: string[]; rows: string[][];
 
 export const REPORT_TYPES: { key: ReportKey; label: string; hint: string }[] = [
   { key: "complaints", label: "Complaint report", hint: "Every complaint with status, vendor and age" },
+  { key: "sla", label: "SLA report", hint: "Time left or overdue against each priority’s resolution target" },
   { key: "daily", label: "Daily report", hint: "Complaints raised, closed and open per day" },
   { key: "vendor", label: "Vendor performance report", hint: "Volume, rework, turnaround and SLA per vendor" },
   { key: "worker", label: "Worker productivity report", hint: "Jobs, speed and photo compliance per worker" },
@@ -59,6 +61,19 @@ export function buildReport(f: ReportFilters, scope?: string[]): ReportResult {
       { label: "Open", value: String(list.filter((c) => !["closed", "rejected"].includes(c.status)).length) },
       { label: "Closed", value: String(list.filter((c) => c.status === "closed").length) },
     ]);
+  }
+
+  if (f.type === "sla") {
+    const rows = complaintsIn(f, scope).filter((c) => c.status !== "rejected").map(slaOf);
+    const sum = slaSummary(rows);
+    return done(
+      ["Complaint", "Title", "Vendor", "Priority", "SLA target", "Raised", "Due by", "Status", "SLA state", "Time left / over"],
+      rows.sort((a, b) => a.leftMin - b.leftMin).map((r) => [r.complaint.id, r.complaint.title, r.complaint.vendor ?? "—", r.complaint.priority, `${r.targetHours} h`, r.complaint.raisedAt, fmtDue(r.due), STATUS_META[r.complaint.status].label, r.state, slaLabel(r)]),
+      [
+        { label: "Compliance", value: `${sum.compliance}%` },
+        { label: "Overdue / missed", value: String(sum.overdue + sum.missed) },
+      ],
+    );
   }
 
   if (f.type === "daily") {

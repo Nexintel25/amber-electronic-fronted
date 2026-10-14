@@ -140,7 +140,7 @@ export default function TeamsPage() {
             <Field label="Specialisation"><Input placeholder="e.g. Solar & Inverters" /></Field>
           </div>
           <Field label="Site">
-            <Select><option>Noida Plant</option><option>Pune – Chakan</option></Select>
+            <Select><option>NADT</option></Select>
           </Field>
           <p className="text-[13px] font-semibold text-slate-700">Members</p>
           <div className="grid gap-2 sm:grid-cols-2">

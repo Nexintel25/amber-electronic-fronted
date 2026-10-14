@@ -60,7 +60,7 @@ export default function LandingPage() {
                 <Zap className="size-5 fill-white text-white" />
               </span>
               <span className="leading-tight">
-                <span className="block text-[15px] font-bold">abcd</span>
+                <span className="block text-[15px] font-bold">NADT</span>
                 <span className="block text-[11px] text-slate-400">Complaint Management</span>
               </span>
             </Link>
@@ -125,7 +125,7 @@ export default function LandingPage() {
               </a>
             </div>
             <ul className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-400">
-              {["7-stage verified workflow", "Works offline in the field", "Multi-site ready"].map((t) => (
+              {["7-stage verified workflow", "Works offline in the field", "Plant-wise reporting"].map((t) => (
                 <li key={t} className="flex items-center gap-2">
                   <Check className="size-4 text-brand-400" /> {t}
                 </li>
@@ -274,7 +274,7 @@ export default function LandingPage() {
             <span className="grid size-7 place-items-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600">
               <Zap className="size-4 fill-white text-white" />
             </span>
-            <span>© 2026 abcd Ltd</span>
+            <span>© 2026 NADT Ltd</span>
           </div>
           <p>
             Built by <span className="font-semibold text-slate-700">Nexintel Synergy Pvt Ltd</span>
@@ -311,7 +311,7 @@ function HeroMockup() {
           <span className="size-2.5 rounded-full bg-amber-400" />
           <span className="size-2.5 rounded-full bg-emerald-400" />
           <span className="ml-3 flex-1 truncate rounded-md bg-white px-3 py-1 text-[11px] text-slate-400 ring-1 ring-slate-200">
-            app.abcd.com/admin
+            app.NADT.com/admin
           </span>
         </div>
 
@@ -368,7 +368,7 @@ function HeroMockup() {
           </span>
           <div>
             <p className="text-xs font-bold">New critical complaint</p>
-            <p className="mt-0.5 text-[11px] text-slate-500">Tripping MCB · Line 3, Noida</p>
+            <p className="mt-0.5 text-[11px] text-slate-500">Tripping MCB · Line 3, NADT</p>
           </div>
         </div>
       </div>

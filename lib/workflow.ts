@@ -46,6 +46,9 @@ export const STATUS_META: Record<
   rejected: { label: "Rejected", step: 2, badge: "bg-red-50 text-red-700 ring-red-600/15", dot: "bg-red-500", bar: "#ef4444" },
 };
 
+/** Resolution target in hours, counted from the moment the Complaint Creator raises the complaint. */
+export const SLA_HOURS: Record<Priority, number> = { Critical: 4, High: 8, Medium: 24, Low: 72 };
+
 export const PRIORITY_META: Record<Priority, { badge: string; dot: string; sla: string }> = {
   Critical: { badge: "bg-red-600 text-white ring-red-700/20", dot: "bg-red-600", sla: "4 hrs" },
   High: { badge: "bg-orange-100 text-orange-800 ring-orange-600/20", dot: "bg-orange-500", sla: "8 hrs" },

@@ -264,7 +264,7 @@ export default function SettingsPage() {
             <Card>
               <CardHeader title="General & branding" />
               <div className="grid gap-4 px-5 pb-5 sm:grid-cols-2">
-                <Field label="Organisation name"><Input defaultValue="abcd Ltd" /></Field>
+                <Field label="Organisation name"><Input defaultValue="NADT Ltd" /></Field>
                 <Field label="Complaint ID prefix"><Input defaultValue="CMP-2026-" /></Field>
                 <Field label="Timezone"><Select><option>Asia/Kolkata (IST, UTC+5:30)</option></Select></Field>
                 <Field label="Date format"><Select><option>DD MMM YYYY</option><option>DD/MM/YYYY</option></Select></Field>

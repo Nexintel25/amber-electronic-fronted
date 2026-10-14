@@ -196,7 +196,7 @@ export default function UsersPage() {
           )}
           <Field label="Organisation" className="sm:col-span-2">
             <Select>
-              <option>abcd</option>
+              <option>NADT</option>
               <option>PowerGrid Services</option>
               <option>Voltline Engineering</option>
               <option>Spark Facility Solutions</option>

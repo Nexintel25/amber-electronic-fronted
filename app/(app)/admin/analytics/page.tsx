@@ -25,7 +25,7 @@ export default function AnalyticsPage() {
       <PageHeader
         eyebrow="Admin Monitoring Dashboard"
         title="Analytics"
-        description="Trends, resolution performance and SLA compliance across sites, vendors and categories."
+        description="Trends, resolution performance and SLA compliance across vendors and categories."
         actions={
           <Button variant="secondary">
             <Download /> Export PDF
@@ -97,7 +97,7 @@ export default function AnalyticsPage() {
         </Card>
 
         <Card>
-          <CardHeader title="SLA compliance by site" subtitle="Target 90%" />
+          <CardHeader title="SLA compliance" subtitle="NADT · target 90%" />
           <div className="px-3 pb-4">
             <Bars data={SLA_BY_SITE} xKey="site" layout="vertical" unit="%" series={[{ key: "sla", label: "SLA %", color: SERIES[0] }]} height={240} />
           </div>

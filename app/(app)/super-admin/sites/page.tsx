@@ -83,7 +83,7 @@ export default function SitesPage() {
           <span className="text-center">
             <Plus className="mx-auto size-7" />
             <span className="mt-2 block text-sm font-semibold">Add a new site</span>
-            <span className="block text-xs">Scales with abcd’s operations</span>
+            <span className="block text-xs">Scales with NADT’s operations</span>
           </span>
         </button>
       </div>

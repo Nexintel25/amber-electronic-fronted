@@ -1,5 +1,5 @@
 
-# abcd — Complaint Management & Monitoring Platform (UI)
+# NADT — Complaint Management & Monitoring Platform (UI)
 
 UI design for proposal **PROP-CMP-2026-01**.
 This is a **UI-only** Next.js app: no API and no database. Everything runs on mock data from `lib/data.ts`.
@@ -51,7 +51,7 @@ Complaint stages (`lib/workflow.ts`): Raised → Vendor Review → Work Distribu
 | Up to 20 concurrent users per site (extra users chargeable) | Sidebar meter, `/super-admin/users`, `/sites`, `/subscription` |
 | Tech stack (React, Node.js, MySQL, AWS S3, Firebase, AWS) | System health in `/super-admin`, storage settings |
 | Commercial terms: renewal invoice 30 days prior, suspension on non-renewal, customizations charged extra | `/super-admin/subscription` |
-| Offline-capable mobile apps, multi-site, 1-year hands-on support | `/worker` offline toggle, `/super-admin/sites`, `/support` |
+| Mobile-friendly worker portal, 1-year hands-on support | `/worker`, `/super-admin/sites`, `/support` |
 
 ## Structure
 

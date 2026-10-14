@@ -18,7 +18,7 @@ export async function downloadPdf(r: ReportResult, meta: string) {
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
   const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
   doc.setFontSize(16);
-  doc.text(`abcd — ${r.title}`, 40, 42);
+  doc.text(`NADT — ${r.title}`, 40, 42);
   doc.setFontSize(9);
   doc.setTextColor(100);
   doc.text(meta, 40, 58);
