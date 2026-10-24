@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import { Plus, Truck } from "lucide-react";
-import { ADMINS, PMS, USERS } from "@/lib/data";
+import { PMS, USERS } from "@/lib/data";
 import { Avatar, Badge, Button, Card, PageHeader, td, th } from "@/components/ui";
 import { CreateUserModal } from "@/components/create-user-modal";
 
 export default function AdminTeam() {
   const [open, setOpen] = useState(false);
-  const me = ADMINS[0];
   const creators = USERS.filter((u) => u.role === "Complaint Creator");
 
   return (
@@ -85,7 +84,7 @@ export default function AdminTeam() {
         </div>
       </Card>
 
-      <CreateUserModal open={open} onClose={() => setOpen(false)} allowedRoles={["Project Manager", "Complaint Creator"]} fixedManager={me.name} />
+      <CreateUserModal open={open} onClose={() => setOpen(false)} allowedRoles={["Project Manager", "Complaint Creator"]} />
     </>
   );
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowUpRight, Camera, ClipboardList, Download, Funnel, Gavel, Search, Video } from "lucide-react";
-import { SITES, inr, penaltyOf, pmOfVendor, type Complaint } from "@/lib/data";
+import { inr, penaltyOf, pmOfVendor, type Complaint } from "@/lib/data";
 import { STATUS_META, type StatusKey } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 import { Avatar, Button, Card, EmptyState, Input, PriorityBadge, Select, StageMeter, StatusBadge, td, th } from "@/components/ui";
@@ -25,6 +25,7 @@ export function ComplaintsTable({ complaints, showSite = true }: { complaints: C
   const [priority, setPriority] = useState("");
   const [site, setSite] = useState("");
 
+  const sites = useMemo(() => [...new Set(complaints.map((c) => c.site))].sort(), [complaints]);
   const count = (b: Bucket) => complaints.filter((c) => !buckets[b] || buckets[b]!.includes(c.status)).length;
 
   const rows = useMemo(
@@ -72,8 +73,8 @@ export function ComplaintsTable({ complaints, showSite = true }: { complaints: C
           {showSite && (
             <Select value={site} onChange={(e) => setSite(e.target.value)} className="w-48">
               <option value="">All sites</option>
-              {SITES.map((s) => (
-                <option key={s.id}>{s.name}</option>
+              {sites.map((s) => (
+                <option key={s}>{s}</option>
               ))}
             </Select>
           )}
@@ -108,7 +109,7 @@ export function ComplaintsTable({ complaints, showSite = true }: { complaints: C
               {rows.map((c) => (
                 <tr key={c.id} className="group hover:bg-slate-50/60">
                   <td className={cn(td, "max-w-[340px]")}>
-                    <Link href={`/complaints/${c.id}`} className="block">
+                    <Link href={`/complaints/${c.ref ?? c.id}`} className="block">
                       <span className="font-mono text-xs font-semibold text-brand-700">{c.id}</span>
                       <span className="mt-0.5 block truncate font-semibold text-slate-900 group-hover:text-brand-700">{c.title}</span>
                       <span className="block truncate text-xs text-slate-500">
@@ -132,7 +133,7 @@ export function ComplaintsTable({ complaints, showSite = true }: { complaints: C
                         <Avatar name={c.workers?.[0] ?? c.vendor} size="xs" />
                         <div className="leading-tight">
                           <span className="block text-[13px]">{c.workers?.[0] ?? c.vendor}</span>
-                          <span className="block text-[11px] text-slate-400">{c.workers ? c.vendor : `PM ${c.pm ?? pmOfVendor(c.vendor)}`}</span>
+                          <span className="block text-[11px] text-slate-400">{c.workers ? c.vendor : (c.pm ?? pmOfVendor(c.vendor)) ? `PM ${c.pm ?? pmOfVendor(c.vendor)}` : ""}</span>
                         </div>
                       </div>
                     ) : (
@@ -172,7 +173,7 @@ export function ComplaintsTable({ complaints, showSite = true }: { complaints: C
                     </span>
                   </td>
                   <td className={cn(td, "text-right")}>
-                    <Link href={`/complaints/${c.id}`} className="inline-grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-white hover:text-brand-600 hover:shadow-sm" aria-label={`Open ${c.id}`}>
+                    <Link href={`/complaints/${c.ref ?? c.id}`} className="inline-grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-white hover:text-brand-600 hover:shadow-sm" aria-label={`Open ${c.id}`}>
                       <ArrowUpRight className="size-4" />
                     </Link>
                   </td>

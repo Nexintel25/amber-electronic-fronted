@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { Bell, Camera, Cloud, GitBranch, Gavel, Globe, GripVertical, Save, Tags, Timer, X } from "lucide-react";
-import { CATEGORIES } from "@/lib/data";
-import { PENALTY_AFTER_DAYS, PENALTY_PER_DAY, PRIORITY_META, WORKFLOW, type Priority } from "@/lib/workflow";
+import { api } from "@/lib/api";
+import { useApi } from "@/lib/use-api";
+import { PENALTY_AFTER_DAYS, PENALTY_PER_DAY, WORKFLOW } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 import { Button, Card, CardHeader, Field, Input, PageHeader, Select } from "@/components/ui";
 import { SwitchControl, useToast } from "@/components/interactive";
@@ -22,6 +23,8 @@ const NAV: { key: Section; label: string; icon: typeof Bell }[] = [
 ];
 
 export default function SettingsPage() {
+  const types = useApi(() => api.getComplaintTypes());
+  const categories = useApi(() => api.getComplaintCategories());
   const [sec, setSec] = useState<Section>("workflow");
   const toast = useToast();
 
@@ -125,17 +128,21 @@ export default function SettingsPage() {
 
           {sec === "sla" && (
             <Card>
-              <CardHeader title="Priorities & SLA" subtitle="Vendors choose a priority during review — the deadline is auto-suggested from these SLAs." />
+              <CardHeader title="Complaint types & SLA" subtitle="Each complaint type carries its own resolution SLA and default fine." />
+              {types.error && <p className="mx-5 mb-5 rounded-xl bg-rose-50 p-3 text-[13px] text-rose-700">{types.error}</p>}
               <div className="grid gap-3 px-5 pb-5 md:grid-cols-2">
-                {(Object.keys(PRIORITY_META) as Priority[]).map((p) => (
-                  <div key={p} className="rounded-xl border border-slate-200 p-4">
-                    <div className="flex items-center gap-2">
-                      <span className={cn("size-2.5 rounded-full", PRIORITY_META[p].dot)} />
-                      <p className="font-semibold text-slate-900">{p}</p>
+                {types.loading && <p className="text-sm text-slate-400">Loading…</p>}
+                {types.data?.map((t) => (
+                  <div key={t.id} className="rounded-xl border border-slate-200 p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold text-slate-900">{t.name}</p>
+                      <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", t.is_active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600")}>{t.is_active ? "Active" : "Inactive"}</span>
                     </div>
-                    <div className="mt-3 grid grid-cols-2 gap-3">
-                      <Field label="Resolution SLA"><Input defaultValue={PRIORITY_META[p].sla} /></Field>
-                      <Field label="Warn before"><Select defaultValue="25"><option value="25">25% left</option><option>1 hour left</option></Select></Field>
+                    <p className="mt-0.5 text-xs text-slate-500">{t.description}</p>
+                    <div className="mt-3 grid grid-cols-3 gap-3">
+                      <Field label="Resolution SLA"><Input readOnly value={`${t.sla_hours} h`} /></Field>
+                      <Field label={`Fine (${t.default_fine_type.replace("_", " ")})`}><Input readOnly value={`₹${Number(t.default_fine_amount).toLocaleString("en-IN")}`} /></Field>
+                      <Field label="Grace days"><Input readOnly value={t.default_grace_days} /></Field>
                     </div>
                   </div>
                 ))}
@@ -219,7 +226,7 @@ export default function SettingsPage() {
               <CardHeader title="Complaint categories" subtitle="Shown to complaint creators when raising a complaint" />
               <div className="px-5 pb-5">
                 <div className="flex flex-wrap gap-2">
-                  {CATEGORIES.map((c) => (
+                  {categories.data?.map((cat) => cat.name).map((c) => (
                     <span key={c} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 py-1.5 pr-2 pl-3 text-[13px] font-medium text-slate-700">
                       {c}
                       <button className="rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700" aria-label={`Remove ${c}`}><X className="size-3.5" /></button>

@@ -9,10 +9,13 @@ import {
   MessageSquare,
   RotateCcw,
   Siren,
+  Loader2,
   UserPlus,
 } from "lucide-react";
 import type { Complaint } from "@/lib/data";
-import { VENDORS, WORKERS } from "@/lib/data";
+import { api } from "@/lib/api";
+import { useApi } from "@/lib/use-api";
+import { workerView } from "@/lib/vendor-workers";
 import { cn } from "@/lib/utils";
 import type { Priority } from "@/lib/workflow";
 import { PRIORITY_META } from "@/lib/workflow";
@@ -46,10 +49,9 @@ export function PrioritySelector({ value, onChange }: { value: Priority; onChang
   );
 }
 
-export function ComplaintActions({ complaint: c }: { complaint: Complaint }) {
+export function ComplaintActions({ complaint: c, onChanged }: { complaint: Complaint; onChanged?: () => void }) {
   const role = useRole();
   const [dialog, setDialog] = useState<Dialog>(null);
-  const [priority, setPriority] = useState<Priority>(c.priority);
   const toast = useToast();
   const done = (msg: string) => {
     setDialog(null);
@@ -57,8 +59,7 @@ export function ComplaintActions({ complaint: c }: { complaint: Complaint }) {
   };
 
   const s = c.status;
-  const vendorName = c.vendor ?? VENDORS[0].name;
-  const vendorWorkers = WORKERS.filter((w) => w.vendor === vendorName);
+  const vendorName = c.vendor ?? "Vendor";
   const buttons: React.ReactNode[] = [];
 
   // Vendor (and Super Admin, who has every access): accept, distribute to workers, verify, rework.
@@ -144,50 +145,16 @@ export function ComplaintActions({ complaint: c }: { complaint: Complaint }) {
         </div>
       </Modal>
 
-      <Modal
+      <DistributeModal
         open={dialog === "distribute"}
         onClose={() => setDialog(null)}
-        title={s === "rework" ? "Assign rework to workers" : "Accept & distribute to workers"}
-        description={`${c.id} · ${c.site} · ${vendorName}`}
-        size="lg"
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setDialog(null)}>Cancel</Button>
-            <Button onClick={() => done(s === "rework" ? "Rework assigned — worker app notified" : "Work distributed — push notification sent to worker app")}>Assign & Notify</Button>
-          </>
-        }
-      >
-        <div className="space-y-5">
-          <Field label="Priority" required>
-            <PrioritySelector value={priority} onChange={setPriority} />
-          </Field>
-          <div>
-            <p className="mb-2 text-[13px] font-semibold text-slate-700">Your workers</p>
-            <div className="space-y-2">
-              {vendorWorkers.filter((w) => w.status !== "Offline").map((w, i) => (
-                <label key={w.id} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3 hover:bg-slate-50 has-[:checked]:border-brand-400 has-[:checked]:bg-brand-50/50">
-                  <input type="checkbox" defaultChecked={i === 0} className="size-4 accent-brand-500" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-slate-800">{w.name}</p>
-                    <p className="text-xs text-slate-500">
-                      {w.skill} · Team {w.team} · {w.distance} away
-                    </p>
-                  </div>
-                  <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", w.status === "Available" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700")}>
-                    {w.status}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-          <Field label="Instructions for the field team">
-            <Textarea placeholder="Isolation steps, PPE, spares, access contact…" />
-          </Field>
-          <p className="rounded-xl bg-amber-50 px-3 py-2.5 text-[13px] text-amber-800">
-            The 15-day completion window started when the complaint was raised — {Math.max(0, 15 - c.daysOpen)} day(s) left before the per-day penalty applies.
-          </p>
-        </div>
-      </Modal>
+        complaint={c}
+        rework={s === "rework"}
+        onDone={(msg) => {
+          done(msg);
+          onChanged?.();
+        }}
+      />
 
       <Modal
         open={dialog === "issue"}
@@ -307,5 +274,90 @@ export function ComplaintActions({ complaint: c }: { complaint: Complaint }) {
       </Modal>
       {toast.node}
     </>
+  );
+}
+
+/** Picks one of the vendor's workers and assigns the complaint to them. */
+function DistributeModal({
+  open,
+  onClose,
+  complaint: c,
+  rework,
+  onDone,
+}: {
+  open: boolean;
+  onClose: () => void;
+  complaint: Complaint;
+  rework: boolean;
+  onDone: (msg: string) => void;
+}) {
+  const workers = useApi(async () => (open && c.vendorId ? (await api.getVendorWorkers(c.vendorId)).map(workerView) : []), [open, c.vendorId]);
+  const [workerId, setWorkerId] = useState<number | null>(null);
+  const [remarks, setRemarks] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const list = workers.data ?? [];
+  const chosen = workerId ?? list[0]?.id ?? null;
+
+  const submit = async () => {
+    if (!chosen || !c.ref) return setError("Choose a worker first.");
+    setSaving(true);
+    setError(null);
+    try {
+      await api.assignWorker(Number(c.ref), chosen, remarks.trim());
+      setRemarks("");
+      onDone(rework ? "Rework assigned — worker app notified" : "Work distributed — push notification sent to worker app");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not assign the worker.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={rework ? "Assign rework to a worker" : "Accept & distribute to a worker"}
+      description={`${c.id} · ${c.site} · ${c.vendor ?? "Vendor"}`}
+      size="lg"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button onClick={submit} disabled={saving || !chosen}>
+            {saving ? <Loader2 className="animate-spin" /> : null} Assign & Notify
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <div>
+          <p className="mb-2 text-[13px] font-semibold text-slate-700">Your workers</p>
+          {workers.loading && <Loader2 className="size-5 animate-spin text-slate-400" />}
+          {workers.error && <p className="rounded-xl bg-rose-50 p-3 text-[13px] text-rose-700">{workers.error}</p>}
+          {!workers.loading && !workers.error && list.length === 0 && (
+            <p className="rounded-xl bg-amber-50 p-3 text-[13px] text-amber-800">This vendor has no workers yet. Add one from My workers first.</p>
+          )}
+          <div className="space-y-2">
+            {list.map((w) => (
+              <label key={w.id} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3 hover:bg-slate-50 has-[:checked]:border-brand-400 has-[:checked]:bg-brand-50/50">
+                <input type="radio" name="worker" checked={chosen === w.id} onChange={() => setWorkerId(w.id)} className="size-4 accent-brand-500" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-slate-800">{w.name}</p>
+                  {w.phone && <p className="text-xs text-slate-500">{w.phone}</p>}
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+        <Field label="Instructions for the field team">
+          <Textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder="Isolation steps, PPE, spares, access contact…" />
+        </Field>
+        {error && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-[13px] font-medium text-rose-700">{error}</p>}
+        <p className="rounded-xl bg-amber-50 px-3 py-2.5 text-[13px] text-amber-800">
+          The 15-day completion window started when the complaint was raised — {Math.max(0, 15 - c.daysOpen)} day(s) left before the per-day penalty applies.
+        </p>
+      </div>
+    </Modal>
   );
 }

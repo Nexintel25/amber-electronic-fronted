@@ -1,9 +1,6 @@
 import { FilePlus } from "lucide-react";
-import { COMPLAINTS } from "@/lib/data";
-import { ComplaintsTable } from "@/components/complaints-table";
+import { ComplaintsLoader } from "@/components/complaints-loader";
 import { LinkButton, PageHeader } from "@/components/ui";
-
-const MINE = ["Rohit Mehra", "Anjali Verma"];
 
 export default function MyComplaintsPage() {
   return (
@@ -18,7 +15,7 @@ export default function MyComplaintsPage() {
           </LinkButton>
         }
       />
-      <ComplaintsTable complaints={COMPLAINTS.filter((c) => MINE.includes(c.raisedBy))} showSite={false} />
+      <ComplaintsLoader showSite={false} />
     </>
   );
 }

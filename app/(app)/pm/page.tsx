@@ -1,22 +1,29 @@
-import Link from "next/link";
-import { ClipboardList, Gavel, Radar, Timer, Truck, Users } from "lucide-react";
-import { COMPLAINTS, PMS, VENDORS, WORKERS, inr, penaltyOf } from "@/lib/data";
-import { PENALTY_AFTER_DAYS } from "@/lib/workflow";
-import { WORKER_STATUS } from "@/lib/worker-status";
-import { cn } from "@/lib/utils";
-import { Avatar, Badge, Card, CardHeader, LinkButton, PageHeader, PriorityBadge, Progress, StatCard, StatusBadge } from "@/components/ui";
-import { LiveMap, MapLegend } from "@/components/live-map";
+"use client";
 
-const ME = PMS[0];
+import Link from "next/link";
+import { ClipboardList, Gavel, Loader2, Radar, Timer, TriangleAlert, Truck } from "lucide-react";
+import { api, toComplaint } from "@/lib/api";
+import { useApi } from "@/lib/use-api";
+import { PENALTY_AFTER_DAYS } from "@/lib/workflow";
+import { cn } from "@/lib/utils";
+import { Avatar, Button, Card, CardHeader, EmptyState, LinkButton, PageHeader, PriorityBadge, StatCard, StatusBadge } from "@/components/ui";
+
+const label = (k: string) => k.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 
 export default function PMDashboard() {
-  const vendors = VENDORS.filter((v) => ME.vendors.includes(v.name));
-  const mine = COMPLAINTS.filter((c) => ME.vendors.includes(c.vendor ?? ""));
-  const open = mine.filter((c) => c.status !== "closed" && c.status !== "rejected");
-  const penalties = mine.map(penaltyOf);
-  const exposure = penalties.reduce((a, p) => a + p.amount, 0);
-  const late = penalties.filter((p) => p.state === "Accruing");
-  const workers = WORKERS.filter((w) => ME.vendors.includes(w.vendor));
+  const complaints = useApi(async () => (await api.getComplaints({ limit: 200 })).data.map(toComplaint));
+  // Extra KPIs from the PM dashboard endpoint, if the signed-in user is allowed to see it.
+  const dash = useApi(() => api.getPmDashboard().catch(() => null));
+
+  if (complaints.loading) return <div className="grid place-items-center py-32 text-slate-400"><Loader2 className="size-6 animate-spin" /></div>;
+  if (complaints.error || !complaints.data)
+    return <EmptyState icon={TriangleAlert} title="Could not load your dashboard" text={complaints.error ?? "No data"} action={<Button onClick={complaints.reload}>Try again</Button>} />;
+
+  const all = complaints.data;
+  const open = all.filter((c) => c.status !== "closed" && c.status !== "rejected");
+  const late = open.filter((c) => c.daysOpen > PENALTY_AFTER_DAYS);
+  const vendors = [...new Set(all.map((c) => c.vendor).filter((v): v is string => !!v))];
+  const kpis = Object.entries(dash.data?.kpis ?? {}).filter(([, v]) => typeof v === "number");
 
   return (
     <>
@@ -37,33 +44,42 @@ export default function PMDashboard() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Vendors I manage" value={vendors.length} icon={Truck} tone="navy" hint={vendors.map((v) => v.name.split(" ")[0]).join(" · ")} />
+        <StatCard label="Vendors I manage" value={vendors.length} icon={Truck} tone="navy" hint={vendors.slice(0, 3).join(" · ")} />
         <StatCard label="Open complaints" value={open.length} icon={ClipboardList} tone="sky" hint="across my vendors" />
         <StatCard label="Past 15 days" value={late.length} icon={Timer} tone="rose" hint="penalty accruing" />
-        <StatCard label="Penalty exposure" value={inr(exposure)} icon={Gavel} tone="amber" hint="levied + accruing" />
+        <StatCard label="Overdue (SLA)" value={all.filter((c) => c.slaRisk && c.slaLeft?.endsWith("overdue")).length} icon={Gavel} tone="amber" hint="deadline passed" />
       </div>
+
+      {kpis.length > 0 && (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {kpis.map(([k, v]) => (
+            <Card key={k} className="p-4">
+              <p className="text-xs text-slate-500">{label(k)}</p>
+              <p className="mt-1 text-xl font-bold text-slate-900 tabular-nums">{String(v)}</p>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-2">
-          <CardHeader title="Vendor scorecard" subtitle="Performance of the vendors you are responsible for" action={<Link href="/pm/vendors" className="text-[13px] font-semibold text-brand-600">Details</Link>} />
+          <CardHeader title="Vendor load" subtitle="Complaints per vendor" action={<Link href="/pm/vendors" className="text-[13px] font-semibold text-brand-600">Details</Link>} />
           <div className="grid gap-3 px-5 pb-5 md:grid-cols-2">
+            {vendors.length === 0 && <p className="text-sm text-slate-400">No complaints are assigned to a vendor yet.</p>}
             {vendors.map((v) => {
-              const vp = mine.filter((c) => c.vendor === v.name).map(penaltyOf);
+              const mine = all.filter((c) => c.vendor === v);
+              const o = mine.filter((c) => c.status !== "closed" && c.status !== "rejected");
               return (
-                <div key={v.id} className="rounded-xl border border-slate-100 p-4">
+                <div key={v} className="rounded-xl border border-slate-100 p-4">
                   <div className="flex items-center gap-3">
-                    <Avatar name={v.name} />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-slate-900">{v.name}</p>
-                      <p className="text-xs text-slate-500">{v.contact} · {v.workers} workers</p>
-                    </div>
-                    <Badge className={v.sla >= 90 ? "bg-emerald-50 text-emerald-700 ring-emerald-600/15" : "bg-rose-50 text-rose-700 ring-rose-600/15"}>SLA {v.sla}%</Badge>
+                    <Avatar name={v} />
+                    <p className="min-w-0 flex-1 truncate font-semibold text-slate-900">{v}</p>
                   </div>
                   <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                     {[
-                      { l: "Open", v: vp.filter((p) => p.complaint.status !== "closed" && p.complaint.status !== "rejected").length },
-                      { l: "Late", v: vp.filter((p) => p.overdueDays > 0).length },
-                      { l: "Penalty", v: inr(vp.reduce((a, p) => a + p.amount, 0)) },
+                      { l: "Total", v: mine.length },
+                      { l: "Open", v: o.length },
+                      { l: "Late", v: o.filter((c) => c.daysOpen > PENALTY_AFTER_DAYS).length },
                     ].map((x) => (
                       <div key={x.l} className="rounded-lg bg-slate-50 py-2">
                         <p className="text-sm font-bold text-slate-900">{x.v}</p>
@@ -80,9 +96,10 @@ export default function PMDashboard() {
         <Card>
           <CardHeader title="Needs a nudge" subtitle="Oldest open complaints" />
           <ul className="divide-y divide-slate-100">
+            {open.length === 0 && <li className="px-5 py-6 text-center text-sm text-slate-400">Nothing open right now.</li>}
             {[...open].sort((a, b) => b.daysOpen - a.daysOpen).slice(0, 5).map((c) => (
               <li key={c.id}>
-                <Link href={`/complaints/${c.id}`} className="block px-5 py-3.5 hover:bg-slate-50">
+                <Link href={`/complaints/${c.ref}`} className="block px-5 py-3.5 hover:bg-slate-50">
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs font-semibold text-brand-700">{c.id}</span>
                     <StatusBadge status={c.status} />
@@ -98,39 +115,6 @@ export default function PMDashboard() {
               </li>
             ))}
           </ul>
-        </Card>
-
-        <Card className="xl:col-span-2">
-          <CardHeader title="Field map" subtitle="Workers of my vendors & open complaints" action={<LinkButton href="/pm/monitoring" size="sm" variant="secondary">Expand</LinkButton>} />
-          <div className="px-5 pb-5">
-            <LiveMap
-              className="h-72"
-              points={[
-                ...workers.map((w) => ({ id: w.id, x: w.x, y: w.y, kind: "worker" as const, tone: WORKER_STATUS[w.status].tone, label: w.name, sub: `${w.status}${w.task ? ` · ${w.task}` : ""}`, live: w.status !== "Offline" })),
-                ...open.map((c, i) => ({ id: c.id, x: 20 + i * 15, y: 25 + (i % 3) * 20, kind: "complaint" as const, tone: c.daysOpen > PENALTY_AFTER_DAYS ? ("red" as const) : ("violet" as const), label: c.id, sub: c.title })),
-              ]}
-            />
-            <div className="mt-3">
-              <MapLegend items={[{ label: "On task", tone: "amber" }, { label: "Travelling", tone: "blue" }, { label: "Available", tone: "green" }, { label: "Offline", tone: "slate" }, { label: "Complaint", tone: "violet" }, { label: "Past 15 days", tone: "red" }]} />
-            </div>
-          </div>
-        </Card>
-
-        <Card>
-          <CardHeader title="Workers in the field" icon={Users} />
-          <div className="space-y-3 px-5 pb-5">
-            {workers.slice(0, 5).map((w) => (
-              <div key={w.id} className="flex items-center gap-3">
-                <Avatar name={w.name} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-semibold text-slate-800">{w.name}</p>
-                  <p className="truncate text-[11px] text-slate-500">{w.vendor}</p>
-                  <Progress value={(w.completed / w.tasksToday) * 100} tone="bg-emerald-500" className="mt-1" />
-                </div>
-                <Badge className={WORKER_STATUS[w.status].badge} dot={WORKER_STATUS[w.status].dot}>{w.status}</Badge>
-              </div>
-            ))}
-          </div>
         </Card>
       </div>
     </>

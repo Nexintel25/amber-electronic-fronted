@@ -1,6 +1,5 @@
 import { FilePlus } from "lucide-react";
-import { COMPLAINTS } from "@/lib/data";
-import { ComplaintsTable } from "@/components/complaints-table";
+import { ComplaintsLoader } from "@/components/complaints-loader";
 import { LinkButton, PageHeader } from "@/components/ui";
 
 export default function ComplaintsPage() {
@@ -16,7 +15,7 @@ export default function ComplaintsPage() {
           </LinkButton>
         }
       />
-      <ComplaintsTable complaints={COMPLAINTS} />
+      <ComplaintsLoader />
     </>
   );
 }

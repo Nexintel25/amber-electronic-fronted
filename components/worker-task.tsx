@@ -10,8 +10,19 @@ import { PriorityBadge, StatusBadge, Textarea } from "@/components/ui";
 import { useToast } from "@/components/interactive";
 import { useOnline } from "@/components/shell/worker-shell";
 import { GeoPhoto } from "@/components/geo-photo";
+import { compressImage as compress } from "@/lib/image";
+import { api, toComplaintFromDetail, type MediaItem } from "@/lib/api";
+import { useApi } from "@/lib/use-api";
 
 const MIN_PHOTOS = 2;
+
+/** Fetches one job from the API, then shows the mobile task screen. */
+export function WorkerTaskLoader({ id }: { id: string }) {
+  const { data, error, loading } = useApi(() => api.getComplaintDetail(Number(id)), [id]);
+  if (loading) return <div className="grid place-items-center py-24 text-slate-400"><Loader2 className="size-6 animate-spin" /></div>;
+  if (error || !data) return <p className="rounded-2xl bg-white p-8 text-center text-sm text-rose-600 ring-1 ring-slate-200/70">{error ?? "Job not found."}</p>;
+  return <WorkerTask complaint={toComplaintFromDetail(data)} />;
+}
 
 type Photo = { id: number; url: string; time: string; lat: number; lng: number };
 type Gps = { lat: number; lng: number; acc?: number; real: boolean };
@@ -19,28 +30,6 @@ type Draft = { gps: Gps | null; before: Photo[]; beforeSaved: boolean; after: Ph
 
 const now = () => new Date().toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 const draftKey = (id: string) => `worker-draft-${id}`;
-
-/** Shrinks a camera photo to a small JPEG data URL so a draft fits in localStorage and survives a reload. */
-function compress(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const src = URL.createObjectURL(file);
-    img.onload = () => {
-      const k = Math.min(1, 720 / Math.max(img.width, img.height));
-      const cv = document.createElement("canvas");
-      cv.width = Math.round(img.width * k);
-      cv.height = Math.round(img.height * k);
-      cv.getContext("2d")?.drawImage(img, 0, 0, cv.width, cv.height);
-      URL.revokeObjectURL(src);
-      resolve(cv.toDataURL("image/jpeg", 0.7));
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(src);
-      reject(new Error("bad image"));
-    };
-    img.src = src;
-  });
-}
 
 /**
  * Mobile-first job screen. Before and After are two separate halves on one screen:
@@ -92,24 +81,66 @@ function TaskScreen({ complaint: c, draft }: { complaint: Complaint; draft: Draf
     } catch {}
   }, [submitted, c.id, gps, before, beforeSaved, after, checks, note]);
 
+  const [saving, setSaving] = useState(false);
+  const jobId = Number(c.ref);
+
+  const fail = (e: unknown) => toast.show(e instanceof Error ? e.message : "Something went wrong");
+
   const checkIn = () => {
+    if (!navigator.geolocation) return toast.show("This browser cannot share a location.");
     setLocating(true);
-    const finish = (g: Gps) => {
-      setGps(g);
-      setLocating(false);
-      toast.show("Checked in — you are inside the site geo-fence");
-    };
-    // The geo-fence result is simulated in this demo build; the browser position is shown when available.
-    if (!navigator.geolocation) return finish({ lat: c.lat, lng: c.lng, real: false });
     navigator.geolocation.getCurrentPosition(
-      (p) => finish({ lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy), real: true }),
-      () => finish({ lat: c.lat, lng: c.lng, real: false }),
+      async (p) => {
+        const g: Gps = { lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy), real: true };
+        try {
+          await api.workerCheckin(jobId, { latitude: g.lat, longitude: g.lng, accuracy_m: g.acc });
+          setGps(g);
+          toast.show("Checked in — you are inside the site geo-fence");
+        } catch (e) {
+          fail(e);
+        }
+        setLocating(false);
+      },
+      () => {
+        setLocating(false);
+        toast.show("Location permission is needed to check in.");
+      },
       { enableHighAccuracy: true, timeout: 8000 },
     );
   };
 
+  const toMedia = (list: Photo[]): MediaItem[] =>
+    list.map((p, i) => ({ kind: "photo", file_url: p.url, file_name: `photo-${p.id}-${i}.jpg`, mime_type: "image/jpeg", latitude: p.lat, longitude: p.lng }));
+
+  const saveBefore = async () => {
+    setSaving(true);
+    try {
+      await api.workerStart(jobId, toMedia(before));
+      setBeforeSaved(true);
+      toast.show("Before photos saved — start the work");
+    } catch (e) {
+      fail(e);
+    }
+    setSaving(false);
+  };
+
+  const submitJob = async () => {
+    setSaving(true);
+    try {
+      await api.workerSubmit(jobId, note.trim(), toMedia(after));
+      setSubmitted(true);
+      try {
+        localStorage.removeItem(draftKey(c.id));
+      } catch {}
+      toast.show("Submitted to your vendor");
+    } catch (e) {
+      fail(e);
+    }
+    setSaving(false);
+  };
+
   const checkedIn = !!gps;
-  const canSubmit = beforeSaved && after.length >= MIN_PHOTOS && online;
+  const canSubmit = beforeSaved && after.length >= MIN_PHOTOS && online && !saving;
 
   return (
     <div className="space-y-4">
@@ -143,7 +174,7 @@ function TaskScreen({ complaint: c, draft }: { complaint: Complaint; draft: Draf
           <RotateCcw className="mt-0.5 size-5 shrink-0 text-rose-600" />
           <div className="text-sm">
             <p className="font-bold text-rose-800">Rework requested by your vendor</p>
-            <p className="mt-0.5 text-rose-700">Cooling fan contactor was not replaced — the after-photo still shows the old unit. Fix it and upload new photos.</p>
+            <p className="mt-0.5 text-rose-700">Check your vendor’s notes on this job, fix the work and upload new photos.</p>
           </div>
         </div>
       )}
@@ -215,11 +246,8 @@ function TaskScreen({ complaint: c, draft }: { complaint: Complaint; draft: Draf
                   </button>
                 ) : (
                   <button
-                    disabled={before.length < MIN_PHOTOS}
-                    onClick={() => {
-                      setBeforeSaved(true);
-                      toast.show("Before photos saved — start the work");
-                    }}
+                    disabled={before.length < MIN_PHOTOS || saving}
+                    onClick={saveBefore}
                     className="mt-2 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-brand-600 text-[13px] font-semibold text-white active:scale-[0.99] disabled:opacity-40"
                   >
                     <Save className="size-4" /> Save
@@ -261,13 +289,7 @@ function TaskScreen({ complaint: c, draft }: { complaint: Complaint; draft: Draf
               {!online && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">You’re offline. Reconnect to submit.</p>}
               <button
                 disabled={!canSubmit}
-                onClick={() => {
-                  setSubmitted(true);
-                  try {
-                    localStorage.removeItem(draftKey(c.id));
-                  } catch {}
-                  toast.show("Submitted to your vendor");
-                }}
+                onClick={submitJob}
                 className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 text-[15px] font-semibold text-white shadow-soft active:scale-[0.99] disabled:opacity-40"
               >
                 <Send className="size-5" /> Submit to vendor

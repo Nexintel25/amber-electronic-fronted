@@ -83,6 +83,9 @@ export const TEAMS = [
 
 export type Complaint = {
   id: string;
+  /** API complaint_id, used in URLs and API calls. Absent on the built-in sample data. */
+  ref?: string;
+  vendorId?: number;
   title: string;
   description: string;
   category: string;

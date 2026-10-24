@@ -2,31 +2,25 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CircleAlert, Eye, EyeOff, Loader2, Lock, Mail, UserRound } from "lucide-react";
-import { ROLES, ROLE_ORDER, type RoleKey } from "@/lib/roles";
+import { ArrowRight, CircleAlert, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
+import { ROLES } from "@/lib/roles";
+import { api, roleKeyFromApi } from "@/lib/api";
+import { setSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
-import { Button, Input, Select } from "@/components/ui";
+import { Button, Input } from "@/components/ui";
 
-type Errors = { email?: string; password?: string };
+type Errors = { email?: string; password?: string; form?: string };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^\+?[0-9\s-]{10,15}$/;
 
 export function LoginForm() {
   const router = useRouter();
-  const [role, setRole] = useState<RoleKey>("admin");
-  const [email, setEmail] = useState(ROLES.admin.user.email);
-  const [password, setPassword] = useState("admin@2026");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState(false);
-  const def = ROLES[role];
-
-  const changeRole = (k: RoleKey) => {
-    setRole(k);
-    setEmail(ROLES[k].user.email);
-    setErrors({});
-  };
 
   const validate = (): Errors => {
     const next: Errors = {};
@@ -38,13 +32,20 @@ export function LoginForm() {
     return next;
   };
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const next = validate();
     setErrors(next);
     if (next.email || next.password) return;
     setLoading(true);
-    setTimeout(() => router.push(def.home), 600);
+    try {
+      const res = await api.login(email.trim(), password);
+      setSession({ user: res.user, access_token: res.access_token, refresh_token: res.refresh_token });
+      router.push(ROLES[roleKeyFromApi(res.user.role)].home);
+    } catch (err) {
+      setErrors({ form: err instanceof Error ? err.message : "Could not sign in." });
+      setLoading(false);
+    }
   };
 
   return (
@@ -78,23 +79,6 @@ export function LoginForm() {
       </div>
 
       <form onSubmit={submit} noValidate className="space-y-5">
-        <div>
-          <label htmlFor="role" className="mb-1.5 block text-[13px] font-semibold text-slate-700">
-            Sign in as
-          </label>
-          <div className="relative">
-            <def.icon className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-slate-400" />
-            <Select id="role" value={role} onChange={(e) => changeRole(e.target.value as RoleKey)} className="h-11 pl-10">
-              {ROLE_ORDER.map((k) => (
-                <option key={k} value={k}>
-                  {ROLES[k].label}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <p className="mt-1.5 text-xs text-slate-500">{def.description}</p>
-        </div>
-
         <div>
           <label htmlFor="email" className="mb-1.5 block text-[13px] font-semibold text-slate-700">
             Email or phone
@@ -162,6 +146,8 @@ export function LoginForm() {
           Remember me for 30 days
         </label>
 
+        {errors.form && <FieldError id="form-error">{errors.form}</FieldError>}
+
         <Button type="submit" size="lg" className="w-full" disabled={loading}>
           {loading ? (
             <>
@@ -182,12 +168,6 @@ export function LoginForm() {
         </a>
       </p>
 
-      <div className="mt-6 flex items-start gap-2.5 rounded-xl bg-slate-50 px-3.5 py-3 text-xs text-slate-500 ring-1 ring-slate-200/70">
-        <UserRound className="mt-px size-4 shrink-0 text-slate-400" />
-        <span>
-          <span className="font-semibold text-slate-700">Demo mode:</span> credentials are pre-filled. Pick a role above and sign in to explore that workspace.
-        </span>
-      </div>
     </>
   );
 }

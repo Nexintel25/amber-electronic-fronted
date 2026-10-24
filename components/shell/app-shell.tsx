@@ -23,6 +23,7 @@ import { NOTIFICATIONS, SITES, USER_CAP_PER_SITE } from "@/lib/data";
 import { Avatar, Kbd, LiveDot } from "@/components/ui";
 import { NotificationIcon } from "@/components/notification-icon";
 import { WorkerShell } from "@/components/shell/worker-shell";
+import { clearSession, useSession } from "@/lib/session";
 
 const RoleContext = createContext<RoleKey>("admin");
 export const useRole = () => useContext(RoleContext);
@@ -205,6 +206,8 @@ function Topbar({ role, onMenu }: { role: RoleKey; onMenu: () => void }) {
   const ref = useClickOutside(close);
   const [site, setSite] = useState(SITES[0].name);
   const unread = NOTIFICATIONS.filter((n) => !n.read).length;
+  const session = useSession();
+  const me = session ? { name: session.user.name, email: session.user.email, title: def.label } : def.user;
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
@@ -348,26 +351,26 @@ function Topbar({ role, onMenu }: { role: RoleKey; onMenu: () => void }) {
           {/* User menu */}
           <div className="relative">
             <button onClick={() => setOpen(open === "user" ? null : "user")} className="flex items-center gap-2 rounded-xl p-1 hover:bg-slate-100" aria-label="Account">
-              <Avatar name={def.user.name} />
+              <Avatar name={me.name} />
               <span className="hidden text-left leading-tight 2xl:block">
-                <span className="block text-[13px] font-semibold text-slate-800">{def.user.name}</span>
-                <span className="block text-[11px] text-slate-500">{def.user.title}</span>
+                <span className="block text-[13px] font-semibold text-slate-800">{me.name}</span>
+                <span className="block text-[11px] text-slate-500">{me.title}</span>
               </span>
             </button>
             {open === "user" && (
               <Dropdown className="w-64">
                 <div className="flex items-center gap-3 px-3 py-2">
-                  <Avatar name={def.user.name} size="lg" />
+                  <Avatar name={me.name} size="lg" />
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-900">{def.user.name}</p>
-                    <p className="truncate text-xs text-slate-500">{def.user.email}</p>
+                    <p className="text-sm font-bold text-slate-900">{me.name}</p>
+                    <p className="truncate text-xs text-slate-500">{me.email}</p>
                   </div>
                 </div>
                 <div className="my-1 h-px bg-slate-100" />
                 <MenuLink href="#" icon={UserRound} label="My profile" />
                 <MenuLink href="/notifications" icon={Settings} label="Notification settings" />
                 <div className="my-1 h-px bg-slate-100" />
-                <MenuLink href="/login" icon={LogOut} label="Sign out" danger />
+                <MenuLink href="/login" icon={LogOut} label="Sign out" danger onClick={clearSession} />
               </Dropdown>
             )}
           </div>
@@ -385,9 +388,9 @@ function Dropdown({ children, className }: { children: ReactNode; className?: st
   );
 }
 
-function MenuLink({ href, icon: Icon, label, danger }: { href: string; icon: typeof Bell; label: string; danger?: boolean }) {
+function MenuLink({ href, icon: Icon, label, danger, onClick }: { href: string; icon: typeof Bell; label: string; danger?: boolean; onClick?: () => void }) {
   return (
-    <Link href={href} className={cn("flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium", danger ? "text-rose-600 hover:bg-rose-50" : "text-slate-700 hover:bg-slate-50")}>
+    <Link href={href} onClick={onClick} className={cn("flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium", danger ? "text-rose-600 hover:bg-rose-50" : "text-slate-700 hover:bg-slate-50")}>
       <Icon className="size-4" />
       {label}
     </Link>

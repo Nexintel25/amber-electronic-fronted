@@ -1,11 +1,13 @@
+"use client";
+
 import Link from "next/link";
-import { CalendarClock, ChevronRight, Gavel, MapPin, RotateCcw } from "lucide-react";
-import { COMPLAINTS, WORKERS } from "@/lib/data";
+import { CalendarClock, ChevronRight, Gavel, Loader2, MapPin, RotateCcw } from "lucide-react";
+import { api, toComplaint } from "@/lib/api";
+import { useApi } from "@/lib/use-api";
+import { useSession } from "@/lib/session";
 import { PENALTY_AFTER_DAYS } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 import { PriorityBadge, StatusBadge } from "@/components/ui";
-
-const ME = WORKERS[0];
 
 const GROUPS: { title: string; statuses: string[] }[] = [
   { title: "Rework — fix again", statuses: ["rework"] },
@@ -15,26 +17,29 @@ const GROUPS: { title: string; statuses: string[] }[] = [
 ];
 
 export default function WorkerHome() {
-  const mine = COMPLAINTS.filter((c) => c.workers?.includes(ME.name) && c.status !== "closed");
+  const session = useSession();
+  const jobs = useApi(async () => (await api.getComplaints({ limit: 200 })).data.map(toComplaint));
+  const mine = (jobs.data ?? []).filter((c) => c.status !== "closed");
   const todo = mine.filter((c) => ["rework", "worker_assigned", "in_progress"].includes(c.status)).length;
+
+  if (jobs.loading) return <div className="grid place-items-center py-24 text-slate-400"><Loader2 className="size-6 animate-spin" /></div>;
+  if (jobs.error) return <p className="rounded-2xl bg-white p-8 text-center text-sm text-rose-600 ring-1 ring-slate-200/70">{jobs.error}</p>;
 
   return (
     <div className="space-y-5">
       <div>
         <p className="text-sm text-slate-500">Hello,</p>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{ME.name}</h1>
-        <p className="text-[13px] text-slate-500">{ME.skill} · Team {ME.team} · {ME.vendor}</p>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{session?.user.name}</h1>
       </div>
 
-      <div className="grid grid-cols-3 gap-2.5 text-center">
+      <div className="grid grid-cols-2 gap-2.5 text-center">
         {[
           { v: todo, l: "To do" },
-          { v: `${ME.completed}/${ME.tasksToday}`, l: "Done today" },
-          { v: ME.rating, l: "Rating" },
-        ].map((s) => (
-          <div key={s.l} className="rounded-2xl bg-white p-3 shadow-soft ring-1 ring-slate-200/70">
-            <p className="text-xl font-bold text-slate-900 tabular-nums">{s.v}</p>
-            <p className="text-[11px] text-slate-500">{s.l}</p>
+          { v: mine.length - todo, l: "Submitted" },
+        ].map((x) => (
+          <div key={x.l} className="rounded-2xl bg-white p-3 shadow-soft ring-1 ring-slate-200/70">
+            <p className="text-xl font-bold text-slate-900 tabular-nums">{x.v}</p>
+            <p className="text-[11px] text-slate-500">{x.l}</p>
           </div>
         ))}
       </div>
@@ -51,7 +56,7 @@ export default function WorkerHome() {
             <ul className="space-y-3">
               {list.map((c) => (
                 <li key={c.id}>
-                  <Link href={`/worker/tasks/${c.id}`} className={cn("block rounded-2xl bg-white p-4 shadow-soft ring-1 transition active:scale-[0.99]", c.status === "rework" ? "ring-rose-300" : "ring-slate-200/70")}>
+                  <Link href={`/worker/tasks/${c.ref}`} className={cn("block rounded-2xl bg-white p-4 shadow-soft ring-1 transition active:scale-[0.99]", c.status === "rework" ? "ring-rose-300" : "ring-slate-200/70")}>
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-mono text-xs font-bold text-brand-700">{c.id}</span>
                       <PriorityBadge priority={c.priority} />
