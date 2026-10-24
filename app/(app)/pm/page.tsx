@@ -8,7 +8,7 @@ import { PENALTY_AFTER_DAYS } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 import { Avatar, Button, Card, CardHeader, EmptyState, LinkButton, PageHeader, PriorityBadge, StatCard, StatusBadge } from "@/components/ui";
 
-const label = (k: string) => k.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+const inr = (v: string | number) => `₹${Number(v).toLocaleString("en-IN")}`;
 
 export default function PMDashboard() {
   const complaints = useApi(async () => (await api.getComplaints({ limit: 200 })).data.map(toComplaint));
@@ -23,7 +23,7 @@ export default function PMDashboard() {
   const open = all.filter((c) => c.status !== "closed" && c.status !== "rejected");
   const late = open.filter((c) => c.daysOpen > PENALTY_AFTER_DAYS);
   const vendors = [...new Set(all.map((c) => c.vendor).filter((v): v is string => !!v))];
-  const kpis = Object.entries(dash.data?.kpis ?? {}).filter(([, v]) => typeof v === "number");
+  const k = dash.data?.kpis;
 
   return (
     <>
@@ -44,22 +44,11 @@ export default function PMDashboard() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Vendors I manage" value={vendors.length} icon={Truck} tone="navy" hint={vendors.slice(0, 3).join(" · ")} />
-        <StatCard label="Open complaints" value={open.length} icon={ClipboardList} tone="sky" hint="across my vendors" />
-        <StatCard label="Past 15 days" value={late.length} icon={Timer} tone="rose" hint="penalty accruing" />
-        <StatCard label="Overdue (SLA)" value={all.filter((c) => c.slaRisk && c.slaLeft?.endsWith("overdue")).length} icon={Gavel} tone="amber" hint="deadline passed" />
+        <StatCard label="Vendors I manage" value={k?.vendors_managed ?? vendors.length} icon={Truck} tone="navy" hint={k?.vendor_names || vendors.slice(0, 3).join(" · ")} />
+        <StatCard label="Open complaints" value={k?.open_complaints ?? open.length} icon={ClipboardList} tone="sky" hint="across my vendors" />
+        <StatCard label="Overdue" value={k?.overdue_count ?? late.length} icon={Timer} tone="rose" hint="past deadline" />
+        <StatCard label="Penalty exposure" value={k ? inr(k.penalty_exposure) : "—"} icon={Gavel} tone="amber" hint={k ? `${inr(k.penalty_levied)} levied · ${inr(k.penalty_accruing)} accruing` : undefined} />
       </div>
-
-      {kpis.length > 0 && (
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {kpis.map(([k, v]) => (
-            <Card key={k} className="p-4">
-              <p className="text-xs text-slate-500">{label(k)}</p>
-              <p className="mt-1 text-xl font-bold text-slate-900 tabular-nums">{String(v)}</p>
-            </Card>
-          ))}
-        </div>
-      )}
 
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-2">

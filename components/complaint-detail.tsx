@@ -27,7 +27,7 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
-import { inr, penaltyOf } from "@/lib/data";
+import { inr, penaltyOf } from "@/lib/complaint";
 import { api, fmtDate, statusFromApi, toComplaintFromDetail, type ComplaintDetail as Detail, type MediaItem } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { PENALTY_AFTER_DAYS, PENALTY_PER_DAY, STATUS_META, WORKFLOW } from "@/lib/workflow";

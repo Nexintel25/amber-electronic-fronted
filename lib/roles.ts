@@ -45,7 +45,6 @@ export type RoleDef = {
   home: string;
   icon: LucideIcon;
   description: string;
-  user: { name: string; email: string; title: string };
   nav: NavSection[];
 };
 
@@ -67,7 +66,6 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     home: "/creator",
     icon: MessageSquareWarning,
     description: "Raise complaints, upload media, track status",
-    user: { name: "Rohit Mehra", email: "rohit.mehra@Amber.com", title: "Facilities Head · Amber" },
     nav: [
       {
         title: "Creator Portal",
@@ -94,7 +92,6 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     home: "/vendor",
     icon: Truck,
     description: "Accept complaints, distribute work to workers, verify & rework",
-    user: { name: "Karan Malhotra", email: "karan@powergridservices.in", title: "PowerGrid Services" },
     nav: [
       {
         title: "Vendor Panel",
@@ -116,7 +113,6 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     home: "/pm",
     icon: ClipboardCheck,
     description: "Responsible for vendors — monitor work and penalties",
-    user: { name: "Arjun Sharma", email: "arjun.sharma@powergridservices.in", title: "Project Manager · Amber" },
     nav: [
       {
         title: "PM Panel",
@@ -137,7 +133,6 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     home: "/worker",
     icon: HardHat,
     description: "Mobile-friendly web portal: my jobs, GPS check-in, before/after photos",
-    user: { name: "Ramesh Kumar", email: "ramesh.k@powergridservices.in", title: "HT Electrician · Team Alpha" },
     // Rendered as a bottom tab bar by the mobile worker shell.
     nav: [
       {
@@ -158,7 +153,6 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     home: "/admin",
     icon: Gauge,
     description: "Review worker photos, raise issues to vendors, reports",
-    user: { name: "Kavita Menon", email: "kavita.menon@Amber.com", title: "Operations Admin" },
     nav: [
       {
         title: "Monitoring",
@@ -186,7 +180,6 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     home: "/super-admin",
     icon: ShieldCheck,
     description: "Full access — creates every user, roles, configurations, audit logs",
-    user: { name: "Nikhil Arora", email: "nikhil.arora@Amber.com", title: "IT Head · Super Admin" },
     nav: [
       {
         title: "Control Center",

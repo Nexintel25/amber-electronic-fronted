@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Building, HardHat, Loader2, MapPin, Plus, TriangleAlert, Users } from "lucide-react";
-import { USER_CAP_PER_SITE } from "@/lib/data";
 import { api, type AdminDashboard } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { cn } from "@/lib/utils";
@@ -74,7 +73,8 @@ export default function SitesPage() {
           {buildings.data.map((b) => {
             const st = statOf(b.id);
             const users = st?.concurrent_users ?? 0;
-            const full = users >= (st?.max_concurrent_users ?? USER_CAP_PER_SITE);
+            const cap = st?.max_concurrent_users;
+            const full = cap != null && users >= cap;
             return (
               <Card key={b.id} className="overflow-hidden">
                 <LiveMap
@@ -107,9 +107,9 @@ export default function SitesPage() {
                   <div className="mt-4">
                     <div className="mb-1.5 flex justify-between text-xs">
                       <span className="flex items-center gap-1 text-slate-500"><Users className="size-3.5" /> Concurrent users</span>
-                      <span className={cn("font-bold tabular-nums", full ? "text-rose-600" : "text-slate-800")}>{users}/{st?.max_concurrent_users ?? USER_CAP_PER_SITE}</span>
+                      <span className={cn("font-bold tabular-nums", full ? "text-rose-600" : "text-slate-800")}>{st ? `${users}/${cap}` : "—"}</span>
                     </div>
-                    <Progress value={(users / (st?.max_concurrent_users ?? USER_CAP_PER_SITE)) * 100} tone={full ? "bg-rose-500" : "bg-brand-500"} />
+                    {cap ? <Progress value={(users / cap) * 100} tone={full ? "bg-rose-500" : "bg-brand-500"} /> : null}
                     {full && (
                       <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-600">
                         <TriangleAlert className="size-3" /> Cap reached — additional users chargeable separately
@@ -171,9 +171,6 @@ export default function SitesPage() {
           <Field label="Email" required><Input type="email" value={form.user_email} onChange={set("user_email")} placeholder="name@company.com" /></Field>
           <Field label="Password" required><Input type="password" value={form.password} onChange={set("password")} autoComplete="new-password" /></Field>
           {formError && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-[13px] font-medium text-rose-700 sm:col-span-2">{formError}</p>}
-          <p className="rounded-xl bg-slate-50 p-3 text-[13px] text-slate-600 sm:col-span-2">
-            Each site includes up to <b>{USER_CAP_PER_SITE} concurrent users</b>. Additional users are chargeable separately.
-          </p>
         </div>
       </Modal>
       {toast.node}

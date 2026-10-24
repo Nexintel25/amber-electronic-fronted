@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { BellOff, CheckCheck, Globe, Smartphone } from "lucide-react";
+import { BellOff, CheckCheck, Smartphone } from "lucide-react";
 import { NOTIFICATIONS } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Button, Card, CardHeader, EmptyState, PageHeader } from "@/components/ui";
+import { Button, Card, CardHeader, EmptyState, NoData, PageHeader } from "@/components/ui";
 import { SwitchControl, Tabs } from "@/components/interactive";
 import { NotificationIcon } from "@/components/notification-icon";
+
+const DEVICES: { i: typeof Smartphone; n: string; s: string }[] = [];
 
 export default function NotificationsPage() {
   const [tab, setTab] = useState<"all" | "unread" | "sla">("all");
@@ -43,7 +45,7 @@ export default function NotificationsPage() {
             />
           </div>
           {groups.length === 0 ? (
-            <EmptyState icon={BellOff} title="You’re all caught up" text="New notifications will appear here in real time." />
+            <EmptyState icon={BellOff} title="No data found · API pending" text="Notifications will appear here once the notification API is connected." />
           ) : (
             groups.map((g) => (
               <div key={g.day}>
@@ -99,11 +101,8 @@ export default function NotificationsPage() {
           <Card>
             <CardHeader title="Registered devices" subtitle="Receiving push notifications" />
             <ul className="space-y-2 px-5 pb-5">
-              {[
-                { i: Smartphone, n: "iPhone 15 · iOS app v1.4.2", s: "Active now" },
-                { i: Smartphone, n: "Samsung Galaxy · Android app v1.4.2", s: "2 days ago" },
-                { i: Globe, n: "Chrome · Web push", s: "Active now" },
-              ].map((d) => (
+              {DEVICES.length === 0 && <li><NoData /></li>}
+              {DEVICES.map((d) => (
                 <li key={d.n} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3">
                   <d.i className="size-4 text-slate-500" />
                   <div className="flex-1">

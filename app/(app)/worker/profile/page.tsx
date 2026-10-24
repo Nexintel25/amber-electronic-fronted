@@ -1,31 +1,34 @@
+"use client";
+
 import Link from "next/link";
 import { ChevronRight, LogOut, Star } from "lucide-react";
 import { ROLES, ROLE_ORDER } from "@/lib/roles";
-import { WORKERS } from "@/lib/data";
+import { useSession } from "@/lib/session";
 import { Avatar } from "@/components/ui";
 
-const ME = WORKERS[0];
+const NONE = "—";
 
 export default function WorkerProfile() {
+  const me = useSession()?.user;
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-soft ring-1 ring-slate-200/70">
-        <Avatar name={ME.name} size="lg" />
+        <Avatar name={me?.name ?? NONE} size="lg" />
         <div className="min-w-0">
-          <p className="text-lg font-bold text-slate-900">{ME.name}</p>
-          <p className="truncate text-[13px] text-slate-500">{ME.skill}</p>
-          <p className="truncate text-xs text-slate-400">{ROLES.worker.user.email}</p>
+          <p className="text-lg font-bold text-slate-900">{me?.name ?? NONE}</p>
+          <p className="truncate text-[13px] text-slate-500">{NONE}</p>
+          <p className="truncate text-xs text-slate-400">{me?.email ?? NONE}</p>
         </div>
       </div>
 
       <dl className="grid grid-cols-2 gap-2.5">
         {[
-          { l: "Vendor", v: ME.vendor },
-          { l: "Team", v: ME.team },
-          { l: "First-time fix", v: `${ME.ftf}%` },
-          { l: "Photo compliance", v: `${ME.photoCompliance}%` },
-          { l: "Avg time / job", v: ME.avgTime },
-          { l: "Rating", v: <span className="inline-flex items-center gap-1"><Star className="size-4 fill-brand-400 text-brand-400" />{ME.rating}</span> },
+          { l: "Vendor", v: NONE },
+          { l: "Team", v: NONE },
+          { l: "First-time fix", v: NONE },
+          { l: "Photo compliance", v: NONE },
+          { l: "Avg time / job", v: NONE },
+          { l: "Rating", v: <span className="inline-flex items-center gap-1"><Star className="size-4 fill-brand-400 text-brand-400" />{NONE}</span> },
         ].map((x) => (
           <div key={x.l} className="rounded-2xl bg-white p-3.5 shadow-soft ring-1 ring-slate-200/70">
             <dt className="text-[11px] text-slate-500">{x.l}</dt>

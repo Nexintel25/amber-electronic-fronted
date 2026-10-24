@@ -65,10 +65,10 @@ export default function LoginPage() {
               “Every complaint, every technician, every site — <span className="text-brand-400">visible in one place</span>, from the first report to verified closure.”
             </blockquote>
             <div className="mt-8 flex items-center gap-3">
-              <span className="grid size-11 place-items-center rounded-full bg-gradient-to-br from-brand-300 to-brand-600 text-sm font-bold">KM</span>
+              <span className="grid size-11 place-items-center rounded-full bg-gradient-to-br from-brand-300 to-brand-600 text-sm font-bold">—</span>
               <div>
-                <p className="text-sm font-semibold">Kavita Menon</p>
-                <p className="text-xs text-slate-400">Operations Admin, Amber</p>
+                <p className="text-sm font-semibold">—</p>
+                <p className="text-xs text-slate-400">Customer testimonial</p>
               </div>
             </div>
 

@@ -5,7 +5,6 @@ import { useSyncExternalStore, type ReactNode } from "react";
 import { Bell, WifiOff, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROLES } from "@/lib/roles";
-import { NOTIFICATIONS } from "@/lib/data";
 
 const subscribeOnline = (cb: () => void) => {
   window.addEventListener("online", cb);
@@ -24,7 +23,6 @@ export const useOnline = () => useSyncExternalStore(subscribeOnline, () => navig
 export function WorkerShell({ pathname, children }: { pathname: string; children: ReactNode }) {
   const tabs = ROLES.worker.nav[0].items;
   const online = useOnline();
-  const unread = NOTIFICATIONS.filter((n) => !n.read).length;
   const active = (href: string) => (href === "/worker" ? pathname === "/worker" || pathname.startsWith("/worker/tasks") : pathname === href || pathname.startsWith(href + "/"));
 
   return (
@@ -41,7 +39,6 @@ export function WorkerShell({ pathname, children }: { pathname: string; children
             </div>
             <Link href="/notifications" className="relative grid size-10 place-items-center rounded-xl hover:bg-white/10" aria-label="Notifications">
               <Bell className="size-5" />
-              {unread > 0 && <span className="absolute top-1.5 right-1.5 grid size-4 place-items-center rounded-full bg-brand-500 text-[9px] font-bold">{unread}</span>}
             </Link>
           </div>
           {!online && (

@@ -32,7 +32,7 @@ export default function VerificationPage() {
 
       {items.length === 0 ? (
         <Card>
-          <EmptyState icon={BadgeCheck} title="Nothing awaiting verification" text="Worker photo submissions will appear here with a push notification." />
+          <EmptyState icon={BadgeCheck} title="No data found · API pending" text="Worker photo submissions awaiting verification will appear here." />
         </Card>
       ) : (
         <div className="space-y-6">

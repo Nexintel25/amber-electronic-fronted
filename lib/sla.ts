@@ -1,8 +1,8 @@
 import { COMPLAINTS, type Complaint } from "./data";
 import { SLA_HOURS } from "./workflow";
 
-/** "Now" for the mock data set. */
-export const NOW = new Date("2026-09-24T10:45:00");
+/** Current time. */
+export const NOW = new Date();
 
 export type SlaState = "On track" | "At risk" | "Overdue" | "Met" | "Missed";
 
@@ -58,7 +58,7 @@ export function slaSummary(rows: Sla[]) {
     overdue: n("Overdue"),
     met: n("Met"),
     missed: n("Missed"),
-    compliance: rows.length ? Math.round(((rows.length - breached) / rows.length) * 1000) / 10 : 100,
+    compliance: rows.length ? Math.round(((rows.length - breached) / rows.length) * 1000) / 10 : null,
   };
 }
 

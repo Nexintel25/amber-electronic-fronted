@@ -44,6 +44,14 @@ export function Legend({ items }: { items: { label: string; color: string }[] })
   );
 }
 
+function NoData({ height }: { height: number }) {
+  return (
+    <div className="grid place-items-center rounded-xl border border-dashed border-slate-200 text-sm text-slate-400" style={{ height }}>
+      No data found · API pending
+    </div>
+  );
+}
+
 export function TrendArea({
   data,
   xKey,
@@ -55,6 +63,7 @@ export function TrendArea({
   series: { key: string; label: string; color: string }[];
   height?: number;
 }) {
+  if (!data.length) return <NoData height={height} />;
   return (
     <div style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
@@ -105,6 +114,7 @@ export function Bars({
   layout?: "horizontal" | "vertical";
   unit?: string;
 }) {
+  if (!data.length) return <NoData height={height} />;
   const vertical = layout === "vertical";
   return (
     <div style={{ height }}>
@@ -151,6 +161,7 @@ export function Donut({
   centerValue?: string;
   colors?: string[];
 }) {
+  if (!data.length) return <NoData height={height} />;
   return (
     <div className="relative" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">

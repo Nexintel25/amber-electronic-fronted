@@ -127,6 +127,7 @@ export type ComplaintDetail = ComplaintRow & {
 
 /** Worker rows have not been observed with data yet, so accept the likely field spellings. */
 export type VendorWorker = {
+  open_jobs?: number;
   id?: number;
   worker_id?: number;
   user_id?: number;
@@ -183,12 +184,23 @@ export type AdminDashboard = {
   }[];
 };
 
-/** The PM dashboard shape has not been observed (the sample PM user does not exist), so it is kept loose. */
 export type PmDashboard = {
-  kpis?: Record<string, number | null>;
-  vendors?: Record<string, unknown>[];
-  workers?: Record<string, unknown>[];
-  complaints?: Record<string, unknown>[];
-  map_complaints?: AdminDashboard["map_complaints"];
-  [k: string]: unknown;
+  kpis: {
+    vendors_managed: number;
+    vendor_names: string;
+    buildings_managed: number;
+    open_complaints: number;
+    overdue_count: number;
+    penalty_accruing_count: number;
+    penalty_levied: string;
+    penalty_accruing: string;
+    penalty_exposure: string;
+    unread_notifications: number;
+  };
+  // Row shapes of these lists are not known yet (empty in the test data), so they stay loose.
+  vendors: Record<string, unknown>[];
+  needs_nudge: Record<string, unknown>[];
+  workers: Record<string, unknown>[];
+  map_complaints: AdminDashboard["map_complaints"];
+  buildings: Record<string, unknown>[];
 };

@@ -1,4 +1,4 @@
-import type { WorkerStatus } from "./data";
+export type WorkerStatus = "On Task" | "Travelling" | "Available" | "Offline";
 
 export const WORKER_STATUS: Record<WorkerStatus, { tone: "green" | "amber" | "blue" | "slate"; badge: string; dot: string }> = {
   "On Task": { tone: "amber", badge: "bg-amber-50 text-amber-700 ring-amber-600/20", dot: "bg-amber-500" },

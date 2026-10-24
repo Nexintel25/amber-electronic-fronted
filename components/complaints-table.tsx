@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowUpRight, Camera, ClipboardList, Download, Funnel, Gavel, Search, Video } from "lucide-react";
-import { inr, penaltyOf, pmOfVendor, type Complaint } from "@/lib/data";
+import { inr, penaltyOf, type Complaint } from "@/lib/complaint";
 import { STATUS_META, type StatusKey } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 import { Avatar, Button, Card, EmptyState, Input, PriorityBadge, Select, StageMeter, StatusBadge, td, th } from "@/components/ui";
@@ -133,7 +133,7 @@ export function ComplaintsTable({ complaints, showSite = true }: { complaints: C
                         <Avatar name={c.workers?.[0] ?? c.vendor} size="xs" />
                         <div className="leading-tight">
                           <span className="block text-[13px]">{c.workers?.[0] ?? c.vendor}</span>
-                          <span className="block text-[11px] text-slate-400">{c.workers ? c.vendor : (c.pm ?? pmOfVendor(c.vendor)) ? `PM ${c.pm ?? pmOfVendor(c.vendor)}` : ""}</span>
+                          <span className="block text-[11px] text-slate-400">{c.workers ? c.vendor : c.pm ? `PM ${c.pm}` : ""}</span>
                         </div>
                       </div>
                     ) : (

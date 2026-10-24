@@ -1,7 +1,7 @@
 import { ArrowDown, Crown, Gavel, HardHat, ShieldCheck, Truck, UserCog, Users } from "lucide-react";
 import { ADMINS, PMS, USERS, VENDORS, WORKERS } from "@/lib/data";
 import { CAN_CREATE } from "@/lib/roles";
-import { Avatar, Card, CardHeader, PageHeader } from "@/components/ui";
+import { Avatar, Card, CardHeader, NoData, PageHeader } from "@/components/ui";
 
 const LEVELS = [
   { role: "Super Admin", icon: Crown, tone: "bg-navy-950 text-white", creates: CAN_CREATE.superadmin, note: "Full access to every panel. Creates every user." },
@@ -45,13 +45,14 @@ export default function HierarchyPage() {
         <Card>
           <CardHeader title="Live organisation tree" subtitle="Admin → Project Manager → Vendor → Worker" icon={Gavel} />
           <div className="space-y-4 px-5 pb-5">
+            {ADMINS.length === 0 && <NoData />}
             {ADMINS.map((a) => (
               <div key={a.id} className="rounded-2xl border border-slate-200 p-4">
                 <div className="flex items-center gap-3">
                   <Avatar name={a.name} />
                   <div>
                     <p className="font-semibold text-slate-900">{a.name}</p>
-                    <p className="text-xs text-slate-500">Admin · reports to {USERS[0].name} (Super Admin)</p>
+                    <p className="text-xs text-slate-500">Admin · reports to {USERS[0]?.name ?? "—"} (Super Admin)</p>
                   </div>
                 </div>
                 <div className="mt-3 space-y-3 border-l-2 border-slate-100 pl-4">

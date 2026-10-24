@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { SITES, USER_CAP_PER_SITE } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Badge, Button, Card, CardHeader, PageHeader, Progress, td, th } from "@/components/ui";
+import { Badge, Button, Card, CardHeader, NoData, NoDataRow, PageHeader, Progress, td, th } from "@/components/ui";
 
 const included = [
   { icon: Wrench, t: "Development", d: "Web dashboard + worker, PM & vendor mobile apps" },
@@ -23,11 +23,8 @@ const included = [
   { icon: Headset, t: "Support", d: "1-year hands-on support included" },
 ];
 
-const customizations = [
-  { id: "CR-004", title: "SAP PM integration for asset IDs", status: "Quoted", note: "Beyond agreed scope — additional charges apply", date: "18 Sep 2026" },
-  { id: "CR-003", title: "Hindi language support in worker app", status: "In review", note: "Estimation in progress", date: "09 Sep 2026" },
-  { id: "CR-002", title: "Custom QR asset tags", status: "Delivered", note: "Delivered in v1.4", date: "22 Aug 2026" },
-];
+const customizations: { id: string; title: string; status: string; note: string; date: string }[] = [];
+const invoices: { id: string; d: string; date: string; s: string }[] = [];
 
 export default function SubscriptionPage() {
   const extra = SITES.reduce((a, s) => a + Math.max(0, s.users - USER_CAP_PER_SITE), 0);
@@ -48,9 +45,9 @@ export default function SubscriptionPage() {
       <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
         <CircleAlert className="mt-0.5 size-5 shrink-0 text-amber-600" />
         <div className="text-sm">
-          <p className="font-semibold text-amber-900">Renewal invoice will be raised on 16 Dec 2026</p>
+          <p className="font-semibold text-amber-900">Renewal invoice date: —</p>
           <p className="text-amber-800">
-            Annual renewal invoices are raised 30 days prior to the renewal date (15 Jan 2027). Non-renewal will result in suspension of cloud services and platform access.
+            Annual renewal invoices are raised 30 days prior to the renewal date (—). Non-renewal will result in suspension of cloud services and platform access.
           </p>
         </div>
       </div>
@@ -62,22 +59,22 @@ export default function SubscriptionPage() {
             <div className="relative flex flex-wrap items-start justify-between gap-4">
               <div>
                 <Badge className="bg-brand-500 text-white ring-brand-400/30">
-                  <Sparkles className="size-3" /> Active
+                  <Sparkles className="size-3" /> —
                 </Badge>
-                <p className="mt-3 text-2xl font-bold">Year 1 Package</p>
-                <p className="text-sm text-slate-300">Complaint Management & Monitoring Platform · PROP-CMP-2026-01</p>
+                <p className="mt-3 text-2xl font-bold">—</p>
+                <p className="text-sm text-slate-300">Complaint Management & Monitoring Platform</p>
               </div>
               <div className="text-right">
                 <p className="text-xs text-slate-400">Payment terms</p>
-                <p className="font-semibold">As mutually agreed</p>
+                <p className="font-semibold">—</p>
               </div>
             </div>
             <div className="relative mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
               {[
-                ["Start date", "15 Jan 2026"],
-                ["Renewal date", "15 Jan 2027"],
-                ["Invoice date", "16 Dec 2026"],
-                ["Days to renewal", "113"],
+                ["Start date", "—"],
+                ["Renewal date", "—"],
+                ["Invoice date", "—"],
+                ["Days to renewal", "—"],
               ].map(([l, v]) => (
                 <div key={l}>
                   <p className="text-[11px] text-slate-400">{l}</p>
@@ -87,9 +84,9 @@ export default function SubscriptionPage() {
             </div>
             <div className="relative mt-4">
               <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                <div className="h-full rounded-full bg-brand-500" style={{ width: "69%" }} />
+                <div className="h-full rounded-full bg-brand-500" style={{ width: "0%" }} />
               </div>
-              <p className="mt-1.5 text-[11px] text-slate-400">252 of 365 days used</p>
+              <p className="mt-1.5 text-[11px] text-slate-400">— days used</p>
             </div>
           </div>
           <div className="grid gap-3 p-5 sm:grid-cols-2">
@@ -108,8 +105,9 @@ export default function SubscriptionPage() {
         </Card>
 
         <Card>
-          <CardHeader title="User limits" subtitle={`Up to ${USER_CAP_PER_SITE} concurrent users per site`} icon={Users} />
+          <CardHeader title="User limits" subtitle="Concurrent users per site" icon={Users} />
           <div className="space-y-3.5 px-5 pb-5">
+            {SITES.length === 0 && <NoData />}
             {SITES.map((s) => (
               <div key={s.id}>
                 <div className="mb-1 flex justify-between text-[13px]">
@@ -120,7 +118,7 @@ export default function SubscriptionPage() {
               </div>
             ))}
             <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
-              Additional users beyond the per-site cap are chargeable separately. Currently <b className="text-slate-900">{extra}</b> additional users billed.
+              Additional users beyond the per-site cap are chargeable separately. Currently <b className="text-slate-900">{SITES.length ? extra : "—"}</b> additional users billed.
             </div>
             <Button variant="secondary" className="w-full">Request more seats</Button>
           </div>
@@ -129,6 +127,7 @@ export default function SubscriptionPage() {
         <Card className="xl:col-span-2">
           <CardHeader title="Customization requests" subtitle="Customizations beyond the agreed scope are subject to additional charges" icon={Wrench} action={<Button size="sm">New request</Button>} />
           <ul className="divide-y divide-slate-100">
+            {customizations.length === 0 && <li><NoData /></li>}
             {customizations.map((c) => (
               <li key={c.id} className="flex flex-col gap-2 px-5 py-3.5 sm:flex-row sm:items-center">
                 <div className="flex-1">
@@ -153,7 +152,7 @@ export default function SubscriptionPage() {
             {["AWS hosting (Node.js API)", "MySQL database", "AWS S3 media storage", "Firebase push notifications", "Android & iOS app distribution"].map((s) => (
               <li key={s} className="flex items-center justify-between">
                 <span className="text-slate-700">{s}</span>
-                <span className="text-xs font-semibold text-emerald-600">Active</span>
+                <span className="text-xs font-semibold text-slate-400">—</span>
               </li>
             ))}
             <li className="flex items-center gap-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-500">
@@ -177,12 +176,8 @@ export default function SubscriptionPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {[
-                { id: "INV-NS-2027-001", d: "Annual renewal — Year 2", date: "16 Dec 2026", s: "Upcoming" },
-                { id: "INV-NS-2026-014", d: "Customization CR-002 — QR asset tags", date: "25 Aug 2026", s: "Paid" },
-                { id: "INV-NS-2026-003", d: "Year 1 Package — Milestone 2 (Go-live)", date: "15 Apr 2026", s: "Paid" },
-                { id: "INV-NS-2026-001", d: "Year 1 Package — Milestone 1 (Kick-off)", date: "15 Jan 2026", s: "Paid" },
-              ].map((i) => (
+              {invoices.length === 0 && <NoDataRow cols={5} />}
+              {invoices.map((i) => (
                 <tr key={i.id} className="hover:bg-slate-50/60">
                   <td className={cn(td, "font-mono text-xs font-semibold")}>{i.id}</td>
                   <td className={td}>{i.d}</td>

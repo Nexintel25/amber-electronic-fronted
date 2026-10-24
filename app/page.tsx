@@ -16,9 +16,8 @@ import {
   WifiOff,
   Zap,
 } from "lucide-react";
-import { COMPLAINTS, SITES, TREND_14D } from "@/lib/data";
 import { ROLES, ROLE_ORDER } from "@/lib/roles";
-import { WORKFLOW } from "@/lib/workflow";
+import { WORKFLOW, type StatusKey } from "@/lib/workflow";
 import { LinkButton, StatusBadge } from "@/components/ui";
 
 const nav = [
@@ -38,10 +37,10 @@ const features = [
 ];
 
 const stats = [
-  { value: "1,284", label: "Complaints managed" },
-  { value: "92.6%", label: "SLA compliance" },
-  { value: "18.4h", label: "Avg. resolution time" },
-  { value: String(SITES.length), label: "Sites connected" },
+  { value: "—", label: "Complaints managed" },
+  { value: "—", label: "SLA compliance" },
+  { value: "—", label: "Avg. resolution time" },
+  { value: "—", label: "Sites connected" },
 ];
 
 export default function LandingPage() {
@@ -296,9 +295,9 @@ function SectionHeading({ eyebrow, title, text }: { eyebrow: string; title: stri
 }
 
 function HeroMockup() {
-  const trend = TREND_14D.slice(-10);
-  const max = Math.max(...trend.map((t) => t.raised));
-  const recent = COMPLAINTS.slice(0, 3);
+  const trend: { day: string; raised: number; resolved: number }[] = [];
+  const max = Math.max(1, ...trend.map((t) => t.raised));
+  const recent: { id: string; title: string; site: string; status: StatusKey }[] = [];
 
   return (
     <div className="relative animate-rise [animation-delay:150ms]">
@@ -318,9 +317,9 @@ function HeroMockup() {
         <div className="space-y-4 p-4 sm:p-5">
           <div className="grid grid-cols-3 gap-3">
             {[
-              { l: "Open now", v: "53", c: "text-sky-600" },
-              { l: "Resolved today", v: "22", c: "text-emerald-600" },
-              { l: "SLA", v: "92.6%", c: "text-brand-600" },
+              { l: "Open now", v: "—", c: "text-sky-600" },
+              { l: "Resolved today", v: "—", c: "text-emerald-600" },
+              { l: "SLA", v: "—", c: "text-brand-600" },
             ].map((s) => (
               <div key={s.l} className="rounded-xl border border-slate-100 p-3">
                 <p className="text-[10px] font-medium text-slate-500 sm:text-[11px]">{s.l}</p>
@@ -334,6 +333,7 @@ function HeroMockup() {
               <p className="text-xs font-semibold">Complaints raised vs resolved</p>
               <p className="text-[10px] text-slate-400">Last 10 days</p>
             </div>
+            {trend.length === 0 && <p className="mt-3 text-center text-[11px] text-slate-400">No data found · API pending</p>}
             <div className="mt-3 flex h-24 items-end gap-1.5 sm:gap-2">
               {trend.map((t) => (
                 <div key={t.day} className="flex h-full flex-1 items-end gap-0.5">
@@ -345,6 +345,7 @@ function HeroMockup() {
           </div>
 
           <div className="divide-y divide-slate-100 rounded-xl border border-slate-100">
+            {recent.length === 0 && <p className="px-3 py-4 text-center text-[11px] text-slate-400">No data found · API pending</p>}
             {recent.map((c) => (
               <div key={c.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
                 <div className="min-w-0">
@@ -367,8 +368,8 @@ function HeroMockup() {
             <Bell className="size-4" />
           </span>
           <div>
-            <p className="text-xs font-bold">New critical complaint</p>
-            <p className="mt-0.5 text-[11px] text-slate-500">Tripping MCB · Line 3, Amber</p>
+            <p className="text-xs font-bold">New complaint</p>
+            <p className="mt-0.5 text-[11px] text-slate-500">Instant alerts to Vendor, Admin & PM</p>
           </div>
         </div>
       </div>
@@ -398,16 +399,16 @@ function PhoneMockup() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] text-slate-500">Good morning,</p>
-            <p className="text-sm font-bold">Ramesh Kumar</p>
+            <p className="text-sm font-bold">—</p>
           </div>
-          <span className="grid size-8 place-items-center rounded-full bg-brand-100 text-[11px] font-bold text-brand-800">RK</span>
+          <span className="grid size-8 place-items-center rounded-full bg-brand-100 text-[11px] font-bold text-brand-800">—</span>
         </div>
 
         <div className="mt-4 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 p-4 text-white">
           <p className="text-[11px] opacity-80">Current task</p>
-          <p className="mt-1 text-sm font-bold">Tripping MCB · Line 3</p>
+          <p className="mt-1 text-sm font-bold">—</p>
           <p className="mt-2 flex items-center gap-1 text-[11px] opacity-90">
-            <MapPin className="size-3" /> Assembly Line 3, Block B
+            <MapPin className="size-3" /> —
           </p>
           <div className="mt-3 h-1.5 rounded-full bg-white/30">
             <div className="h-full w-2/3 rounded-full bg-white" />

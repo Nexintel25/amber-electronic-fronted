@@ -7,7 +7,7 @@ import { COMPLAINTS, SITES, WORKERS } from "@/lib/data";
 import { STATUS_META } from "@/lib/workflow";
 import { WORKER_STATUS } from "@/lib/worker-status";
 import { cn } from "@/lib/utils";
-import { Avatar, Card, LiveDot, PageHeader, Select, StatusBadge } from "@/components/ui";
+import { Avatar, Card, LiveDot, NoData, PageHeader, Select, StatusBadge } from "@/components/ui";
 import { Tabs } from "@/components/interactive";
 import { LiveMap, MapLegend, type MapPoint } from "@/components/live-map";
 
@@ -36,7 +36,7 @@ export default function LiveTrackingPage() {
         description="Every worker’s GPS position and every open complaint — updated in real time."
         actions={
           <span className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
-            <LiveDot /> Streaming · 5s refresh
+            <LiveDot /> Live tracking
           </span>
         }
       />
@@ -81,6 +81,7 @@ export default function LiveTrackingPage() {
           <Card className="overflow-hidden">
             <p className="border-b border-slate-100 px-4 py-3 text-sm font-semibold text-slate-900">Field workers</p>
             <ul className="max-h-72 divide-y divide-slate-100 overflow-y-auto">
+              {workers.length === 0 && <li><NoData /></li>}
               {workers.map((w) => (
                 <li key={w.id}>
                   <button onClick={() => setSel(w.id)} className={cn("flex w-full items-center gap-3 px-4 py-2.5 text-left", sel === w.id ? "bg-brand-50/60" : "hover:bg-slate-50")}>
@@ -99,6 +100,7 @@ export default function LiveTrackingPage() {
           <Card className="overflow-hidden">
             <p className="flex items-center gap-2 border-b border-slate-100 px-4 py-3 text-sm font-semibold text-slate-900"><Building className="size-4" /> Open complaints</p>
             <ul className="max-h-72 divide-y divide-slate-100 overflow-y-auto">
+              {complaints.length === 0 && <li><NoData /></li>}
               {complaints.map((c) => (
                 <li key={c.id}>
                   <Link href={`/complaints/${c.id}`} className="block px-4 py-2.5 hover:bg-slate-50">

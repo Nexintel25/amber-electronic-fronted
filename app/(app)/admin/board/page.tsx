@@ -1,9 +1,12 @@
+"use client";
+
 import Link from "next/link";
-import { Camera, Timer } from "lucide-react";
-import { COMPLAINTS } from "@/lib/data";
+import { Loader2, Timer, TriangleAlert } from "lucide-react";
+import { api, toComplaint } from "@/lib/api";
+import { useApi } from "@/lib/use-api";
 import { STATUS_META, WORKFLOW, type StatusKey } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
-import { AvatarStack, LiveDot, PageHeader, PriorityBadge } from "@/components/ui";
+import { AvatarStack, Button, EmptyState, LiveDot, PageHeader, PriorityBadge } from "@/components/ui";
 
 const columns: { step: number; label: string; owner: string; statuses: StatusKey[] }[] = WORKFLOW.map((w) => ({
   step: w.step,
@@ -13,6 +16,10 @@ const columns: { step: number; label: string; owner: string; statuses: StatusKey
 }));
 
 export default function StatusBoardPage() {
+  const list = useApi(async () => (await api.getComplaints({ limit: 500 })).data.map(toComplaint));
+  const COMPLAINTS = list.data ?? [];
+  if (list.loading) return <div className="grid place-items-center py-32 text-slate-400"><Loader2 className="size-6 animate-spin" /></div>;
+  if (list.error) return <EmptyState icon={TriangleAlert} title="Could not load the board" text={list.error} action={<Button onClick={list.reload}>Try again</Button>} />;
   return (
     <>
       <PageHeader
@@ -20,9 +27,9 @@ export default function StatusBoardPage() {
         title="Live status board"
         description="Every open complaint, organised by its current stage in the 7-step workflow."
         actions={
-          <span className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
-            <LiveDot /> Auto-refreshing
-          </span>
+          <Button variant="secondary" onClick={list.reload}>
+            <LiveDot /> Refresh
+          </Button>
         }
       />
 
@@ -47,7 +54,7 @@ export default function StatusBoardPage() {
                   {items.map((c) => (
                     <Link
                       key={c.id}
-                      href={`/complaints/${c.id}`}
+                      href={`/complaints/${c.ref}`}
                       className={cn(
                         "block rounded-xl border-l-4 bg-white p-3 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift",
                         c.status === "rework" ? "border-rose-500" : c.status === "issue_raised" ? "border-fuchsia-500" : c.daysOpen > 15 ? "border-red-600" : c.slaRisk ? "border-orange-500" : "border-transparent",
@@ -64,7 +71,6 @@ export default function StatusBoardPage() {
                       <div className="mt-2.5 flex items-center justify-between">
                         {c.workers ? <AvatarStack names={c.workers} /> : <span className="text-[11px] text-slate-400">{c.vendor ?? "Awaiting vendor"}</span>}
                         <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                          <span className="flex items-center gap-0.5"><Camera className="size-3" />{c.media.photos}</span>
                           {c.status !== "closed" && (
                             <span className={cn("flex items-center gap-0.5 font-semibold", c.daysOpen > 15 ? "text-rose-600" : c.daysOpen >= 12 ? "text-amber-600" : "")}>
                               <Timer className="size-3" />Day {c.daysOpen}/15

@@ -1,5 +1,5 @@
 import { BadgeCheck, CircleAlert, FilePlus, Hammer, Info, RotateCcw, ShieldCheck, UserCheck } from "lucide-react";
-import type { NotificationType } from "@/lib/data";
+import type { NotificationType } from "@/lib/complaint";
 import { cn } from "@/lib/utils";
 
 const map = {

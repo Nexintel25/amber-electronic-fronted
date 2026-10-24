@@ -38,7 +38,7 @@ export default function SlaPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="SLA compliance" value={`${sum.compliance}%`} icon={ShieldCheck} tone={sum.compliance >= 90 ? "emerald" : "rose"} hint="target 90%" />
+        <StatCard label="SLA compliance" value={sum.compliance == null ? "—" : `${sum.compliance}%`} icon={ShieldCheck} tone={sum.compliance == null || sum.compliance >= 90 ? "emerald" : "rose"} hint="target 90%" />
         <StatCard label="Running on time" value={sum.onTrack} icon={Timer} tone="sky" hint="inside the duration" />
         <StatCard label="At risk" value={sum.atRisk} icon={Hourglass} tone="amber" hint="close to the limit" />
         <StatCard label="Outside duration" value={sum.overdue + sum.missed} icon={CircleAlert} tone="rose" hint={`${sum.overdue} still open · ${sum.missed} closed late`} />
@@ -69,7 +69,7 @@ export default function SlaPage() {
       <Card className="mt-6">
         <CardHeader title="Time left" subtitle="Jobs still inside their duration — least time first" icon={Gauge} />
         {running.length === 0 ? (
-          <EmptyState icon={Timer} title="Nothing running" text="No open jobs are inside their SLA duration right now." />
+          <EmptyState icon={Timer} title="No data found · API pending" text="Open jobs inside their SLA duration will appear here." />
         ) : (
           <SlaTable rows={running} kind="left" />
         )}
@@ -78,7 +78,7 @@ export default function SlaPage() {
       <Card className="mt-6">
         <CardHeader title="Outside duration" subtitle="Jobs that went past their SLA — longest overdue first" icon={CircleAlert} />
         {outside.length === 0 ? (
-          <EmptyState icon={ShieldCheck} title="No SLA breaches" text="Every job is inside its resolution time." />
+          <EmptyState icon={ShieldCheck} title="No data found · API pending" text="Jobs that went past their SLA will appear here." />
         ) : (
           <SlaTable rows={outside} kind="over" />
         )}

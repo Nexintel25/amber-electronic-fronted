@@ -1,4 +1,4 @@
-import type { Complaint } from "../data";
+import type { Complaint } from "../complaint";
 import type { Priority, StatusKey } from "../workflow";
 import type { RoleKey } from "../roles";
 import type { ComplaintDetail, ComplaintRow } from "./types";
@@ -28,7 +28,7 @@ export function roleKeyFromApi(role: string): RoleKey {
 export const API_ROLE_BY_LABEL: Record<string, string> = {
   "Super Admin": "super_admin",
   Admin: "admin",
-  "Project Manager": "pm",
+  "Project Manager": "project_manager",
   Vendor: "vendor",
   Worker: "worker",
   "Complaint Creator": "client",

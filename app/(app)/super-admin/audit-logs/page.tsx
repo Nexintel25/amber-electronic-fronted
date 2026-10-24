@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { CalendarDays, Download, Monitor, Search, Smartphone } from "lucide-react";
 import { AUDIT_LOGS } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Avatar, Badge, Button, Card, Input, PageHeader, Select, td, th } from "@/components/ui";
+import { Avatar, Badge, Button, Card, Input, NoDataRow, PageHeader, Select, td, th } from "@/components/ui";
 import { Tabs } from "@/components/interactive";
 
 const sev = {
@@ -66,7 +66,7 @@ export default function AuditLogsPage() {
               ))}
             </Select>
             <Button variant="secondary">
-              <CalendarDays /> Last 7 days
+              <CalendarDays /> Date range
             </Button>
           </div>
         </div>
@@ -84,6 +84,7 @@ export default function AuditLogsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
+              {rows.length === 0 && <NoDataRow cols={7} />}
               {rows.map((a) => (
                 <tr key={a.id} className={cn("hover:bg-slate-50/60", a.severity === "critical" && "bg-rose-50/30")}>
                   <td className={cn(td, "font-mono text-xs text-slate-500")}>{a.time}</td>
@@ -112,7 +113,7 @@ export default function AuditLogsPage() {
           </table>
         </div>
         <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
-          <span>Showing {rows.length} of 18,402 events</span>
+          <span>Showing {rows.length} events</span>
           <span>Retention: 3 years · tamper-evident</span>
         </div>
       </Card>

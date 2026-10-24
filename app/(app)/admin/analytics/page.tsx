@@ -4,15 +4,15 @@ import { useState } from "react";
 import { CalendarDays, Download } from "lucide-react";
 import { PRIORITY_MIX, RESOLUTION_BUCKETS, SITES, SLA_BY_SITE, TREND_14D, VENDORS } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Button, Card, CardHeader, PageHeader, Select } from "@/components/ui";
+import { Button, Card, CardHeader, NoData, PageHeader, Select } from "@/components/ui";
 import { Tabs } from "@/components/interactive";
 import { Bars, Donut, Legend, SERIES, TrendArea } from "@/components/charts";
 
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const hours = ["6a", "8a", "10a", "12p", "2p", "4p", "6p", "8p"];
 // Complaint volume heatmap (day × hour)
-const heat = days.map((_, d) => hours.map((_, h) => Math.round(Math.max(0, 9 * Math.sin((h + 1) / 2.6) + (d < 5 ? 4 : -2) + ((d * 7 + h * 3) % 5)))));
-const heatMax = Math.max(...heat.flat());
+const heat = days.map(() => hours.map(() => 0));
+const heatMax = Math.max(1, ...heat.flat());
 // Sequential single-hue ramp (light → dark)
 const ramp = ["#eef4fc", "#cfe0f7", "#a6c6f0", "#78a8e6", "#4f8ddc", "#2a78d6", "#1f5fae", "#174a88"];
 
@@ -45,7 +45,7 @@ export default function AnalyticsPage() {
           ]}
         />
         <Button variant="secondary" size="sm">
-          <CalendarDays /> 11 Sep – 24 Sep 2026
+          <CalendarDays /> —
         </Button>
         <Select className="h-9 w-48">
           <option>All sites</option>
@@ -76,7 +76,7 @@ export default function AnalyticsPage() {
         <Card>
           <CardHeader title="Priority mix" subtitle="Share of complaints" />
           <div className="px-5 pb-5">
-            <Donut data={PRIORITY_MIX} colors={priorityColors} centerValue="1,284" centerLabel="total" height={200} />
+            <Donut data={PRIORITY_MIX} colors={priorityColors} centerValue={String(PRIORITY_MIX.reduce((a, p) => a + p.value, 0))} centerLabel="total" height={200} />
             <ul className="mt-4 space-y-2">
               {PRIORITY_MIX.map((p, i) => (
                 <li key={p.name} className="flex items-center gap-2 text-[13px]">
@@ -97,7 +97,7 @@ export default function AnalyticsPage() {
         </Card>
 
         <Card>
-          <CardHeader title="SLA compliance" subtitle="Amber · target 90%" />
+          <CardHeader title="SLA compliance" subtitle="By site" />
           <div className="px-3 pb-4">
             <Bars data={SLA_BY_SITE} xKey="site" layout="vertical" unit="%" series={[{ key: "sla", label: "SLA %", color: SERIES[0] }]} height={240} />
           </div>
@@ -106,6 +106,7 @@ export default function AnalyticsPage() {
         <Card>
           <CardHeader title="Vendor SLA" subtitle="Last 30 days" />
           <div className="space-y-4 px-5 pb-5">
+            {VENDORS.length === 0 && <NoData />}
             {VENDORS.map((v) => (
               <div key={v.id}>
                 <div className="mb-1.5 flex justify-between text-[13px]">

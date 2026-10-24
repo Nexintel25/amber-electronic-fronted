@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { ArrowLeft, Camera, Check, CheckCircle2, Clock, Crosshair, Loader2, Lock, MapPin, Navigation, RotateCcw, Save, Send, Trash2 } from "lucide-react";
-import type { Complaint } from "@/lib/data";
+import type { Complaint } from "@/lib/complaint";
 import { cn } from "@/lib/utils";
 import { PENALTY_AFTER_DAYS } from "@/lib/workflow";
 import { PriorityBadge, StatusBadge, Textarea } from "@/components/ui";

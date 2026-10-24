@@ -5,24 +5,29 @@ import Link from "next/link";
 import { CheckCircle2, Clock, Crosshair, Flag, ImageIcon, MapPin, ShieldCheck, ThumbsUp, TriangleAlert } from "lucide-react";
 import { COMPLAINTS, type Complaint } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Avatar, Button, Card, EmptyState, Field, PageHeader, PriorityBadge, Select, Textarea } from "@/components/ui";
+import { Avatar, Button, Card, Field, NoData, PageHeader, PriorityBadge, Select, Textarea } from "@/components/ui";
 import { Modal, Tabs, useToast } from "@/components/interactive";
 import { GeoPhoto } from "@/components/geo-photo";
 import { LiveMap } from "@/components/live-map";
 
+const NONE: Complaint = {
+  id: "—", title: "—", description: "", category: "—", site: "—", location: "—", asset: "—", priority: "Low", status: "pending_verification",
+  raisedBy: "—", raisedAt: "—", updatedAt: "—", media: { photos: 0, videos: 0 }, lat: 0, lng: 0, daysOpen: 0,
+};
+
 const initial: Complaint[] = [
   ...COMPLAINTS.filter((c) => c.status === "pending_verification" || c.status === "issue_raised"),
-  { ...COMPLAINTS[14], id: "CMP-2026-0126", status: "pending_verification", title: "Replace damaged DB cover — Stores", workers: ["Imran Khan"], updatedAt: "8 min ago" },
 ];
 
 export default function PhotoReviewPage() {
   const [items, setItems] = useState(initial);
-  const [sel, setSel] = useState(initial[0].id);
+  const [sel, setSel] = useState(initial[0]?.id ?? "");
   const [view, setView] = useState<"side" | "slider">("side");
   const [slider, setSlider] = useState(50);
   const [issue, setIssue] = useState(false);
   const toast = useToast();
-  const c = items.find((i) => i.id === sel) ?? items[0];
+  const real = items.find((i) => i.id === sel) ?? items[0];
+  const c = real ?? NONE;
 
   const finish = (msg: string) => {
     const rest = items.filter((i) => i.id !== c.id);
@@ -33,10 +38,10 @@ export default function PhotoReviewPage() {
   };
 
   const checks = [
-    { t: "GPS within geo-fence", d: "Before 8 m · After 11 m from pin (limit 150 m)", ok: true, i: Crosshair },
-    { t: "Timestamps sequential", d: "Before 09:42 AM → After 11:05 AM (1h 23m)", ok: true, i: Clock },
-    { t: "Minimum photos", d: "3 before · 3 after (min 2 + 2)", ok: true, i: ImageIcon },
-    { t: "Same device & worker", d: "Android · App v1.4.2 · Deepak Singh", ok: true, i: ShieldCheck },
+    { t: "GPS within geo-fence", d: "—", ok: false, i: Crosshair },
+    { t: "Timestamps sequential", d: "—", ok: false, i: Clock },
+    { t: "Minimum photos", d: "—", ok: false, i: ImageIcon },
+    { t: "Same device & worker", d: "—", ok: false, i: ShieldCheck },
   ];
 
   return (
@@ -47,11 +52,7 @@ export default function PhotoReviewPage() {
         description="Photos uploaded by workers arrive here and with the Vendor. If something looks wrong, raise an issue — it goes to the Vendor only, who verifies or sends the job back for rework."
       />
 
-      {!c ? (
-        <Card>
-          <EmptyState icon={ShieldCheck} title="All caught up" text="No worker photos to review. You’ll be notified when a worker submits completed work." />
-        </Card>
-      ) : (
+      {(
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
           <Card className="xl:self-start">
             <div className="px-5 pt-5 pb-3">
@@ -59,6 +60,7 @@ export default function PhotoReviewPage() {
               <p className="text-[13px] text-slate-500">{items.length} submissions</p>
             </div>
             <ul className="space-y-2 px-3 pb-3">
+              {items.length === 0 && <li><NoData /></li>}
               {items.map((x) => (
                 <li key={x.id}>
                   <button onClick={() => setSel(x.id)} className={cn("flex w-full gap-3 rounded-xl border p-3 text-left", x.id === c.id ? "border-brand-300 bg-brand-50/60" : "border-slate-100 hover:bg-slate-50")}>
@@ -94,8 +96,8 @@ export default function PhotoReviewPage() {
                   <div className="grid gap-5 md:grid-cols-2">
                     {(["before", "after"] as const).map((k) => (
                       <div key={k}>
-                        <p className={cn("mb-2 text-xs font-bold tracking-wider uppercase", k === "before" ? "text-rose-600" : "text-emerald-600")}>{k} · 3 photos</p>
-                        <GeoPhoto kind={k} seed={0} lat={c.lat} lng={c.lng} time={k === "before" ? "24 Sep 2026 · 09:42 AM" : "24 Sep 2026 · 11:05 AM"} />
+                        <p className={cn("mb-2 text-xs font-bold tracking-wider uppercase", k === "before" ? "text-rose-600" : "text-emerald-600")}>{k} · {real ? "" : "no "}photos</p>
+                        <GeoPhoto kind={k} seed={0} lat={c.lat} lng={c.lng} time="—" />
                         <div className="mt-2 grid grid-cols-3 gap-2">
                           {[1, 2, 3].map((s) => (
                             <GeoPhoto key={s} kind={k} seed={s} compact lat={c.lat} lng={c.lng} verified={false} />
@@ -107,9 +109,9 @@ export default function PhotoReviewPage() {
                 ) : (
                   <div className="mx-auto max-w-2xl">
                     <div className="relative overflow-hidden rounded-xl">
-                      <GeoPhoto kind="after" seed={0} lat={c.lat} lng={c.lng} time="24 Sep 2026 · 11:05 AM" className="rounded-none" />
+                      <GeoPhoto kind="after" seed={0} lat={c.lat} lng={c.lng} time="—" className="rounded-none" />
                       <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - slider}% 0 0)` }}>
-                        <GeoPhoto kind="before" seed={0} lat={c.lat} lng={c.lng} time="24 Sep 2026 · 09:42 AM" className="rounded-none" />
+                        <GeoPhoto kind="before" seed={0} lat={c.lat} lng={c.lng} time="—" className="rounded-none" />
                       </div>
                       <div className="absolute inset-y-0 w-0.5 bg-white shadow" style={{ left: `${slider}%` }}>
                         <span className="absolute top-1/2 left-1/2 grid size-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white text-xs font-bold text-slate-600 shadow-lift">⇆</span>
@@ -139,7 +141,7 @@ export default function PhotoReviewPage() {
                 <div className="flex gap-3">
                   <Avatar name={c.workers?.[0] ?? "W"} />
                   <div className="rounded-xl rounded-tl-sm bg-slate-50 p-3 text-sm text-slate-700">
-                    Earth pit treated with bentonite & salt, strip re-tightened. Leakage alarm no longer triggers on spindle start. Measured 0.8 Ω.
+                    {real ? "—" : "No data found · API pending"}
                     <p className="mt-1 text-[11px] text-slate-400">{c.workers?.[0]} · {c.updatedAt}</p>
                   </div>
                 </div>
@@ -151,20 +153,20 @@ export default function PhotoReviewPage() {
                   geofence={{ x: 50, y: 50, r: 22 }}
                   points={[
                     { id: "pin", x: 50, y: 48, kind: "complaint", tone: "violet", label: "Complaint pin" },
-                    { id: "b", x: 45, y: 55, kind: "worker", tone: "red", label: "Before photos", sub: "8 m" },
-                    { id: "a", x: 56, y: 44, kind: "worker", tone: "green", label: "After photos", sub: "11 m" },
+                    { id: "b", x: 45, y: 55, kind: "worker", tone: "red", label: "Before photos", sub: "—" },
+                    { id: "a", x: 56, y: 44, kind: "worker", tone: "green", label: "After photos", sub: "—" },
                   ]}
                 />
               </Card>
             </div>
 
             <Card className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-slate-600">An issue is sent to <b>{c.vendor}</b> only — the Creator and Project Manager are not notified. The Vendor decides to verify or send it for rework.</p>
+              <p className="text-sm text-slate-600">An issue is sent to <b>{c.vendor ?? "the vendor"}</b> only — the Creator and Project Manager are not notified. The Vendor decides to verify or send it for rework.</p>
               <div className="flex gap-2">
-                <Button variant="secondary" onClick={() => finish(`${c.id} reviewed — no issues found`)}>
+                <Button variant="secondary" disabled={!real} onClick={() => finish(`${c.id} reviewed — no issues found`)}>
                   <ThumbsUp /> Looks fine
                 </Button>
-                <Button variant="danger" onClick={() => setIssue(true)}>
+                <Button variant="danger" disabled={!real} onClick={() => setIssue(true)}>
                   <Flag /> Raise issue to vendor
                 </Button>
               </div>

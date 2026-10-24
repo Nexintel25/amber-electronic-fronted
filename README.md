@@ -2,7 +2,7 @@
 # Amber — Complaint Management & Monitoring Platform (UI)
 
 UI design for proposal **PROP-CMP-2026-01**.
-This is a **UI-only** Next.js app: no API and no database. Everything runs on mock data from `lib/data.ts`.
+Every page reads from the API (see `lib/api/`). Pages whose API is not built yet show an empty "No data" state — there is no mock data in the project.
 
 ## Run
 
@@ -62,7 +62,7 @@ app/
   (app)/complaints/[id]    Shared complaint detail (role-aware actions)
   (app)/creator|vendor|pm|worker|admin|super-admin/…
 components/                UI kit, charts, live map, geo-photo, stepper, shell
-lib/                       Mock data, workflow/status metadata, role navigation
+lib/                       Workflow/status metadata, role navigation
 ```
 
 To connect a real backend, replace the imports from `lib/data.ts` with API calls. The components take their data as props or read it at the page level.

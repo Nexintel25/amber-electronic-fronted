@@ -118,7 +118,7 @@ export function ReportViewer({ types, vendors, scoped = false }: { types?: Repor
               </div>
             </div>
             {result.data.rows.length === 0 ? (
-              <EmptyState icon={FileSearch} title="No records found" text="Nothing matches these filters. Widen the date range, pick another vendor or clear the search." />
+              <EmptyState icon={FileSearch} title="No data found · API pending" text="No records for these filters." />
             ) : (
               <div className="max-h-[560px] overflow-auto">
                 <table className="w-full">

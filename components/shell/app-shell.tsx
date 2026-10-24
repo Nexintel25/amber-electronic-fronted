@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
   Bell,
@@ -18,12 +18,13 @@ import {
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ROLES, ROLE_ORDER, roleFromPath, type RoleKey } from "@/lib/roles";
-import { NOTIFICATIONS, SITES, USER_CAP_PER_SITE } from "@/lib/data";
+import { ROLES, roleFromPath, type RoleKey } from "@/lib/roles";
+import { api } from "@/lib/api";
+import { useApi } from "@/lib/use-api";
 import { Avatar, Kbd, LiveDot } from "@/components/ui";
-import { NotificationIcon } from "@/components/notification-icon";
 import { WorkerShell } from "@/components/shell/worker-shell";
 import { clearSession, useSession } from "@/lib/session";
+import { roleKeyFromApi } from "@/lib/api";
 
 const RoleContext = createContext<RoleKey>("admin");
 export const useRole = () => useContext(RoleContext);
@@ -68,7 +69,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     } catch {}
   }, [pathRole]);
 
-  const role = pathRole ?? storedRole ?? "admin";
+  const session = useSession();
+  // The signed-in account decides the panel; the URL/stored role is only a fallback while the session loads.
+  const role = (session ? roleKeyFromApi(session.user.role) : null) ?? pathRole ?? storedRole ?? "admin";
   const def = ROLES[role];
 
   if (role === "worker") {
@@ -121,7 +124,6 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 function Sidebar({ role, pathname }: { role: RoleKey; pathname: string }) {
   const def = ROLES[role];
-  const site = SITES[0];
   const isActive = (href: string) =>
     href === def.home || href === "/complaints" ? pathname === href : pathname === href || pathname.startsWith(href + "/");
 
@@ -177,21 +179,6 @@ function Sidebar({ role, pathname }: { role: RoleKey; pathname: string }) {
           </div>
         ))}
       </nav>
-
-      <div className="space-y-3 p-4">
-        <div className="rounded-xl border border-white/5 bg-gradient-to-br from-white/[0.06] to-white/[0.02] p-3.5">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-white">{site.name}</span>
-            <span className="text-slate-400 tabular-nums">
-              {site.users}/{USER_CAP_PER_SITE} users
-            </span>
-          </div>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
-            <div className="h-full rounded-full bg-brand-500" style={{ width: `${(site.users / USER_CAP_PER_SITE) * 100}%` }} />
-          </div>
-          <p className="mt-2 text-[11px] text-slate-400">Concurrent user cap per site</p>
-        </div>
-      </div>
     </div>
   );
 }
@@ -199,15 +186,15 @@ function Sidebar({ role, pathname }: { role: RoleKey; pathname: string }) {
 /* --------------------------------- Topbar --------------------------------- */
 
 function Topbar({ role, onMenu }: { role: RoleKey; onMenu: () => void }) {
-  const router = useRouter();
   const def = ROLES[role];
   const [open, setOpen] = useState<null | "notif" | "role" | "user" | "site">(null);
   const close = () => setOpen(null);
   const ref = useClickOutside(close);
-  const [site, setSite] = useState(SITES[0].name);
-  const unread = NOTIFICATIONS.filter((n) => !n.read).length;
   const session = useSession();
-  const me = session ? { name: session.user.name, email: session.user.email, title: def.label } : def.user;
+  const sites = useApi(() => (session ? api.getBuildings() : Promise.resolve([])), [session?.user.id]);
+  const [picked, setPicked] = useState<string | null>(null);
+  const site = picked ?? sites.data?.[0]?.name ?? (sites.loading ? "Loading…" : "No site");
+  const me = session ? { name: session.user.name, email: session.user.email, title: def.label } : { name: "", email: "", title: def.label };
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
@@ -241,11 +228,13 @@ function Topbar({ role, onMenu }: { role: RoleKey; onMenu: () => void }) {
             {open === "site" && (
               <Dropdown className="w-72">
                 <p className="px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wider text-slate-400 uppercase">Switch site</p>
-                {SITES.map((s) => (
+                {sites.data?.length === 0 && <p className="px-3 py-2 text-xs text-slate-500">No sites available.</p>}
+                {sites.error && <p className="px-3 py-2 text-xs text-rose-600">{sites.error}</p>}
+                {sites.data?.map((s) => (
                   <button
                     key={s.id}
                     onClick={() => {
-                      setSite(s.name);
+                      setPicked(s.name);
                       close();
                     }}
                     className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left hover:bg-slate-50"
@@ -253,7 +242,7 @@ function Topbar({ role, onMenu }: { role: RoleKey; onMenu: () => void }) {
                     <span>
                       <span className="block text-[13px] font-semibold text-slate-800">{s.name}</span>
                       <span className="block text-[11px] text-slate-500">
-                        {s.users}/{USER_CAP_PER_SITE} users · {s.open} open
+                        {s.city || s.address}
                       </span>
                     </span>
                     {site === s.name && <Check className="size-4 text-brand-600" />}
@@ -276,11 +265,6 @@ function Topbar({ role, onMenu }: { role: RoleKey; onMenu: () => void }) {
               aria-label="Notifications"
             >
               <Bell className="size-[18px]" />
-              {unread > 0 && (
-                <span className="absolute -top-1 -right-1 grid size-5 place-items-center rounded-full bg-brand-500 text-[10px] font-bold text-white ring-2 ring-white">
-                  {unread}
-                </span>
-              )}
             </button>
             {open === "notif" && (
               <Dropdown className="w-[min(380px,calc(100vw-2rem))]">
@@ -289,19 +273,7 @@ function Topbar({ role, onMenu }: { role: RoleKey; onMenu: () => void }) {
                   <span className="text-[11px] font-medium text-slate-500">Firebase push · real-time</span>
                 </div>
                 <div className="max-h-96 overflow-y-auto">
-                  {NOTIFICATIONS.slice(0, 5).map((n) => (
-                    <Link key={n.id} href={n.link ?? "/notifications"} onClick={close} className="flex gap-3 rounded-lg px-3 py-2.5 hover:bg-slate-50">
-                      <NotificationIcon type={n.type} />
-                      <div className="min-w-0 flex-1">
-                        <p className="flex items-center gap-2 text-[13px] font-semibold text-slate-800">
-                          {n.title}
-                          {!n.read && <span className="size-1.5 rounded-full bg-brand-500" />}
-                        </p>
-                        <p className="line-clamp-2 text-xs text-slate-500">{n.body}</p>
-                        <p className="mt-0.5 text-[11px] text-slate-400">{n.time}</p>
-                      </div>
-                    </Link>
-                  ))}
+                  <p className="px-3 py-6 text-center text-xs text-slate-500">No notifications yet.</p>
                 </div>
                 <Link href="/notifications" onClick={close} className="mt-1 block rounded-lg px-3 py-2 text-center text-[13px] font-semibold text-brand-600 hover:bg-brand-50">
                   View all notifications
@@ -310,42 +282,14 @@ function Topbar({ role, onMenu }: { role: RoleKey; onMenu: () => void }) {
             )}
           </div>
 
-          {/* Role switcher */}
-          <div className="relative">
-            <button
-              onClick={() => setOpen(open === "role" ? null : "role")}
-              className="flex h-10 items-center gap-2 rounded-xl bg-navy-950 px-3 text-[13px] font-semibold text-white hover:bg-navy-900"
-            >
-              <def.icon className="size-4 text-brand-400" />
-              <span className="hidden sm:inline">{def.label}</span>
-              <ChevronDown className="size-3.5 text-slate-400" />
-            </button>
-            {open === "role" && (
-              <Dropdown className="w-80">
-                <p className="px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wider text-slate-400 uppercase">Switch panel (demo)</p>
-                {ROLE_ORDER.map((k) => {
-                  const r = ROLES[k];
-                  return (
-                    <button
-                      key={k}
-                      onClick={() => {
-                        close();
-                        router.push(r.home);
-                      }}
-                      className={cn("flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-slate-50", k === role && "bg-brand-50/60")}
-                    >
-                      <span className={cn("grid size-8 place-items-center rounded-lg", k === role ? "bg-brand-500 text-white" : "bg-slate-100 text-slate-600")}>
-                        <r.icon className="size-4" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[13px] font-semibold text-slate-800">{r.panel}</span>
-                        <span className="block truncate text-[11px] text-slate-500">{r.description}</span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </Dropdown>
-            )}
+          {/* Signed-in user's role (fixed — panels can no longer be switched) */}
+          <div
+            aria-disabled
+            title="Your role is set by your account"
+            className="flex h-10 cursor-not-allowed items-center gap-2 rounded-xl bg-navy-950 px-3 text-[13px] font-semibold text-white opacity-70 select-none"
+          >
+            <def.icon className="size-4 text-brand-400" />
+            <span className="hidden sm:inline">{def.label}</span>
           </div>
 
           {/* User menu */}

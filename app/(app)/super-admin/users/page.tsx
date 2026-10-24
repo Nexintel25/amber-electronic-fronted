@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Ellipsis, KeyRound, Lock, Search, TriangleAlert, UserPlus } from "lucide-react";
 import { SITES, USER_CAP_PER_SITE, USERS } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Avatar, Badge, Button, Card, Input, PageHeader, Progress, Select, td, th } from "@/components/ui";
+import { Avatar, Badge, Button, Card, Input, NoData, NoDataRow, PageHeader, Progress, Select, td, th } from "@/components/ui";
 import { useToast } from "@/components/interactive";
 import { CreateUserModal } from "@/components/create-user-modal";
 import type { UserRoleLabel } from "@/lib/roles";
@@ -52,6 +52,7 @@ export default function UsersPage() {
       />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {SITES.length === 0 && <Card className="sm:col-span-2 lg:col-span-5"><NoData /></Card>}
         {SITES.map((s) => {
           const full = s.users >= USER_CAP_PER_SITE;
           return (
@@ -106,6 +107,7 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
+              {rows.length === 0 && <NoDataRow cols={8} />}
               {rows.map((u) => (
                 <tr key={u.id} className="hover:bg-slate-50/60">
                   <td className={td}>
@@ -147,7 +149,7 @@ export default function UsersPage() {
           </table>
         </div>
         <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
-          Showing {rows.length} of 69 users
+          Showing {rows.length} users
         </div>
       </Card>
 

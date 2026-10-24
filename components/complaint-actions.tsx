@@ -12,7 +12,7 @@ import {
   Loader2,
   UserPlus,
 } from "lucide-react";
-import type { Complaint } from "@/lib/data";
+import type { Complaint } from "@/lib/complaint";
 import { api } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { workerView } from "@/lib/vendor-workers";

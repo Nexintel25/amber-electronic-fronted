@@ -17,7 +17,7 @@ export const createComplaint = (c: {
   contact_phone?: string;
   media: MediaItem[];
   is_draft?: boolean;
-}) => post<{ complaint_id?: number; complaint_no?: string; [k: string]: unknown }>("users/createComplaint", { ...c, user_id: currentUserId(), is_draft: c.is_draft ? 1 : 0 });
+}) => post<{ complaint_id?: number; complaint_no?: string; [k: string]: unknown }>("users/createComplaint", { ...c, user_id: currentUserId(), created_by: currentUserId(), is_draft: c.is_draft ? 1 : 0 });
 
 /** Validates the attached media (e.g. minimum number of photos) before a complaint is submitted. */
 export const checkMedia = (media: Pick<MediaItem, "kind" | "file_url">[], minPhotos: number) =>
@@ -32,4 +32,4 @@ export const getComplaintDetail = (complaintId: number) =>
 
 /** Vendor assigns a complaint to one of their workers. */
 export const assignWorker = (complaintId: number, workerId: number, remarks: string) =>
-  post<unknown>("complaints/assignWorker", { user_id: currentUserId(), complaint_id: complaintId, worker_id: workerId, remarks });
+  post<unknown>("complaints/assignWorker", { user_id: currentUserId(), complaint_id: complaintId, worker_id: workerId, remarks, updated_by: currentUserId() });
