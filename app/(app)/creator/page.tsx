@@ -31,7 +31,7 @@ export default function CreatorDashboard() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Open complaints" value={active.length} icon={CircleDashed} tone="sky" hint="at NADT" />
+        <StatCard label="Open complaints" value={active.length} icon={CircleDashed} tone="sky" hint="at Amber" />
         <StatCard label="Work in progress" value={mine.filter((c) => ["worker_assigned", "in_progress", "rework"].includes(c.status)).length} icon={Hammer} tone="amber" hint="field teams on it" />
         <StatCard label="Awaiting verification" value={mine.filter((c) => ["pending_verification", "issue_raised"].includes(c.status)).length} icon={Hourglass} tone="violet" hint="vendor verification" />
         <StatCard label="Resolved this month" value={23} icon={BadgeCheck} tone="emerald" delta="18%" hint="vs last month" />

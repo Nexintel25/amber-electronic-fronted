@@ -67,7 +67,7 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     home: "/creator",
     icon: MessageSquareWarning,
     description: "Raise complaints, upload media, track status",
-    user: { name: "Rohit Mehra", email: "rohit.mehra@NADT.com", title: "Facilities Head · NADT" },
+    user: { name: "Rohit Mehra", email: "rohit.mehra@Amber.com", title: "Facilities Head · Amber" },
     nav: [
       {
         title: "Creator Portal",
@@ -116,7 +116,7 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     home: "/pm",
     icon: ClipboardCheck,
     description: "Responsible for vendors — monitor work and penalties",
-    user: { name: "Arjun Sharma", email: "arjun.sharma@powergridservices.in", title: "Project Manager · NADT" },
+    user: { name: "Arjun Sharma", email: "arjun.sharma@powergridservices.in", title: "Project Manager · Amber" },
     nav: [
       {
         title: "PM Panel",
@@ -158,7 +158,7 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     home: "/admin",
     icon: Gauge,
     description: "Review worker photos, raise issues to vendors, reports",
-    user: { name: "Kavita Menon", email: "kavita.menon@NADT.com", title: "Operations Admin" },
+    user: { name: "Kavita Menon", email: "kavita.menon@Amber.com", title: "Operations Admin" },
     nav: [
       {
         title: "Monitoring",
@@ -186,7 +186,7 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     home: "/super-admin",
     icon: ShieldCheck,
     description: "Full access — creates every user, roles, configurations, audit logs",
-    user: { name: "Nikhil Arora", email: "nikhil.arora@NADT.com", title: "IT Head · Super Admin" },
+    user: { name: "Nikhil Arora", email: "nikhil.arora@Amber.com", title: "IT Head · Super Admin" },
     nav: [
       {
         title: "Control Center",

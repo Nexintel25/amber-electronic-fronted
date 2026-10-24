@@ -104,7 +104,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <main className="mx-auto w-full max-w-[1480px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
           <footer className="border-t border-slate-200/70 px-4 py-4 text-xs text-slate-500 sm:px-6 lg:px-8">
             <div className="mx-auto flex max-w-[1480px] flex-wrap items-center justify-between gap-2">
-              <span>© 2026 NADT Ltd · {def.panel}</span>
+              <span>© 2026 Amber Ltd · {def.panel}</span>
               <span>
                 Built & supported by <span className="font-semibold text-slate-700">Nexintel Synergy Pvt Ltd</span>
               </span>
@@ -131,7 +131,7 @@ function Sidebar({ role, pathname }: { role: RoleKey; pathname: string }) {
           <Zap className="size-5 fill-white text-white" />
         </span>
         <div className="leading-tight">
-          <p className="text-[15px] font-bold tracking-tight text-white">NADT</p>
+          <p className="text-[15px] font-bold tracking-tight text-white">Amber</p>
           <p className="text-[11px] font-medium text-slate-400">Complaint Management</p>
         </div>
       </div>

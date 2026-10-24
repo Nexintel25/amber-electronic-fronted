@@ -9,7 +9,7 @@ type Ev = { id: number; icon: LucideIcon; tone: string; text: string; sub: strin
 const POOL: Omit<Ev, "id" | "time">[] = [
   { icon: Crosshair, tone: "bg-sky-50 text-sky-600", text: "Gopal Das checked in", sub: "CMP-2026-0128 · Main LT Room · 9 m" },
   { icon: Camera, tone: "bg-amber-50 text-amber-600", text: "Before-photos uploaded (3)", sub: "CMP-2026-0135 · Manoj Patil" },
-  { icon: FilePlus, tone: "bg-violet-50 text-violet-600", text: "New complaint raised", sub: "CMP-2026-0147 · NADT · High" },
+  { icon: FilePlus, tone: "bg-violet-50 text-violet-600", text: "New complaint raised", sub: "CMP-2026-0147 · Amber · High" },
   { icon: UserCheck, tone: "bg-indigo-50 text-indigo-600", text: "PM assigned by vendor", sub: "CMP-2026-0140 → Vikram Rao" },
   { icon: BadgeCheck, tone: "bg-emerald-50 text-emerald-600", text: "Complaint closed", sub: "CMP-2026-0127 · Spark Facility Solutions" },
   { icon: RotateCcw, tone: "bg-rose-50 text-rose-600", text: "Sent back for rework", sub: "CMP-2026-0133 · Arjun Sharma" },

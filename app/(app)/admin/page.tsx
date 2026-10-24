@@ -34,7 +34,7 @@ export default function AdminOverview() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
         <StatCard label="Total complaints" value="1,284" icon={ClipboardList} tone="navy" delta="12%" hint="vs last month" />
-        <StatCard label="Open now" value={open} icon={CircleDashed} tone="sky" hint="at NADT" />
+        <StatCard label="Open now" value={open} icon={CircleDashed} tone="sky" hint="at Amber" />
         <StatCard label="Resolved today" value={22} icon={BadgeCheck} tone="emerald" delta="8%" />
         <StatCard label="Avg resolution" value="18.4h" icon={Timer} tone="violet" delta="2.1h" hint="faster" />
         <StatCard label="SLA compliance" value="92.6%" icon={Target} tone="brand" delta="1.4%" />
@@ -71,7 +71,7 @@ export default function AdminOverview() {
         <Card className="xl:col-span-2">
           <CardHeader
             title="Live tracking"
-            subtitle="Workers and open complaints at NADT"
+            subtitle="Workers and open complaints at Amber"
             action={<LinkButton href="/admin/live" size="sm" variant="secondary">Full screen</LinkButton>}
           />
           <div className="px-5 pb-5">

@@ -1,5 +1,5 @@
 
-# NADT — Complaint Management & Monitoring Platform (UI)
+# Amber — Complaint Management & Monitoring Platform (UI)
 
 UI design for proposal **PROP-CMP-2026-01**.
 This is a **UI-only** Next.js app: no API and no database. Everything runs on mock data from `lib/data.ts`.

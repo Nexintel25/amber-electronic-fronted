@@ -4,8 +4,8 @@ import { ArrowLeft, BadgeCheck, Radar, ShieldCheck, Zap } from "lucide-react";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = {
-  title: "Sign in · NADT",
-  description: "Sign in to the NADT Complaint Management & Monitoring Platform.",
+  title: "Sign in · Amber",
+  description: "Sign in to the Amber Complaint Management & Monitoring Platform.",
 };
 
 const highlights = [
@@ -24,7 +24,7 @@ export default function LoginPage() {
             <span className="grid size-9 place-items-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-md shadow-brand-500/30">
               <Zap className="size-5 fill-white text-white" />
             </span>
-            <span className="text-[15px] font-bold text-slate-900">NADT</span>
+            <span className="text-[15px] font-bold text-slate-900">Amber</span>
           </Link>
           <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-slate-900">
             <ArrowLeft className="size-4" /> Back to home
@@ -40,7 +40,7 @@ export default function LoginPage() {
         </div>
 
         <footer className="flex flex-col items-center justify-between gap-3 text-xs text-slate-400 sm:flex-row">
-          <span>© 2026 NADT Ltd. All rights reserved.</span>
+          <span>© 2026 Amber Ltd. All rights reserved.</span>
           <nav className="flex gap-4">
             <a href="#" className="hover:text-slate-600">Privacy</a>
             <a href="#" className="hover:text-slate-600">Terms</a>
@@ -68,7 +68,7 @@ export default function LoginPage() {
               <span className="grid size-11 place-items-center rounded-full bg-gradient-to-br from-brand-300 to-brand-600 text-sm font-bold">KM</span>
               <div>
                 <p className="text-sm font-semibold">Kavita Menon</p>
-                <p className="text-xs text-slate-400">Operations Admin, NADT</p>
+                <p className="text-xs text-slate-400">Operations Admin, Amber</p>
               </div>
             </div>
 

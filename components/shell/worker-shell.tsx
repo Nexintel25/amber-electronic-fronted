@@ -36,8 +36,8 @@ export function WorkerShell({ pathname, children }: { pathname: string; children
               <Zap className="size-4 fill-white text-white" />
             </span>
             <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate text-[14px] font-bold">NADT</p>
-              <p className="truncate text-[11px] text-slate-400">Worker Portal · NADT</p>
+              <p className="truncate text-[14px] font-bold">Amber</p>
+              <p className="truncate text-[11px] text-slate-400">Worker Portal · Amber</p>
             </div>
             <Link href="/notifications" className="relative grid size-10 place-items-center rounded-xl hover:bg-white/10" aria-label="Notifications">
               <Bell className="size-5" />

@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NADT · Complaint Management & Monitoring Platform",
+  title: "Amber · Complaint Management & Monitoring Platform",
   description:
     "End-to-end complaint lifecycle, vendor oversight, field execution and verified closure — by Nexintel Synergy Pvt Ltd.",
 };
