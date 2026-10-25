@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { Ellipsis, KeyRound, Lock, Search, TriangleAlert, UserPlus } from "lucide-react";
-import { SITES, USER_CAP_PER_SITE, USERS } from "@/lib/data";
+import { USERS } from "@/lib/data";
+import { api } from "@/lib/api";
+import { useApi } from "@/lib/use-api";
 import { cn } from "@/lib/utils";
 import { Avatar, Badge, Button, Card, Input, NoData, NoDataRow, PageHeader, Progress, Select, td, th } from "@/components/ui";
 import { useToast } from "@/components/interactive";
@@ -26,6 +28,9 @@ export default function UsersPage() {
   const [site, setSite] = useState("");
   const [open, setOpen] = useState(false);
   const toast = useToast();
+  const dash = useApi(() => api.getAdminDashboard());
+  const buildings = useApi(() => api.getBuildings());
+  const SITES = dash.data?.sites ?? [];
 
   const rows = useMemo(
     () =>
@@ -54,19 +59,20 @@ export default function UsersPage() {
       <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {SITES.length === 0 && <Card className="sm:col-span-2 lg:col-span-5"><NoData /></Card>}
         {SITES.map((s) => {
-          const full = s.users >= USER_CAP_PER_SITE;
+          const cap = s.max_concurrent_users;
+          const full = cap > 0 && s.concurrent_users >= cap;
           return (
-            <Card key={s.id} className={cn("p-4", full && "ring-2 ring-rose-200")}>
+            <Card key={s.building_id} className={cn("p-4", full && "ring-2 ring-rose-200")}>
               <div className="flex items-center justify-between">
-                <p className="truncate text-[13px] font-semibold text-slate-800">{s.name}</p>
+                <p className="truncate text-[13px] font-semibold text-slate-800">{s.building_name}</p>
                 {full && <TriangleAlert className="size-4 text-rose-500" />}
               </div>
               <p className="mt-1 text-xl font-bold text-slate-900 tabular-nums">
-                {s.users}
-                <span className="text-sm font-medium text-slate-400">/{USER_CAP_PER_SITE}</span>
+                {s.concurrent_users}
+                <span className="text-sm font-medium text-slate-400">/{cap}</span>
               </p>
-              <Progress value={(s.users / USER_CAP_PER_SITE) * 100} tone={full ? "bg-rose-500" : s.users > 15 ? "bg-amber-500" : "bg-emerald-500"} className="mt-2" />
-              <p className={cn("mt-1.5 text-[11px]", full ? "font-semibold text-rose-600" : "text-slate-500")}>{full ? "Cap reached — extra users chargeable" : `${USER_CAP_PER_SITE - s.users} seats left`}</p>
+              <Progress value={cap ? (s.concurrent_users / cap) * 100 : 0} tone={full ? "bg-rose-500" : "bg-emerald-500"} className="mt-2" />
+              <p className={cn("mt-1.5 text-[11px]", full ? "font-semibold text-rose-600" : "text-slate-500")}>{full ? "Cap reached — extra users chargeable" : `${Math.max(0, cap - s.concurrent_users)} seats left`}</p>
             </Card>
           );
         })}
@@ -87,7 +93,7 @@ export default function UsersPage() {
           <Select value={site} onChange={(e) => setSite(e.target.value)} className="w-56">
             <option value="">All sites</option>
             <option>All Sites</option>
-            {SITES.map((s) => (
+            {buildings.data?.map((s) => (
               <option key={s.id}>{s.name}</option>
             ))}
           </Select>
@@ -107,7 +113,7 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {rows.length === 0 && <NoDataRow cols={8} />}
+              {rows.length === 0 && <NoDataRow cols={8} noApi />}
               {rows.map((u) => (
                 <tr key={u.id} className="hover:bg-slate-50/60">
                   <td className={td}>

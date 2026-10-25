@@ -36,12 +36,12 @@ export default function SuperAdminOverview() {
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-2">
           <CardHeader title="Recent audit events" action={<Link href="/super-admin/audit-logs" className="text-[13px] font-semibold text-brand-600">View all</Link>} />
-          <EmptyState icon={ScrollText} title="No audit events" text="The audit-log API is not connected yet." />
+          <EmptyState icon={ScrollText} title="API not available" text="No audit-log API is available yet." />
         </Card>
 
         <Card>
           <CardHeader title="Users by role" />
-          <EmptyState icon={Users} title="No data" text="The users API is not connected yet." />
+          <EmptyState icon={Users} title="API not available" text="No users API is available yet." />
         </Card>
       </div>
     </>

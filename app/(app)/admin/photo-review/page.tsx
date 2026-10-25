@@ -60,7 +60,7 @@ export default function PhotoReviewPage() {
               <p className="text-[13px] text-slate-500">{items.length} submissions</p>
             </div>
             <ul className="space-y-2 px-3 pb-3">
-              {items.length === 0 && <li><NoData /></li>}
+              {items.length === 0 && <li><NoData noApi /></li>}
               {items.map((x) => (
                 <li key={x.id}>
                   <button onClick={() => setSel(x.id)} className={cn("flex w-full gap-3 rounded-xl border p-3 text-left", x.id === c.id ? "border-brand-300 bg-brand-50/60" : "border-slate-100 hover:bg-slate-50")}>
@@ -141,7 +141,7 @@ export default function PhotoReviewPage() {
                 <div className="flex gap-3">
                   <Avatar name={c.workers?.[0] ?? "W"} />
                   <div className="rounded-xl rounded-tl-sm bg-slate-50 p-3 text-sm text-slate-700">
-                    {real ? "—" : "No data found · API pending"}
+                    {real ? "—" : "API not available"}
                     <p className="mt-1 text-[11px] text-slate-400">{c.workers?.[0]} · {c.updatedAt}</p>
                   </div>
                 </div>

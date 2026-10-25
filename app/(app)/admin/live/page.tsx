@@ -3,7 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Building, ClipboardList, HardHat } from "lucide-react";
-import { COMPLAINTS, SITES, WORKERS } from "@/lib/data";
+import { api, rowsOf, num } from "@/lib/api";
+import { useApi } from "@/lib/use-api";
+import { projector, toWorker } from "@/lib/worker-map";
+import { statusFromApi } from "@/lib/api";
 import { STATUS_META } from "@/lib/workflow";
 import { WORKER_STATUS } from "@/lib/worker-status";
 import { cn } from "@/lib/utils";
@@ -16,15 +19,20 @@ export default function LiveTrackingPage() {
   const [site, setSite] = useState("");
   const [sel, setSel] = useState<string | null>(null);
 
-  const workers = WORKERS.filter((w) => !site || w.site === site);
-  const complaints = COMPLAINTS.filter((c) => !["closed", "rejected"].includes(c.status) && (!site || c.site === site));
+  const dash = useApi(() => api.getAdminDashboard());
+  const buildings = useApi(() => api.getBuildings());
+  const rawWorkers = rowsOf(dash.data?.workers).map(toWorker);
+  const rawComplaints = (dash.data?.map_complaints ?? []).map((c) => ({ ...c, lat: num(c.latitude), lng: num(c.longitude), status: statusFromApi(c.status) }));
+  const proj = projector([...rawWorkers, ...rawComplaints]);
+  const workers = rawWorkers.filter((w) => !site || w.site === site).map((w) => ({ ...w, ...proj(w.lat, w.lng) }));
+  const complaints = rawComplaints.filter((c) => !["closed", "rejected"].includes(c.status) && (!site || c.building_name === site)).map((c) => ({ ...c, id: c.complaint_no, ref: c.complaint_id, ...proj(c.lat, c.lng) }));
 
   const points: MapPoint[] = [
     ...(layer !== "complaints"
       ? workers.map((w) => ({ id: w.id, x: w.x, y: w.y, kind: "worker" as const, tone: WORKER_STATUS[w.status].tone, label: w.name, sub: `${w.status} · ${w.lastPing}`, live: w.status !== "Offline" }))
       : []),
     ...(layer !== "workers"
-      ? complaints.map((c, i) => ({ id: c.id, x: 10 + ((i * 29) % 82), y: 12 + ((i * 17) % 76), kind: "complaint" as const, tone: c.slaRisk ? ("red" as const) : ("violet" as const), label: `${c.id} · ${STATUS_META[c.status].label}`, sub: c.title }))
+      ? complaints.map((c) => ({ id: c.id, x: c.x, y: c.y, kind: "complaint" as const, tone: "violet" as const, label: `${c.id} · ${STATUS_META[c.status].label}`, sub: c.title }))
       : []),
   ];
 
@@ -53,8 +61,8 @@ export default function LiveTrackingPage() {
         />
         <Select value={site} onChange={(e) => setSite(e.target.value)} className="w-56">
           <option value="">All sites</option>
-          {SITES.map((s) => (
-            <option key={s.id}>{s.name}</option>
+          {buildings.data?.map((s) => (
+            <option key={s.id} value={s.name}>{s.name}</option>
           ))}
         </Select>
       </div>
@@ -103,7 +111,7 @@ export default function LiveTrackingPage() {
               {complaints.length === 0 && <li><NoData /></li>}
               {complaints.map((c) => (
                 <li key={c.id}>
-                  <Link href={`/complaints/${c.id}`} className="block px-4 py-2.5 hover:bg-slate-50">
+                  <Link href={`/complaints/${c.ref}`} className="block px-4 py-2.5 hover:bg-slate-50">
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-mono text-[11px] font-semibold text-brand-700">{c.id}</span>
                       <StatusBadge status={c.status} />

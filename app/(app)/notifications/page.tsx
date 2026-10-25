@@ -45,7 +45,7 @@ export default function NotificationsPage() {
             />
           </div>
           {groups.length === 0 ? (
-            <EmptyState icon={BellOff} title="No data found · API pending" text="Notifications will appear here once the notification API is connected." />
+            <EmptyState icon={BellOff} title="API not available" text="No notification API is available yet." />
           ) : (
             groups.map((g) => (
               <div key={g.day}>
@@ -101,7 +101,7 @@ export default function NotificationsPage() {
           <Card>
             <CardHeader title="Registered devices" subtitle="Receiving push notifications" />
             <ul className="space-y-2 px-5 pb-5">
-              {DEVICES.length === 0 && <li><NoData /></li>}
+              {DEVICES.length === 0 && <li><NoData noApi /></li>}
               {DEVICES.map((d) => (
                 <li key={d.n} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3">
                   <d.i className="size-4 text-slate-500" />

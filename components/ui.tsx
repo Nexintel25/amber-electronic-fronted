@@ -389,17 +389,17 @@ export function KeyValue({ label, children }: { label: string; children: ReactNo
 export const th = "px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase whitespace-nowrap";
 export const td = "px-4 py-3.5 text-sm text-slate-700 whitespace-nowrap";
 
-/** Shown wherever a list, table or chart has no data yet. */
-export function NoData({ className }: { className?: string }) {
-  return <p className={cn("px-5 py-8 text-center text-sm text-slate-400", className)}>No data found · API pending</p>;
+/** Shown wherever a list, table or chart is empty; `noApi` when the backend has no endpoint for it yet. */
+export function NoData({ className, noApi }: { className?: string; noApi?: boolean }) {
+  return <p className={cn("px-5 py-8 text-center text-sm text-slate-400", className)}>{noApi ? "API not available" : "No data found"}</p>;
 }
 
 /** Table-row version of `NoData`. */
-export function NoDataRow({ cols }: { cols: number }) {
+export function NoDataRow({ cols, noApi }: { cols: number; noApi?: boolean }) {
   return (
     <tr>
       <td colSpan={cols} className="px-4 py-10 text-center text-sm text-slate-400">
-        No data found · API pending
+        {noApi ? "API not available" : "No data found"}
       </td>
     </tr>
   );

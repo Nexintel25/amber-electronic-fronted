@@ -45,7 +45,7 @@ export default function HierarchyPage() {
         <Card>
           <CardHeader title="Live organisation tree" subtitle="Admin → Project Manager → Vendor → Worker" icon={Gavel} />
           <div className="space-y-4 px-5 pb-5">
-            {ADMINS.length === 0 && <NoData />}
+            {ADMINS.length === 0 && <NoData noApi />}
             {ADMINS.map((a) => (
               <div key={a.id} className="rounded-2xl border border-slate-200 p-4">
                 <div className="flex items-center gap-3">

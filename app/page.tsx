@@ -333,7 +333,7 @@ function HeroMockup() {
               <p className="text-xs font-semibold">Complaints raised vs resolved</p>
               <p className="text-[10px] text-slate-400">Last 10 days</p>
             </div>
-            {trend.length === 0 && <p className="mt-3 text-center text-[11px] text-slate-400">No data found · API pending</p>}
+            {trend.length === 0 && <p className="mt-3 text-center text-[11px] text-slate-400">API not available</p>}
             <div className="mt-3 flex h-24 items-end gap-1.5 sm:gap-2">
               {trend.map((t) => (
                 <div key={t.day} className="flex h-full flex-1 items-end gap-0.5">
@@ -345,7 +345,7 @@ function HeroMockup() {
           </div>
 
           <div className="divide-y divide-slate-100 rounded-xl border border-slate-100">
-            {recent.length === 0 && <p className="px-3 py-4 text-center text-[11px] text-slate-400">No data found · API pending</p>}
+            {recent.length === 0 && <p className="px-3 py-4 text-center text-[11px] text-slate-400">API not available</p>}
             {recent.map((c) => (
               <div key={c.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
                 <div className="min-w-0">

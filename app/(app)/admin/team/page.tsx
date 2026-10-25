@@ -31,7 +31,7 @@ export default function AdminTeam() {
       />
 
       <div className="grid gap-4 md:grid-cols-2">
-        {PMS.length === 0 && <Card><NoData /></Card>}
+        {PMS.length === 0 && <Card><NoData noApi /></Card>}
         {PMS.map((p) => (
           <Card key={p.id} className="p-5">
             <div className="flex items-center gap-3">
@@ -71,7 +71,7 @@ export default function AdminTeam() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {creators.length === 0 && <NoDataRow cols={3} />}
+              {creators.length === 0 && <NoDataRow cols={3} noApi />}
               {creators.map((u) => (
                 <tr key={u.id} className="hover:bg-slate-50/60">
                   <td className={td}>

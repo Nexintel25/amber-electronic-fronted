@@ -44,10 +44,10 @@ export function Legend({ items }: { items: { label: string; color: string }[] })
   );
 }
 
-function NoData({ height }: { height: number }) {
+function NoData({ height, noApi }: { height: number; noApi?: boolean }) {
   return (
     <div className="grid place-items-center rounded-xl border border-dashed border-slate-200 text-sm text-slate-400" style={{ height }}>
-      No data found · API pending
+      {noApi ? "API not available" : "No data found"}
     </div>
   );
 }
@@ -57,13 +57,15 @@ export function TrendArea({
   xKey,
   series,
   height = 260,
+  noApi,
 }: {
   data: Record<string, string | number>[];
   xKey: string;
   series: { key: string; label: string; color: string }[];
   height?: number;
+  noApi?: boolean;
 }) {
-  if (!data.length) return <NoData height={height} />;
+  if (!data.length) return <NoData height={height} noApi={noApi} />;
   return (
     <div style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
@@ -106,6 +108,7 @@ export function Bars({
   height = 260,
   layout = "horizontal",
   unit,
+  noApi,
 }: {
   data: Record<string, string | number>[];
   xKey: string;
@@ -113,8 +116,9 @@ export function Bars({
   height?: number;
   layout?: "horizontal" | "vertical";
   unit?: string;
+  noApi?: boolean;
 }) {
-  if (!data.length) return <NoData height={height} />;
+  if (!data.length) return <NoData height={height} noApi={noApi} />;
   const vertical = layout === "vertical";
   return (
     <div style={{ height }}>
@@ -154,14 +158,16 @@ export function Donut({
   centerLabel,
   centerValue,
   colors = SERIES,
+  noApi,
 }: {
   data: { name: string; value: number }[];
   height?: number;
   centerLabel?: string;
   centerValue?: string;
   colors?: string[];
+  noApi?: boolean;
 }) {
-  if (!data.length) return <NoData height={height} />;
+  if (!data.length) return <NoData height={height} noApi={noApi} />;
   return (
     <div className="relative" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">

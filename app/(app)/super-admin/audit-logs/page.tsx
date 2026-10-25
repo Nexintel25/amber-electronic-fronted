@@ -84,7 +84,7 @@ export default function AuditLogsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {rows.length === 0 && <NoDataRow cols={7} />}
+              {rows.length === 0 && <NoDataRow cols={7} noApi />}
               {rows.map((a) => (
                 <tr key={a.id} className={cn("hover:bg-slate-50/60", a.severity === "critical" && "bg-rose-50/30")}>
                   <td className={cn(td, "font-mono text-xs text-slate-500")}>{a.time}</td>

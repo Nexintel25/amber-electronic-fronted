@@ -3,66 +3,30 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Battery, Clock, Crosshair, Loader2, MessageSquare, Phone, Search, Signal, TriangleAlert, WifiOff } from "lucide-react";
-import { api, num, pick, rowsOf, text, type Row } from "@/lib/api";
+import { api, pick, rowsOf, text } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
+import { projector, toWorker, type MapWorker } from "@/lib/worker-map";
 import { WORKER_STATUS, type WorkerStatus } from "@/lib/worker-status";
 import { cn } from "@/lib/utils";
 import { Avatar, Badge, Button, Card, EmptyState, Input, LiveDot, NoData, PageHeader } from "@/components/ui";
 import { Tabs } from "@/components/interactive";
 import { LiveMap, MapLegend } from "@/components/live-map";
 
-type W = {
-  id: string; name: string; skill: string; team: string; status: WorkerStatus; battery: number | undefined; lastPing: string;
-  lat?: number; lng?: number; x: number; y: number; task?: string;
-};
-
-const toStatus = (v: unknown): WorkerStatus => {
-  const t = String(v ?? "").toLowerCase();
-  if (/task|busy|progress|work/.test(t)) return "On Task";
-  if (/travel|route|transit/.test(t)) return "Travelling";
-  if (/avail|idle|free|online/.test(t)) return "Available";
-  return "Offline";
-};
-
-/** Worker row of the PM dashboard → UI model (field names are not fixed, so several spellings are tried). */
-function toWorker(r: Row): W {
-  return {
-    id: String(pick(r, "worker_id", "user_id", "id") ?? ""),
-    name: text(pick(r, "worker_name", "name")),
-    skill: text(pick(r, "skill", "designation", "vendor_name")),
-    team: text(pick(r, "team", "team_name")),
-    status: toStatus(pick(r, "status", "work_status", "availability")),
-    battery: num(pick(r, "battery", "battery_pct", "battery_level")),
-    lastPing: text(pick(r, "last_ping", "last_seen", "last_seen_at", "last_location_at")),
-    lat: num(pick(r, "latitude", "lat")),
-    lng: num(pick(r, "longitude", "lng")),
-    x: 50,
-    y: 50,
-    task: pick(r, "complaint_no", "current_complaint_no") as string | undefined,
-  };
-}
-
-/** Lat/lng → the 0–100 canvas the map uses, fitted to the workers that have a position. */
-function project(list: W[]): W[] {
-  const pts = list.filter((w) => w.lat != null && w.lng != null);
-  if (!pts.length) return list;
-  const lats = pts.map((w) => w.lat!), lngs = pts.map((w) => w.lng!);
-  const [la0, la1, ln0, ln1] = [Math.min(...lats), Math.max(...lats), Math.min(...lngs), Math.max(...lngs)];
-  const at = (v: number, lo: number, hi: number) => (hi === lo ? 50 : 10 + ((v - lo) / (hi - lo)) * 80);
-  return list.map((w) => (w.lat != null && w.lng != null ? { ...w, x: at(w.lng, ln0, ln1), y: 100 - at(w.lat, la0, la1) } : w));
-}
+type W = MapWorker;
 
 export default function MonitoringPage() {
   const [filter, setFilter] = useState<"all" | WorkerStatus>("all");
   const [q, setQ] = useState("");
   const [sel, setSel] = useState<string | null>(null);
   const dash = useApi(() => api.getPmDashboard());
-  const WORKERS = project(rowsOf(dash.data?.workers).map(toWorker));
+  const raw = rowsOf(dash.data?.workers).map(toWorker);
+  const proj = projector(raw);
+  const WORKERS = raw.map((w) => ({ ...w, ...proj(w.lat, w.lng) }));
   const list = WORKERS.filter((w) => (filter === "all" || w.status === filter) && w.name.toLowerCase().includes(q.toLowerCase()));
   const real = WORKERS.find((x) => x.id === sel);
   const detail = useApi(() => (sel ? api.getPmWorkerDetail(Number(sel)) : Promise.resolve(null)), [sel]);
   const d = detail.data;
-  const w: W = real ?? { id: "", name: "—", skill: "—", team: "—", status: "Offline", battery: undefined, lastPing: "—", x: 0, y: 0 };
+  const w: W = real ?? { id: "", name: "—", skill: "—", team: "—", site: "", status: "Offline", battery: undefined, lastPing: "—", x: 0, y: 0 };
   const name = text(pick(d, "name", "worker_name"), w.name);
   const complaintNo = pick(d, "complaint_no", "current_complaint_no") as string | undefined;
   const task = complaintNo ? { id: String(pick(d, "complaint_id") ?? complaintNo), no: complaintNo, title: text(pick(d, "complaint_title", "title")), location: text(pick(d, "area_location", "location")) } : undefined;
