@@ -1,4 +1,4 @@
-import type { ReportResult } from "./reports";
+export type ReportResult = { title: string; columns: string[]; rows: string[][]; summary: { label: string; value: string }[] };
 
 const stamp = () => new Date().toISOString().slice(0, 10);
 const fileBase = (r: ReportResult) => `${r.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${stamp()}`;

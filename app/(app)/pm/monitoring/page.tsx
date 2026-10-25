@@ -2,33 +2,71 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Battery, Clock, Crosshair, MessageSquare, Phone, Search, Signal, WifiOff } from "lucide-react";
-import { COMPLAINTS, PMS, WORKERS as ALL_WORKERS, type WorkerStatus } from "@/lib/data";
-import { WORKER_STATUS } from "@/lib/worker-status";
+import { Battery, Clock, Crosshair, Loader2, MessageSquare, Phone, Search, Signal, TriangleAlert, WifiOff } from "lucide-react";
+import { api, num, pick, rowsOf, text, type Row } from "@/lib/api";
+import { useApi } from "@/lib/use-api";
+import { WORKER_STATUS, type WorkerStatus } from "@/lib/worker-status";
 import { cn } from "@/lib/utils";
-import { Avatar, Badge, Button, Card, Input, LiveDot, NoData, PageHeader } from "@/components/ui";
+import { Avatar, Badge, Button, Card, EmptyState, Input, LiveDot, NoData, PageHeader } from "@/components/ui";
 import { Tabs } from "@/components/interactive";
 import { LiveMap, MapLegend } from "@/components/live-map";
-import { GeoPhoto } from "@/components/geo-photo";
 
-/** Only the workers of the vendors this Project Manager is responsible for. */
-const WORKERS = ALL_WORKERS.filter((w) => (PMS[0]?.vendors ?? []).includes(w.vendor));
-
-const NO_WORKER: (typeof ALL_WORKERS)[number] = {
-  id: "", name: "—", vendor: "", skill: "—", team: "—", site: "", status: "Offline", battery: 0, lastPing: "—", x: 0, y: 0,
-  tasksToday: 0, completed: 0, avgTime: "—", ftf: 0, photoCompliance: 0, rating: 0, distance: "—",
+type W = {
+  id: string; name: string; skill: string; team: string; status: WorkerStatus; battery: number | undefined; lastPing: string;
+  lat?: number; lng?: number; x: number; y: number; task?: string;
 };
 
-const ACTIVITY: { i: typeof Crosshair; t: string; d: string }[] = [];
+const toStatus = (v: unknown): WorkerStatus => {
+  const t = String(v ?? "").toLowerCase();
+  if (/task|busy|progress|work/.test(t)) return "On Task";
+  if (/travel|route|transit/.test(t)) return "Travelling";
+  if (/avail|idle|free|online/.test(t)) return "Available";
+  return "Offline";
+};
+
+/** Worker row of the PM dashboard → UI model (field names are not fixed, so several spellings are tried). */
+function toWorker(r: Row): W {
+  return {
+    id: String(pick(r, "worker_id", "user_id", "id") ?? ""),
+    name: text(pick(r, "worker_name", "name")),
+    skill: text(pick(r, "skill", "designation", "vendor_name")),
+    team: text(pick(r, "team", "team_name")),
+    status: toStatus(pick(r, "status", "work_status", "availability")),
+    battery: num(pick(r, "battery", "battery_pct", "battery_level")),
+    lastPing: text(pick(r, "last_ping", "last_seen", "last_seen_at", "last_location_at")),
+    lat: num(pick(r, "latitude", "lat")),
+    lng: num(pick(r, "longitude", "lng")),
+    x: 50,
+    y: 50,
+    task: pick(r, "complaint_no", "current_complaint_no") as string | undefined,
+  };
+}
+
+/** Lat/lng → the 0–100 canvas the map uses, fitted to the workers that have a position. */
+function project(list: W[]): W[] {
+  const pts = list.filter((w) => w.lat != null && w.lng != null);
+  if (!pts.length) return list;
+  const lats = pts.map((w) => w.lat!), lngs = pts.map((w) => w.lng!);
+  const [la0, la1, ln0, ln1] = [Math.min(...lats), Math.max(...lats), Math.min(...lngs), Math.max(...lngs)];
+  const at = (v: number, lo: number, hi: number) => (hi === lo ? 50 : 10 + ((v - lo) / (hi - lo)) * 80);
+  return list.map((w) => (w.lat != null && w.lng != null ? { ...w, x: at(w.lng, ln0, ln1), y: 100 - at(w.lat, la0, la1) } : w));
+}
 
 export default function MonitoringPage() {
   const [filter, setFilter] = useState<"all" | WorkerStatus>("all");
   const [q, setQ] = useState("");
   const [sel, setSel] = useState<string | null>(null);
+  const dash = useApi(() => api.getPmDashboard());
+  const WORKERS = project(rowsOf(dash.data?.workers).map(toWorker));
   const list = WORKERS.filter((w) => (filter === "all" || w.status === filter) && w.name.toLowerCase().includes(q.toLowerCase()));
   const real = WORKERS.find((x) => x.id === sel);
-  const w = real ?? NO_WORKER;
-  const task = w?.task ? COMPLAINTS.find((c) => c.id === w.task) : undefined;
+  const detail = useApi(() => (sel ? api.getPmWorkerDetail(Number(sel)) : Promise.resolve(null)), [sel]);
+  const d = detail.data;
+  const w: W = real ?? { id: "", name: "—", skill: "—", team: "—", status: "Offline", battery: undefined, lastPing: "—", x: 0, y: 0 };
+  const name = text(pick(d, "name", "worker_name"), w.name);
+  const complaintNo = pick(d, "complaint_no", "current_complaint_no") as string | undefined;
+  const task = complaintNo ? { id: String(pick(d, "complaint_id") ?? complaintNo), no: complaintNo, title: text(pick(d, "complaint_title", "title")), location: text(pick(d, "area_location", "location")) } : undefined;
+  const activity = rowsOf(pick(d, "activity", "timeline", "today_activity", "history"));
   const count = (s: WorkerStatus) => WORKERS.filter((x) => x.status === s).length;
 
   return (
@@ -65,8 +103,10 @@ export default function MonitoringPage() {
               <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find worker" className="pl-9" />
             </div>
           </div>
+          {dash.loading && <div className="grid place-items-center py-6 text-slate-400"><Loader2 className="size-5 animate-spin" /></div>}
+          {dash.error && <EmptyState icon={TriangleAlert} title="Could not load workers" text={dash.error} action={<Button onClick={dash.reload}>Try again</Button>} />}
           <ul className="max-h-[560px] divide-y divide-slate-100 overflow-y-auto">
-            {list.length === 0 && <li><NoData /></li>}
+            {!dash.loading && list.length === 0 && <li><NoData /></li>}
             {list.map((x) => (
               <li key={x.id}>
                 <button onClick={() => setSel(x.id)} className={cn("flex w-full items-center gap-3 px-4 py-3 text-left", sel === x.id ? "bg-brand-50/60" : "hover:bg-slate-50")}>
@@ -92,7 +132,6 @@ export default function MonitoringPage() {
             onSelect={setSel}
             points={[
               ...list.map((x) => ({ id: x.id, x: x.x, y: x.y, kind: "worker" as const, tone: WORKER_STATUS[x.status].tone, label: x.name, sub: `${x.status} · ${x.lastPing}`, live: x.status !== "Offline" })),
-              ...COMPLAINTS.filter((c) => !["closed", "rejected"].includes(c.status)).slice(0, 8).map((c, i) => ({ id: c.id, x: 12 + ((i * 23) % 80), y: 15 + ((i * 31) % 70), kind: "complaint" as const, tone: c.slaRisk ? ("red" as const) : ("violet" as const), label: c.id, sub: c.title })),
             ]}
           />
           <div className="px-2 pt-3">
@@ -103,16 +142,16 @@ export default function MonitoringPage() {
         {(
           <Card className="xl:self-start">
             <div className="flex items-center gap-3 border-b border-slate-100 p-5">
-              <Avatar name={w.name} size="lg" />
+              <Avatar name={name} size="lg" />
               <div className="min-w-0 flex-1">
-                <p className="font-bold text-slate-900">{w.name}</p>
+                <p className="font-bold text-slate-900">{name}</p>
                 <p className="text-xs text-slate-500">{w.skill} · Team {w.team}</p>
                 {real ? <Badge className={cn("mt-1.5", WORKER_STATUS[w.status].badge)} dot={WORKER_STATUS[w.status].dot}>{w.status}</Badge> : <NoData className="px-0 py-1 text-left" />}
               </div>
             </div>
             <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100 text-center">
               {[
-                { i: Battery, v: real ? `${w.battery}%` : "—", l: "Battery", bad: !!real && w.battery < 20 },
+                { i: Battery, v: w.battery != null ? `${w.battery}%` : "—", l: "Battery", bad: w.battery != null && w.battery < 20 },
                 { i: w.status === "Offline" ? WifiOff : Signal, v: !real ? "—" : w.status === "Offline" ? "Offline" : "4G", l: "Network", bad: !!real && w.status === "Offline" },
                 { i: Clock, v: w.lastPing, l: "Last ping", bad: false },
               ].map((s) => (
@@ -127,34 +166,28 @@ export default function MonitoringPage() {
               {task ? (
                 <Link href={`/complaints/${task.id}`} className="block rounded-xl border border-slate-200 p-3 hover:bg-slate-50">
                   <p className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase">Current task</p>
-                  <p className="mt-1 font-mono text-xs font-bold text-brand-700">{task.id}</p>
+                  <p className="mt-1 font-mono text-xs font-bold text-brand-700">{task.no}</p>
                   <p className="text-[13.5px] font-semibold text-slate-900">{task.title}</p>
                   <p className="text-xs text-slate-500">{task.location}</p>
                 </Link>
               ) : (
-                <p className="rounded-xl bg-slate-50 p-3 text-[13px] text-slate-500">No active task — available for the vendor to assign.</p>
+                <p className="rounded-xl bg-slate-50 p-3 text-[13px] text-slate-500">{detail.loading && sel ? "Loading…" : "No active task."}</p>
               )}
               <div>
                 <p className="mb-2 text-[13px] font-semibold text-slate-700">Today’s activity</p>
                 <ol className="space-y-2.5">
-                  {ACTIVITY.length === 0 && <li><NoData className="px-0 py-3 text-left" /></li>}
-                  {ACTIVITY.map((a) => (
-                    <li key={a.t} className="flex items-center gap-2.5 text-[13px]">
-                      <a.i className="size-4 text-brand-500" />
-                      <span className="flex-1 text-slate-700">{a.t}</span>
-                      <span className="text-xs text-slate-400">{a.d}</span>
+                  {activity.length === 0 && <li><NoData className="px-0 py-3 text-left" /></li>}
+                  {activity.map((a, i) => (
+                    <li key={i} className="flex items-center gap-2.5 text-[13px]">
+                      <Crosshair className="size-4 text-brand-500" />
+                      <span className="flex-1 text-slate-700">{text(pick(a, "title", "description", "event"))}</span>
+                      <span className="text-xs text-slate-400">{text(pick(a, "time", "event_time", "created_at"))}</span>
                     </li>
                   ))}
                 </ol>
               </div>
-              {task && (
-                <div className="grid grid-cols-2 gap-2">
-                  <GeoPhoto kind="before" seed={0} compact lat={task.lat} lng={task.lng} />
-                  <GeoPhoto kind="before" seed={1} compact lat={task.lat} lng={task.lng} />
-                </div>
-              )}
               <div className="grid grid-cols-2 gap-2">
-                <Button variant="secondary"><Phone /> Call</Button>
+                <Button variant="secondary" disabled={!pick(d, "phone", "worker_phone")} onClick={() => (window.location.href = `tel:${pick(d, "phone", "worker_phone")}`)}><Phone /> Call</Button>
                 <Button variant="secondary"><MessageSquare /> Message</Button>
               </div>
             </div>

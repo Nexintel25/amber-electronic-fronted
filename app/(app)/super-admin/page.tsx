@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Building, ClipboardList, HardHat, ScrollText, Settings, UserPlus, Users } from "lucide-react";
+import { Building, ClipboardList, HardHat, ScrollText, UserPlus, Users } from "lucide-react";
 import { api } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { Card, CardHeader, EmptyState, LinkButton, PageHeader, StatCard } from "@/components/ui";
@@ -19,9 +19,6 @@ export default function SuperAdminOverview() {
         description="Manage users and roles, platform configuration, sites, subscription and the complete audit trail."
         actions={
           <>
-            <LinkButton href="/super-admin/settings" variant="secondary">
-              <Settings /> Configurations
-            </LinkButton>
             <LinkButton href="/super-admin/users">
               <UserPlus /> Add user
             </LinkButton>

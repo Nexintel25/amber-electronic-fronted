@@ -1,4 +1,3 @@
-import { VENDORS } from "@/lib/data";
 import { PageHeader } from "@/components/ui";
 import { ReportViewer } from "@/components/report-viewer";
 
@@ -10,7 +9,7 @@ export default function ReportsPage() {
         title="Reports"
         description="Choose a report type, narrow it by date and vendor, then search. Download the result as PDF or Excel."
       />
-      <ReportViewer vendors={VENDORS.map((v) => v.name)} />
+      <ReportViewer />
     </>
   );
 }

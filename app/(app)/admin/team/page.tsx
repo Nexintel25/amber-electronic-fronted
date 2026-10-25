@@ -5,9 +5,11 @@ import { Plus, Truck } from "lucide-react";
 import { PMS, USERS } from "@/lib/data";
 import { Avatar, Badge, Button, Card, NoData, NoDataRow, PageHeader, td, th } from "@/components/ui";
 import { CreateUserModal } from "@/components/create-user-modal";
+import { AssignVendorsModal } from "@/components/assign-vendors-modal";
 
 export default function AdminTeam() {
   const [open, setOpen] = useState(false);
+  const [assign, setAssign] = useState(false);
   const creators = USERS.filter((u) => u.role === "Complaint Creator");
 
   return (
@@ -17,9 +19,14 @@ export default function AdminTeam() {
         title="Project Managers & creators"
         description="You create the Project Managers (who in turn create and own the vendors) and the people who raise complaints."
         actions={
-          <Button onClick={() => setOpen(true)}>
-            <Plus /> Add user
-          </Button>
+          <>
+            <Button variant="secondary" onClick={() => setAssign(true)}>
+              <Truck /> Assign vendors to PM
+            </Button>
+            <Button onClick={() => setOpen(true)}>
+              <Plus /> Add user
+            </Button>
+          </>
         }
       />
 
@@ -86,6 +93,7 @@ export default function AdminTeam() {
         </div>
       </Card>
 
+      <AssignVendorsModal open={assign} onClose={() => setAssign(false)} />
       <CreateUserModal open={open} onClose={() => setOpen(false)} allowedRoles={["Project Manager", "Complaint Creator"]} />
     </>
   );

@@ -11,25 +11,26 @@ import {
   MessageSquare,
   Phone,
   PlayCircle,
-  Send,
   ShieldCheck,
-  Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Avatar, Badge, Button, Card, CardHeader, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
-import { useToast } from "@/components/interactive";
+import { Avatar, Card, CardHeader, PageHeader } from "@/components/ui";
+import { useSession } from "@/lib/session";
+import { AdminTickets, MyTickets, TicketForm } from "@/components/support-tickets";
 
 const FAQ = [
   { q: "What happens if a worker has no internet at site?", a: "The worker app is offline capable. Check-ins, photos and completion are saved on the device and synced automatically once connectivity returns — timestamps and GPS are preserved." },
   { q: "How is photo location verified?", a: "Every photo is captured in-app with GPS coordinates and a timestamp burned into the image. The platform checks the distance to the complaint pin against the site’s geo-fence and flags anything outside it." },
   { q: "How many users can we add per site?", a: "The plan includes up to 20 concurrent users per site. Additional users are chargeable separately — contact your account manager." },
-  { q: "Can we request new features?", a: "Yes. Raise a customization request from Subscription. Customizations beyond the agreed scope are subject to additional charges." },
+  { q: "Can we request new features?", a: "Yes. Contact your account manager. Customizations beyond the agreed scope are subject to additional charges." },
   { q: "When is the renewal invoice raised?", a: "Annual renewal invoices are raised 30 days prior to the renewal date. Non-renewal results in suspension of cloud services and platform access." },
 ];
 
 export default function SupportPage() {
   const [open, setOpen] = useState<number | null>(0);
-  const toast = useToast();
+  const [ticketTick, setTicketTick] = useState(0);
+  const role = useSession()?.user.role;
+  const isAdmin = !!role && ["admin", "super_admin"].includes(role.toLowerCase().replace(/[\s-]/g, "_"));
 
   return (
     <>
@@ -61,43 +62,7 @@ export default function SupportPage() {
         <div className="space-y-6">
           <Card>
             <CardHeader title="Raise a support ticket" icon={MessageSquare} />
-            <form
-              className="grid gap-4 px-5 pb-5 sm:grid-cols-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                toast.show("Ticket SUP-1042 created — we’ll respond shortly");
-              }}
-            >
-              <Field label="Subject" required className="sm:col-span-2">
-                <Input placeholder="Briefly describe the issue" />
-              </Field>
-              <Field label="Area">
-                <Select>
-                  <option>Web dashboard</option>
-                  <option>Worker mobile app</option>
-                  <option>PM / Vendor mobile app</option>
-                  <option>Notifications</option>
-                  <option>Reports</option>
-                  <option>Access / login</option>
-                </Select>
-              </Field>
-              <Field label="Severity">
-                <Select>
-                  <option>Low — question</option>
-                  <option>Medium — feature not working</option>
-                  <option>High — blocking my work</option>
-                  <option>Critical — platform down</option>
-                </Select>
-              </Field>
-              <Field label="Details" className="sm:col-span-2">
-                <Textarea placeholder="Steps to reproduce, screenshots, complaint IDs…" className="min-h-28" />
-              </Field>
-              <div className="flex justify-end sm:col-span-2">
-                <Button type="submit">
-                  <Send /> Submit ticket
-                </Button>
-              </div>
-            </form>
+            <TicketForm onCreated={() => setTicketTick((t) => t + 1)} />
           </Card>
 
           <Card>
@@ -161,26 +126,14 @@ export default function SupportPage() {
             </ul>
           </Card>
 
-          <Card>
-            <CardHeader title="My tickets" icon={Wrench} />
-            <ul className="space-y-2 px-5 pb-5">
-              {[
-                { id: "SUP-1039", t: "Report export timing out", s: "Resolved" },
-                { id: "SUP-1035", t: "Add new vendor organisation", s: "In progress" },
-              ].map((t) => (
-                <li key={t.id} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3">
-                  <div className="flex-1">
-                    <p className="font-mono text-[11px] text-slate-400">{t.id}</p>
-                    <p className="text-[13px] font-semibold text-slate-800">{t.t}</p>
-                  </div>
-                  <Badge className={t.s === "Resolved" ? "bg-emerald-50 text-emerald-700 ring-emerald-600/15" : "bg-amber-50 text-amber-700 ring-amber-600/20"}>{t.s}</Badge>
-                </li>
-              ))}
-            </ul>
-          </Card>
+          <MyTickets refreshKey={ticketTick} />
         </div>
       </div>
-      {toast.node}
+      {isAdmin && (
+        <div className="mt-6">
+          <AdminTickets />
+        </div>
+      )}
     </>
   );
 }

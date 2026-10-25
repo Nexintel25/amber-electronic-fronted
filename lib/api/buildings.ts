@@ -1,4 +1,5 @@
 import { currentUserId, post } from "./client";
+import type { Row } from "./shape";
 import type { Building } from "./types";
 
 /** Sites the signed-in user can see. */
@@ -18,3 +19,9 @@ export const createBuildingWithUser = (b: {
   password: string;
   vendor_id: number | null;
 }) => post<unknown>("buildings/createBuildingWithUser", { ...b, created_by: currentUserId() });
+
+/** Full detail of one worker for the Project Manager's monitoring view. */
+export const getPmWorkerDetail = (workerId: number) => post<Row>("buildings/getPmWorkerDetail", { user_id: currentUserId(), worker_id: workerId });
+
+/** Admin: replaces the set of vendors a Project Manager is responsible for. */
+export const setPmVendors = (pmId: number, vendorIds: number[]) => post<unknown>("buildings/setPmVendors", { user_id: currentUserId(), pm_id: pmId, vendor_ids: vendorIds });

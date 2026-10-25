@@ -7,7 +7,6 @@ import {
   ChartColumn,
   ClipboardCheck,
   ClipboardList,
-  CreditCard,
   FileChartColumn,
   FilePlus,
   Gauge,
@@ -24,7 +23,6 @@ import {
   Network,
   Radar,
   ScrollText,
-  Settings,
   ShieldCheck,
   Timer,
   Truck,
@@ -52,7 +50,7 @@ const common: NavSection = {
   title: "General",
   items: [
     { label: "All Complaints", href: "/complaints", icon: ClipboardList },
-    { label: "SLA Tracker", href: "/sla", icon: Timer },
+    { label: "SLA Report", href: "/sla/report", icon: Timer },
     { label: "Notifications", href: "/notifications", icon: Bell, badge: "3" },
     { label: "Help & Support", href: "/support", icon: LifeBuoy },
   ],
@@ -73,7 +71,7 @@ export const ROLES: Record<RoleKey, RoleDef> = {
           { label: "Dashboard", href: "/creator", icon: LayoutDashboard },
           { label: "Raise Complaint", href: "/creator/new", icon: FilePlus },
           { label: "Track My Complaints", href: "/creator/complaints", icon: ListChecks },
-          { label: "SLA Tracker", href: "/sla", icon: Timer },
+          { label: "SLA Report", href: "/sla/report", icon: Timer },
         ],
       },
       {
@@ -188,9 +186,7 @@ export const ROLES: Record<RoleKey, RoleDef> = {
           { label: "User Management", href: "/super-admin/users", icon: Users },
           { label: "Roles & Access", href: "/super-admin/roles", icon: KeyRound },
           { label: "Sites", href: "/super-admin/sites", icon: Building },
-          { label: "Configurations", href: "/super-admin/settings", icon: Settings },
           { label: "Audit Logs", href: "/super-admin/audit-logs", icon: ScrollText },
-          { label: "Subscription", href: "/super-admin/subscription", icon: CreditCard },
         ],
       },
       {
