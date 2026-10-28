@@ -8,7 +8,7 @@ import { useApi } from "@/lib/use-api";
 import { cn } from "@/lib/utils";
 import { Avatar, Badge, Button, Card, Input, NoData, NoDataRow, PageHeader, Progress, Select, td, th } from "@/components/ui";
 import { useToast } from "@/components/interactive";
-import { CreateUserModal } from "@/components/create-user-modal";
+import { CreateSiteModal } from "@/components/create-site-modal";
 import type { UserRoleLabel } from "@/lib/roles";
 
 const ROLE_OPTIONS: UserRoleLabel[] = ["Super Admin", "Admin", "Project Manager", "Vendor", "Worker", "Complaint Creator"];
@@ -159,7 +159,7 @@ export default function UsersPage() {
         </div>
       </Card>
 
-      <CreateUserModal open={open} onClose={() => setOpen(false)} allowedRoles={ROLE_OPTIONS.filter((r) => r !== "Super Admin")} defaultRole="Admin" />
+      <CreateSiteModal open={open} onClose={() => setOpen(false)} onCreated={buildings.reload} />
       {toast.node}
     </>
   );
