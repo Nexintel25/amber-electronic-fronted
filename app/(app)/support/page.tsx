@@ -30,7 +30,9 @@ export default function SupportPage() {
   const [open, setOpen] = useState<number | null>(0);
   const [ticketTick, setTicketTick] = useState(0);
   const role = useSession()?.user.role;
-  const isAdmin = !!role && ["admin", "super_admin"].includes(role.toLowerCase().replace(/[\s-]/g, "_"));
+  const key = role?.toLowerCase().replace(/[\s-]/g, "_");
+  const isSuperAdmin = key === "super_admin" || key === "superadmin";
+  const isAdmin = key === "admin";
 
   return (
     <>
@@ -60,10 +62,12 @@ export default function SupportPage() {
 
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
-          <Card>
-            <CardHeader title="Raise a support ticket" icon={MessageSquare} />
-            <TicketForm onCreated={() => setTicketTick((t) => t + 1)} />
-          </Card>
+          {!isSuperAdmin && (
+            <Card>
+              <CardHeader title="Raise a support ticket" icon={MessageSquare} />
+              <TicketForm onCreated={() => setTicketTick((t) => t + 1)} />
+            </Card>
+          )}
 
           <Card>
             <CardHeader title="Frequently asked questions" icon={BookOpen} />
@@ -126,12 +130,12 @@ export default function SupportPage() {
             </ul>
           </Card>
 
-          <MyTickets refreshKey={ticketTick} />
+          {!isSuperAdmin && <MyTickets refreshKey={ticketTick} />}
         </div>
       </div>
-      {isAdmin && (
+      {(isAdmin || isSuperAdmin) && (
         <div className="mt-6">
-          <AdminTickets />
+          <AdminTickets canUpdate={isSuperAdmin} />
         </div>
       )}
     </>

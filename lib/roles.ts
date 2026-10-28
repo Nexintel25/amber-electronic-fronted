@@ -156,17 +156,10 @@ export const ROLES: Record<RoleKey, RoleDef> = {
         title: "Monitoring",
         items: [
           { label: "Overview", href: "/admin", icon: LayoutDashboard },
-          { label: "Photo Review & Issues", href: "/admin/photo-review", icon: Camera, badge: "3" },
-          { label: "Live Tracking", href: "/admin/live", icon: Map },
           { label: "Live Status Board", href: "/admin/board", icon: SquareKanban },
-          { label: "Analytics", href: "/admin/analytics", icon: ChartColumn },
           { label: "Reports", href: "/admin/reports", icon: FileChartColumn },
           { label: "Penalty Report", href: "/admin/penalties", icon: Gavel },
         ],
-      },
-      {
-        title: "My Team",
-        items: [{ label: "Project Managers & Creators", href: "/admin/team", icon: Network }],
       },
       common,
     ],

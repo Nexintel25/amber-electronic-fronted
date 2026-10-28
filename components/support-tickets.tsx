@@ -139,8 +139,8 @@ export function MyTickets({ refreshKey = 0 }: { refreshKey?: number }) {
   );
 }
 
-/** Admin: all tickets with filters (adminGetTickets) and a status update (updateTicketStatus). */
-export function AdminTickets() {
+/** All tickets with filters (adminGetTickets). Only Super Admin gets the status update (updateTicketStatus). */
+export function AdminTickets({ canUpdate = false }: { canUpdate?: boolean }) {
   const toast = useToast();
   const [f, setF] = useState({ status: "", severity: "", area: "", search: "", from_date: "", to_date: "" });
   const [applied, setApplied] = useState(f);
@@ -173,7 +173,7 @@ export function AdminTickets() {
 
   return (
     <Card>
-      <CardHeader title="All support tickets" subtitle="Admin view — filter, then update a ticket’s status" icon={Wrench} />
+      <CardHeader title="All support tickets" subtitle={canUpdate ? "Filter, then update a ticket’s status" : "Admin view — filter and review tickets"} icon={Wrench} />
       <form
         className="grid gap-3 px-5 pb-4 sm:grid-cols-2 lg:grid-cols-4"
         onSubmit={(e) => {
@@ -223,7 +223,7 @@ export function AdminTickets() {
                 <p className="truncate text-xs text-slate-500">{text(pick(t, "contact_name", "raised_by_name", "user_name"))} · {text(pick(t, "created_at"))}</p>
               </div>
               <Badge className={statusTone(s)}>{s || "—"}</Badge>
-              <Button variant="secondary" size="sm" onClick={() => { setEdit(t); setStatus(s === "resolved" ? "open" : "resolved"); setNote(""); }}>Update</Button>
+              {canUpdate && <Button variant="secondary" size="sm" onClick={() => { setEdit(t); setStatus(s === "resolved" ? "open" : "resolved"); setNote(""); }}>Update</Button>}
             </li>
           );
         })}

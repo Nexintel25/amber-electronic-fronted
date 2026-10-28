@@ -89,7 +89,6 @@ export default function AdminOverview() {
           <CardHeader
             title="Live tracking"
             subtitle="Open complaints with a GPS pin"
-            action={<LinkButton href="/admin/live" size="sm" variant="secondary">Full screen</LinkButton>}
           />
           <div className="px-5 pb-5">
             <LiveMap
