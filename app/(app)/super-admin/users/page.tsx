@@ -9,6 +9,9 @@ import { cn } from "@/lib/utils";
 import { Avatar, Badge, Button, Card, Input, NoData, NoDataRow, PageHeader, Progress, Select, td, th } from "@/components/ui";
 import { useToast } from "@/components/interactive";
 import { CreateSiteModal } from "@/components/create-site-modal";
+import { CreateUserModal } from "@/components/create-user-modal";
+import { CreateVendorModal } from "@/components/create-vendor-modal";
+import { Modal } from "@/components/interactive";
 import type { UserRoleLabel } from "@/lib/roles";
 
 const ROLE_OPTIONS: UserRoleLabel[] = ["Super Admin", "Admin", "Project Manager", "Vendor", "Worker", "Complaint Creator"];
@@ -26,7 +29,7 @@ export default function UsersPage() {
   const [q, setQ] = useState("");
   const [role, setRole] = useState("");
   const [site, setSite] = useState("");
-  const [open, setOpen] = useState(false);
+  const [kind, setKind] = useState<"choose" | "building" | "admin" | "vendor" | null>(null);
   const toast = useToast();
   const dash = useApi(() => api.getAdminDashboard());
   const buildings = useApi(() => api.getBuildings());
@@ -50,7 +53,7 @@ export default function UsersPage() {
         title="User management"
         description="The Super Admin creates every user. Chain of command: Super Admin → Admin → Project Manager → Vendor → Worker — each level then creates the level below it."
         actions={
-          <Button onClick={() => setOpen(true)}>
+          <Button onClick={() => setKind("choose")}>
             <UserPlus /> Add user
           </Button>
         }
@@ -159,7 +162,23 @@ export default function UsersPage() {
         </div>
       </Card>
 
-      <CreateSiteModal open={open} onClose={() => setOpen(false)} onCreated={buildings.reload} />
+      <Modal open={kind === "choose"} onClose={() => setKind(null)} title="Add user" description="What type of user do you want to create?" size="sm">
+        <div className="space-y-2">
+          {([
+            ["building", "Building", "A site together with its sign-in user"],
+            ["admin", "Admin & other roles", "Admin, Project Manager, Worker, Complaint Creator"],
+            ["vendor", "Vendor", "A vendor company with its sign-in user and sites"],
+          ] as const).map(([k, t, d]) => (
+            <button key={k} onClick={() => setKind(k)} className="w-full rounded-xl border border-slate-200 p-3 text-left transition hover:border-brand-300 hover:bg-brand-50/30">
+              <p className="text-sm font-semibold text-slate-900">{t}</p>
+              <p className="text-xs text-slate-500">{d}</p>
+            </button>
+          ))}
+        </div>
+      </Modal>
+      <CreateSiteModal open={kind === "building"} onClose={() => setKind(null)} onCreated={buildings.reload} />
+      <CreateUserModal open={kind === "admin"} onClose={() => setKind(null)} allowedRoles={ROLE_OPTIONS.filter((r) => r !== "Super Admin" && r !== "Vendor")} defaultRole="Admin" />
+      <CreateVendorModal open={kind === "vendor"} onClose={() => setKind(null)} />
       {toast.node}
     </>
   );
