@@ -81,7 +81,7 @@ export default function PhotoReviewPage() {
               <div className="flex flex-col gap-4 border-b border-slate-100 p-5 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <Link href={`/complaints/${c.id}`} className="font-mono text-xs font-bold text-brand-700 hover:underline">{c.id}</Link>
+                    <Link href={`/complaints/${c.ref ?? c.id}`} className="font-mono text-xs font-bold text-brand-700 hover:underline">{c.id}</Link>
                     <PriorityBadge priority={c.priority} />
                     {c.status === "issue_raised" && <span className="inline-flex items-center gap-1 rounded-full bg-fuchsia-50 px-2.5 py-0.5 text-xs font-semibold text-fuchsia-700 ring-1 ring-fuchsia-600/15"><Flag className="size-3" />Issue already raised</span>}
                   </div>

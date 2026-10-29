@@ -5,7 +5,7 @@ import { Ellipsis, KeyRound, Loader2, Lock, Search, TriangleAlert, UserPlus } fr
 import { API_ROLE_BY_LABEL, api, pick, roleKeyFromApi, rowsOf, text, timeText, type Row } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { cn } from "@/lib/utils";
-import { Avatar, Badge, Button, Card, EmptyState, Input, NoData, NoDataRow, PageHeader, Progress, Select, td, th } from "@/components/ui";
+import { Avatar, Badge, Button, Card, EmptyState, Input, NoDataRow, PageHeader, Select, td, th } from "@/components/ui";
 import { Pager } from "@/components/pager";
 import { useToast } from "@/components/interactive";
 import { CreateSiteModal } from "@/components/create-site-modal";
@@ -42,9 +42,7 @@ export default function UsersPage() {
   const [limit, setLimit] = useState(20);
   const [kind, setKind] = useState<"choose" | "building" | "admin" | "vendor" | null>(null);
   const toast = useToast();
-  const dash = useApi(() => api.getAdminDashboard());
   const buildings = useApi(() => api.getBuildings());
-  const SITES = dash.data?.sites ?? [];
 
   // Debounce the search box so each keystroke does not hit the server.
   useEffect(() => {
@@ -73,28 +71,6 @@ export default function UsersPage() {
           </Button>
         }
       />
-
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        {SITES.length === 0 && <Card className="sm:col-span-2 lg:col-span-5"><NoData /></Card>}
-        {SITES.map((s) => {
-          const cap = s.max_concurrent_users;
-          const full = cap > 0 && s.concurrent_users >= cap;
-          return (
-            <Card key={s.building_id} className={cn("p-4", full && "ring-2 ring-rose-200")}>
-              <div className="flex items-center justify-between">
-                <p className="truncate text-[13px] font-semibold text-slate-800">{s.building_name}</p>
-                {full && <TriangleAlert className="size-4 text-rose-500" />}
-              </div>
-              <p className="mt-1 text-xl font-bold text-slate-900 tabular-nums">
-                {s.concurrent_users}
-                <span className="text-sm font-medium text-slate-400">/{cap}</span>
-              </p>
-              <Progress value={cap ? (s.concurrent_users / cap) * 100 : 0} tone={full ? "bg-rose-500" : "bg-emerald-500"} className="mt-2" />
-              <p className={cn("mt-1.5 text-[11px]", full ? "font-semibold text-rose-600" : "text-slate-500")}>{full ? "Cap reached — extra users chargeable" : `${Math.max(0, cap - s.concurrent_users)} seats left`}</p>
-            </Card>
-          );
-        })}
-      </div>
 
       <Card>
         <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 p-4">
