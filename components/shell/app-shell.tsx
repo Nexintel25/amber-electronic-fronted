@@ -241,7 +241,7 @@ function Topbar({ role, onMenu }: { role: RoleKey; onMenu: () => void }) {
                   </div>
                 </div>
                 <div className="my-1 h-px bg-slate-100" />
-                <MenuLink href="#" icon={UserRound} label="My profile" />
+                <MenuLink href="/profile" icon={UserRound} label="My profile" onClick={() => setOpen(null)} />
                 <div className="my-1 h-px bg-slate-100" />
                 <MenuLink href="/login" icon={LogOut} label="Sign out" danger onClick={clearSession} />
               </Dropdown>

@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, LogOut, Star } from "lucide-react";
-import { ROLES, ROLE_ORDER } from "@/lib/roles";
+import { LogOut, Star } from "lucide-react";
 import { useSession } from "@/lib/session";
 import { Avatar } from "@/components/ui";
 
@@ -36,21 +35,6 @@ export default function WorkerProfile() {
           </div>
         ))}
       </dl>
-
-      <section>
-        <h2 className="mb-2 text-[13px] font-bold tracking-wide text-slate-500 uppercase">Switch panel (demo)</h2>
-        <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-slate-200/70">
-          {ROLE_ORDER.filter((k) => k !== "worker").map((k) => (
-            <li key={k}>
-              <Link href={ROLES[k].home} className="flex min-h-14 items-center gap-3 px-4 text-[14px] font-medium text-slate-800 active:bg-slate-50">
-                {(() => { const I = ROLES[k].icon; return <I className="size-5 text-slate-500" />; })()}
-                <span className="flex-1">{ROLES[k].label}</span>
-                <ChevronRight className="size-4 text-slate-300" />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
 
       <Link href="/login" className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white text-[15px] font-semibold text-rose-600 shadow-soft ring-1 ring-rose-200 active:bg-rose-50">
         <LogOut className="size-5" /> Sign out

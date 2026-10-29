@@ -15,7 +15,6 @@ import {
   ListChecks,
   MessageSquareWarning,
   ShieldCheck,
-  Timer,
   Truck,
   UserRound,
   Users,
@@ -41,7 +40,6 @@ const common: NavSection = {
   title: "General",
   items: [
     { label: "All Complaints", href: "/complaints", icon: ClipboardList },
-    { label: "SLA Report", href: "/sla/report", icon: Timer },
     { label: "Help & Support", href: "/support", icon: LifeBuoy },
   ],
 };
@@ -61,8 +59,8 @@ export const ROLES: Record<RoleKey, RoleDef> = {
           { label: "Dashboard", href: "/creator", icon: LayoutDashboard },
           { label: "Raise Complaint", href: "/creator/new", icon: FilePlus },
           { label: "Track My Complaints", href: "/creator/complaints", icon: ListChecks },
-          { label: "SLA Report", href: "/sla/report", icon: Timer },
-        ],
+          { label: "Reports", href: "/reports", icon: FileChartColumn },
+              ],
       },
       {
         title: "General",
@@ -88,6 +86,7 @@ export const ROLES: Record<RoleKey, RoleDef> = {
           { label: "Verify & Rework", href: "/vendor/verification", icon: BadgeCheck, badge: "3" },
           { label: "My Workers", href: "/vendor/workers", icon: HardHat },
           { label: "Penalties", href: "/vendor/penalties", icon: Gavel },
+          { label: "Reports", href: "/reports", icon: FileChartColumn },
         ],
       },
       common,
@@ -107,6 +106,7 @@ export const ROLES: Record<RoleKey, RoleDef> = {
           { label: "Dashboard", href: "/pm", icon: LayoutDashboard },
           { label: "My Vendors", href: "/pm/vendors", icon: Truck },
           { label: "Penalties", href: "/pm/penalties", icon: Gavel },
+          { label: "Reports", href: "/reports", icon: FileChartColumn },
         ],
       },
       common,

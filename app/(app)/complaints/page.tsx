@@ -1,6 +1,7 @@
 import { FilePlus } from "lucide-react";
 import { ComplaintsLoader } from "@/components/complaints-loader";
 import { LinkButton, PageHeader } from "@/components/ui";
+import { CreatorOnly } from "@/components/role-gate";
 
 export default function ComplaintsPage() {
   return (
@@ -10,9 +11,11 @@ export default function ComplaintsPage() {
         title="All Complaints"
         description="Every Amber complaint with its current workflow stage, owner, priority and SLA."
         actions={
-          <LinkButton href="/creator/new">
-            <FilePlus /> Raise Complaint
-          </LinkButton>
+          <CreatorOnly>
+            <LinkButton href="/creator/new">
+              <FilePlus /> Raise Complaint
+            </LinkButton>
+          </CreatorOnly>
         }
       />
       <ComplaintsLoader />

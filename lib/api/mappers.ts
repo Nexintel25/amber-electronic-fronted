@@ -115,10 +115,14 @@ export function toComplaint(r: ComplaintRow): Complaint {
     deadline: r.sla_applicable ? fmtDate(r.deadline) : undefined,
     vendor: r.vendor_name ?? undefined,
     workers: r.worker_name ? [r.worker_name] : undefined,
-    media: { photos: 0, videos: 0 },
+    media: { photos: r.photo_count ?? 0, videos: r.video_count ?? 0 },
     lat: 0,
     lng: 0,
     daysOpen: r.elapsed_days,
+    slaLabel: r.sla_applicable ? (r.sla_label ?? undefined) : undefined,
+    slaDays: r.sla_applicable ? r.sla_days : undefined,
+    timeLeftMinutes: r.sla_applicable ? (r.time_left_minutes ?? undefined) : undefined,
+    raisedAtIso: r.raised_at,
     ...slaLeft(r.sla_applicable ? r.deadline : null, status),
   };
 }

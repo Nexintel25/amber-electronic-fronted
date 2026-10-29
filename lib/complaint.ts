@@ -27,6 +27,14 @@ export type Complaint = {
   lng: number;
   slaLeft?: string;
   slaRisk?: boolean;
+  /** Resolution target from the API, e.g. "3 hours". */
+  slaLabel?: string;
+  /** Whole days the SLA allows. */
+  slaDays?: number;
+  /** Minutes left to the deadline (negative once overdue). */
+  timeLeftMinutes?: number;
+  /** Time taken so far, from `raised_at`. */
+  raisedAtIso?: string;
   /** Whole days since the complaint was raised (as of 24 Sep 2026). */
   daysOpen: number;
   /** Days the vendor took to close it, if already closed. */

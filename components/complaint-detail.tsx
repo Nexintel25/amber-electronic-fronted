@@ -76,11 +76,12 @@ function MediaThumb({ m, kind, seed, lat, lng }: { m?: MediaItem; kind: "before"
 }
 
 /** Complaint creator rates the finished work (satisfied / not satisfied) with a remark. */
-function FeedbackCard({ complaintId }: { complaintId: number }) {
+function FeedbackCard({ complaintId, locked }: { complaintId: number; locked: boolean }) {
   const [satisfied, setSatisfied] = useState<boolean | null>(null);
   const [remarks, setRemarks] = useState("");
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
+  const [doneSatisfied, setDoneSatisfied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
@@ -90,11 +91,24 @@ function FeedbackCard({ complaintId }: { complaintId: number }) {
     try {
       await api.recordComplaintFeedback(complaintId, satisfied, remarks.trim());
       setDone(true);
+      setDoneSatisfied(satisfied);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save your feedback.");
     } finally {
       setSaving(false);
     }
+  }
+
+  // Once the creator is satisfied the feedback is closed for good; "not satisfied" leaves it open to submit again.
+  if (locked || (done && doneSatisfied)) {
+    return (
+      <Card>
+        <CardHeader title="Your feedback" subtitle="Were you satisfied with the work done?" icon={ThumbsUp} />
+        <p className="mx-5 mb-5 flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-3 text-sm font-medium text-emerald-700">
+          <CheckCircle2 className="size-4" /> {done ? "Thanks — your feedback has been recorded." : "You marked this work as satisfied."}
+        </p>
+      </Card>
+    );
   }
 
   return (
@@ -370,7 +384,7 @@ function Body({ d, onChanged }: { d: Detail; onChanged: () => void }) {
         <div className="space-y-6">
           {c.status === "closed" && (
             <RoleGate roles={["creator"]}>
-              <FeedbackCard complaintId={d.complaint_id} />
+              <FeedbackCard complaintId={d.complaint_id} locked={d.feedback_satisfied === 1 || d.feedback_satisfied === true} />
             </RoleGate>
           )}
 

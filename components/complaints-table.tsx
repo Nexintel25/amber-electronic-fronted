@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowUpRight, Camera, ClipboardList, Download, Funnel, Gavel, Search, Video } from "lucide-react";
-import { inr, penaltyOf, type Complaint } from "@/lib/complaint";
+import { Camera, Eye, ClipboardList, Download, Funnel, Search, Video } from "lucide-react";
+import type { Complaint } from "@/lib/complaint";
 import { STATUS_META, type StatusKey } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 import { Avatar, Button, Card, EmptyState, Input, PriorityBadge, Select, StageMeter, StatusBadge, td, th } from "@/components/ui";
@@ -18,6 +18,37 @@ const buckets: Record<Bucket, StatusKey[] | null> = {
   verify: ["pending_verification", "issue_raised"],
   done: ["closed", "rejected"],
 };
+
+/** "2h 10m" / "3d 4h" from a number of minutes. */
+function span(min: number): string {
+  const m = Math.max(0, Math.round(min));
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  return h >= 48 ? `${Math.floor(h / 24)}d ${h % 24}h` : `${h}h ${m % 60}m`;
+}
+
+/** SLA target from the API, plus time left / overdue while open, and how long it took. */
+function SlaCell({ c }: { c: Complaint }) {
+  if (c.status === "rejected" || !c.slaLabel) return <span className="text-xs text-slate-400">—</span>;
+  const open = c.status !== "closed";
+  const overdue = open && (c.timeLeftMinutes ?? 0) < 0;
+  const taken = c.raisedAtIso ? span((Date.now() - new Date(c.raisedAtIso).getTime()) / 60000) : `${c.daysOpen}d`;
+  return (
+    <div className="leading-tight whitespace-nowrap">
+      <span className="block text-[13px] font-semibold text-slate-800">Within {c.slaLabel}</span>
+      {open ? (
+        <>
+          <span className={cn("block text-[11px] font-semibold", overdue ? "text-rose-600" : c.slaRisk ? "text-amber-600" : "text-emerald-600")}>
+            {c.timeLeftMinutes === undefined ? "" : overdue ? `${span(-c.timeLeftMinutes)} overdue` : `${span(c.timeLeftMinutes)} left`}
+          </span>
+          <span className="block text-[11px] text-slate-400">Taken {taken}</span>
+        </>
+      ) : (
+        <span className="block text-[11px] font-semibold text-emerald-600">Closed · took {c.daysOpen}d</span>
+      )}
+    </div>
+  );
+}
 
 export function ComplaintsTable({ complaints, showSite = true }: { complaints: Complaint[]; showSite?: boolean }) {
   const [tab, setTab] = useState<Bucket>("all");
@@ -100,7 +131,7 @@ export function ComplaintsTable({ complaints, showSite = true }: { complaints: C
                 <th className={th}>Stage</th>
                 <th className={th}>Priority</th>
                 <th className={th}>Vendor / Worker</th>
-                <th className={th}>15-day clock</th>
+                <th className={th}>SLA</th>
                 <th className={th}>Media</th>
                 <th className={th} />
               </tr>
@@ -141,22 +172,7 @@ export function ComplaintsTable({ complaints, showSite = true }: { complaints: C
                     )}
                   </td>
                   <td className={td}>
-                    {(() => {
-                      const p = penaltyOf(c);
-                      if (c.status === "rejected") return <span className="text-xs text-slate-400">—</span>;
-                      if (p.overdueDays)
-                        return (
-                          <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-rose-600">
-                            <Gavel className="size-3.5" />
-                            {inr(p.amount)} · +{p.overdueDays}d
-                          </span>
-                        );
-                      return (
-                        <span className={cn("text-[13px] font-semibold", c.status === "closed" ? "text-emerald-600" : p.daysLeft <= 3 ? "text-amber-600" : "text-slate-700")}>
-                          {c.status === "closed" ? `Closed in ${p.days}d` : `Day ${p.days}/15`}
-                        </span>
-                      );
-                    })()}
+                    <SlaCell c={c} />
                   </td>
                   <td className={td}>
                     <span className="flex items-center gap-2 text-xs text-slate-500">
@@ -173,8 +189,8 @@ export function ComplaintsTable({ complaints, showSite = true }: { complaints: C
                     </span>
                   </td>
                   <td className={cn(td, "text-right")}>
-                    <Link href={`/complaints/${c.ref ?? c.id}`} className="inline-grid size-8 place-items-center rounded-lg text-slate-400 hover:bg-white hover:text-brand-600 hover:shadow-sm" aria-label={`Open ${c.id}`}>
-                      <ArrowUpRight className="size-4" />
+                    <Link href={`/complaints/${c.ref ?? c.id}`} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-brand-300 hover:text-brand-600 hover:shadow-sm" aria-label={`View ${c.id}`}>
+                      <Eye className="size-3.5" /> View
                     </Link>
                   </td>
                 </tr>

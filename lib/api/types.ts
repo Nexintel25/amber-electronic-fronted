@@ -65,6 +65,10 @@ export type ComplaintRow = {
   worker_name: string | null;
   sla_applicable: number;
   sla_hours: number;
+  sla_label?: string | null;
+  time_left_minutes?: number | null;
+  photo_count?: number;
+  video_count?: number;
   deadline: string | null;
   raised_at: string;
   elapsed_days: number;
@@ -118,6 +122,8 @@ export type ComplaintDetail = ComplaintRow & {
   approved_at: string | null;
   closed_at: string | null;
   rework_reason: string | null;
+  /** 1 = the creator was satisfied (feedback is locked); 0 = not satisfied (they may submit again); null = no feedback yet. */
+  feedback_satisfied?: number | boolean | null;
   checked_in: number;
   before_photos: number;
   after_photos: number;

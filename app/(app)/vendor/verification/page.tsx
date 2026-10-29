@@ -8,23 +8,24 @@ import { useSession } from "@/lib/session";
 import { useApi } from "@/lib/use-api";
 import { workerView } from "@/lib/vendor-workers";
 import { Avatar, Badge, Button, Card, EmptyState, Field, Input, NoData, PageHeader, Select, Textarea } from "@/components/ui";
-import { Modal, useToast } from "@/components/interactive";
+import { Modal, Tabs, useToast } from "@/components/interactive";
 import { Pager } from "@/components/pager";
 
-type Photo = { url: string; kind: string };
+type Photo = { url: string; type: string; cycle: number; name: string };
 
-/** Photos on a verification row, wherever the API puts them (`media`, `photos`, or before/after lists). */
+const GROUPS = [
+  { type: "initial", label: "Complaint photos", hint: "Raised by the creator" },
+  { type: "before", label: "Before work", hint: "Taken by the worker at check-in" },
+  { type: "after", label: "After work", hint: "Taken by the worker on completion" },
+];
+
+/** Photos on a verification row, from `media` (type: initial / before / after), oldest first. */
 function photosOf(r: Row): Photo[] {
-  const out: Photo[] = [];
-  for (const key of ["media", "photos", "before_photos", "after_photos"]) {
-    const v = r[key];
-    if (!Array.isArray(v)) continue;
-    for (const m of v as Row[]) {
-      const url = text(pick(m, "file_url", "url"), "");
-      if (url) out.push({ url, kind: text(pick(m, "kind", "type", "phase"), key.startsWith("before") ? "before" : key.startsWith("after") ? "after" : "photo") });
-    }
-  }
-  return out;
+  const list = Array.isArray(r.media) ? (r.media as Row[]) : [];
+  return list
+    .map((m) => ({ url: text(pick(m, "file_url", "url"), ""), type: text(pick(m, "type", "phase"), "other").toLowerCase(), cycle: num(pick(m, "cycle")) ?? 0, name: text(pick(m, "file_name"), ""), id: num(pick(m, "media_id")) ?? 0 }))
+    .filter((p) => p.url)
+    .sort((a, b) => a.cycle - b.cycle || a.id - b.id);
 }
 
 export default function VerificationPage() {
@@ -32,6 +33,7 @@ export default function VerificationPage() {
   const vendorId = session?.user.vendor_id ?? null;
   const toast = useToast();
 
+  const [view, setView] = useState<"pending" | "rework">("pending");
   const [q, setQ] = useState("");
   const [search, setSearch] = useState("");
   const [building, setBuilding] = useState("");
@@ -42,11 +44,12 @@ export default function VerificationPage() {
   const buildings = useApi(() => api.getBuildings());
   const workers = useApi(async () => (vendorId ? (await api.getVendorWorkers(vendorId)).map(workerView) : []), [vendorId]);
   const list = useApi(
-    () => api.getVendorVerificationList({ view: "pending", search, building_id: building ? Number(building) : undefined, worker_id: worker ? Number(worker) : undefined, page, limit }),
-    [search, building, worker, page, limit],
+    () => api.getVendorVerificationList({ view, search, building_id: building ? Number(building) : undefined, worker_id: worker ? Number(worker) : undefined, page, limit }),
+    [view, search, building, worker, page, limit],
   );
 
   const items = rowsOf(list.data?.data);
+  const counts = (list.data as unknown as { tabs?: { pending_count?: number; rework_count?: number } } | null)?.tabs;
   const idOf = (r: Row) => num(pick(r, "complaint_id", "id"));
 
   const [remarks, setRemarks] = useState<Record<number, string>>({});
@@ -100,6 +103,16 @@ export default function VerificationPage() {
         description="Photos uploaded by your workers land here (and with the Admin). If the Admin raises an issue, only you see it. Verify and close — or send the job back to a worker for rework."
       />
 
+      <Tabs
+        className="mb-4 w-fit"
+        value={view}
+        onChange={(v) => { setView(v); setPage(1); }}
+        tabs={[
+          { value: "pending", label: "Pending verification", count: counts?.pending_count },
+          { value: "rework", label: "Rework", count: counts?.rework_count },
+        ]}
+      />
+
       <form
         className="mb-4 flex flex-wrap gap-2"
         onSubmit={(e) => {
@@ -146,6 +159,7 @@ export default function VerificationPage() {
             const no = text(pick(r, "complaint_no"), id ? `#${id}` : "—");
             const photos = photosOf(r);
             const issue = pick(r, "admin_issue", "issue", "issue_text", "issue_remarks");
+            const reworkReason = pick(r, "rework_reason");
             const workerName = text(pick(r, "worker_name"));
             return (
               <Card key={id ?? i} className="overflow-hidden">
@@ -167,6 +181,16 @@ export default function VerificationPage() {
                   </div>
                 </div>
 
+                {reworkReason != null && (
+                  <div className="flex items-start gap-3 border-b border-amber-100 bg-amber-50/60 px-5 py-3.5">
+                    <RotateCcw className="mt-0.5 size-4 shrink-0 text-amber-600" />
+                    <div className="text-sm">
+                      <p className="font-semibold text-amber-900">Sent for rework <span className="font-normal text-amber-700/80">· {timeText(pick(r, "rework_sent_at"))}</span></p>
+                      <p className="mt-0.5 text-amber-900/90">{text(reworkReason)}</p>
+                    </div>
+                  </div>
+                )}
+
                 {issue != null && (
                   <div className="flex items-start gap-3 border-b border-fuchsia-100 bg-fuchsia-50/60 px-5 py-3.5">
                     <Flag className="mt-0.5 size-4 shrink-0 text-fuchsia-600" />
@@ -182,14 +206,27 @@ export default function VerificationPage() {
                     {photos.length === 0 ? (
                       <NoData className="rounded-xl border border-dashed border-slate-200 py-10" />
                     ) : (
-                      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                        {photos.map((p, k) => (
-                          <figure key={k} className="overflow-hidden rounded-xl border border-slate-100">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={p.url} alt={`${p.kind} photo`} className="aspect-square w-full object-cover" />
-                            <figcaption className="px-2 py-1 text-[11px] font-semibold text-slate-500 capitalize">{p.kind}</figcaption>
-                          </figure>
-                        ))}
+                      <div className="space-y-5">
+                        {GROUPS.map((g) => {
+                          const set = photos.filter((p) => p.type === g.type);
+                          if (set.length === 0) return null;
+                          return (
+                            <section key={g.type}>
+                              <p className="mb-2 text-xs font-bold tracking-wider text-slate-500 uppercase">
+                                {g.label} <span className="font-medium tracking-normal text-slate-400 normal-case">· {set.length} · {g.hint}</span>
+                              </p>
+                              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                {set.map((p, k) => (
+                                  <a key={k} href={p.url} target="_blank" rel="noreferrer" className="group block overflow-hidden rounded-xl border border-slate-100">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={p.url} alt={`${g.label} ${k + 1}`} loading="lazy" className="aspect-[4/3] w-full object-cover transition group-hover:opacity-90" />
+                                    <span className="block truncate px-2 py-1 text-[11px] text-slate-500">{p.cycle > 0 ? `Rework ${p.cycle} · ` : ""}{p.name || `Photo ${k + 1}`}</span>
+                                  </a>
+                                ))}
+                              </div>
+                            </section>
+                          );
+                        })}
                       </div>
                     )}
                     <div className="mt-4 rounded-xl bg-slate-50 p-4">

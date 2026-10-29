@@ -28,12 +28,12 @@ export const getPenaltyReport = (q: ReportQuery) =>
   });
 
 /** Month-based reports served from `complaint-types/*` (`month` is `YYYY-MM`). */
-export const getComplaintRegisterReport = (q: { month: string; vendor_id?: number; search?: string; status?: string; page: number; limit: number }) =>
+export const getComplaintRegisterReport = (q: { month: string; vendor_id?: number; search?: string; status?: string; category_id?: number; page: number; limit: number }) =>
   call<unknown>("complaint-types/getComplaintRegisterReport", {
     user_id: currentUserId(),
     month: q.month,
     vendor_id: q.vendor_id ?? "",
-    category_id: "",
+    category_id: q.category_id ?? "",
     status: q.status ?? "ALL",
     search: q.search ?? "",
     page: q.page,
@@ -43,6 +43,9 @@ export const getComplaintRegisterReport = (q: { month: string; vendor_id?: numbe
 
 export const getSatisfactionReport = (q: { month: string; vendor_id?: number }) =>
   call<unknown>("complaint-types/getSatisfactionReport", { user_id: currentUserId(), month: q.month, vendor_id: q.vendor_id ?? "" });
+
+export const getBenchmarkReport = (q: { month: string; vendor_id?: number }) =>
+  call<unknown>("complaint-types/getBenchmarkReport", { user_id: currentUserId(), month: q.month, vendor_id: q.vendor_id ?? "" });
 
 /** Admin waives the fine on a complaint. */
 export const waiveFine = (complaintId: number, remarks: string) =>

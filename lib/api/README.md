@@ -15,4 +15,4 @@
 
 Import everything from `@/lib/api`. Base URL: `NEXT_PUBLIC_API_URL` (defaults to the Vercel deployment).
 
-`reports.ts` also has `getComplaintRegisterReport`, `getSatisfactionReport`, `waiveFine`.
+`reports.ts` also has `getComplaintRegisterReport`, `getSatisfactionReport`, `getBenchmarkReport`, `waiveFine`.

@@ -24,7 +24,8 @@ import { useSession } from "@/lib/session";
 import { compressImage } from "@/lib/image";
 import { WORKFLOW } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
-import { Button, Card, CardHeader, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
+import { Button, Card, CardHeader, EmptyState, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
+import { useIsCreator } from "@/components/role-gate";
 import { Modal } from "@/components/interactive";
 
 const MIN_PHOTOS = 2;
@@ -37,7 +38,14 @@ type Gps = { lat: number; lng: number; acc: number };
 
 const VISIT_WINDOWS = ["As soon as possible", "During shift change (2–3 PM)", "After production hours", "Weekend shutdown"];
 
-export default function RaiseComplaintPage() {
+/** Only Complaint Creators may raise complaints; everyone else is told so instead of seeing the form. */
+export default function RaiseComplaintGate() {
+  const isCreator = useIsCreator();
+  if (!isCreator) return <EmptyState icon={ShieldCheck} title="Only Complaint Creators can raise complaints" text="Sign in with a Complaint Creator account to create a new complaint." />;
+  return <RaiseComplaintPage />;
+}
+
+function RaiseComplaintPage() {
   const router = useRouter();
   const session = useSession();
   const fileInput = useRef<HTMLInputElement>(null);

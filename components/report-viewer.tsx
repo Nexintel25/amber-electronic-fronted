@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Eye, Gavel, FileSpreadsheet, FileText, FileSearch, Loader2, Search, TriangleAlert, X } from "lucide-react";
-import { api, pick, rowsOf, summaryOf, num, text, timeText, type Row } from "@/lib/api";
+import { STATUS_META, type StatusKey } from "@/lib/workflow";
+import { api, apiStatusOf, pick, rowsOf, summaryOf, num, text, timeText, type Row } from "@/lib/api";
 import { downloadExcel, downloadPdf, type ReportResult } from "@/lib/report-export";
 import { useRole } from "@/components/shell/app-shell";
 import { useSession } from "@/lib/session";
@@ -11,25 +12,21 @@ import { Button, Card, EmptyState, Field, Input, Select, Textarea, td, th } from
 import { Modal, useToast } from "@/components/interactive";
 import { Pager } from "@/components/pager";
 
-export type ReportKey = "complaints" | "sla" | "daily" | "vendor" | "worker" | "photo" | "penalty" | "register" | "satisfaction";
+export type ReportKey = "register" | "satisfaction" | "benchmark" | "penalty";
 
 export const REPORT_TYPES: { key: ReportKey; label: string; hint: string }[] = [
-  { key: "complaints", label: "Complaint report", hint: "Every complaint with status, vendor and age" },
-  { key: "sla", label: "SLA report", hint: "Time left or overdue against each priority’s resolution target" },
-  { key: "daily", label: "Daily report", hint: "Complaints raised, closed and open per day" },
-  { key: "vendor", label: "Vendor performance report", hint: "Volume, rework, turnaround and SLA per vendor" },
-  { key: "worker", label: "Worker productivity report", hint: "Jobs, speed and photo compliance per worker" },
-  { key: "photo", label: "Photo report", hint: "Before/after photo sets with GPS check" },
-  { key: "penalty", label: "Penalty report", hint: "Vendors past the 15-day window" },
   { key: "register", label: "Complaint register", hint: "Month-wise register of every complaint" },
   { key: "satisfaction", label: "Satisfaction report", hint: "Creator feedback on closed complaints, month-wise" },
+  { key: "benchmark", label: "Benchmark report", hint: "Vendor benchmark for the month" },
+  { key: "penalty", label: "Penalty report", hint: "Vendors past the 15-day window" },
 ];
-const MONTHLY: ReportKey[] = ["register", "satisfaction"];
+const STATUS_OPTIONS: StatusKey[] = ["new", "vendor_review", "worker_assigned", "in_progress", "pending_verification", "rework", "closed", "rejected"];
+const MONTHLY: ReportKey[] = ["register", "satisfaction", "benchmark"];
 
-type Filters = { type: ReportKey; from: string; to: string; month: string; vendorId: string; q: string };
+type Filters = { type: ReportKey; from: string; to: string; month: string; vendorId: string; categoryId: string; status: string; q: string };
 type Loaded = { ids: (number | undefined)[]; waived: boolean[]; columns: string[]; rows: string[][]; summary: { label: string; value: string }[]; total?: number; totalPages?: number; meta: string; title: string };
 
-const EMPTY: Filters = { type: "complaints", from: "", to: "", month: new Date().toISOString().slice(0, 7), vendorId: "", q: "" };
+const EMPTY: Filters = { type: "register", from: "", to: "", month: new Date().toISOString().slice(0, 7), vendorId: "", categoryId: "", status: "ALL", q: "" };
 /** Columns shown inline; the rest are opened with the row’s View button. */
 const MAX_COLS = 6;
 /** Columns the Penalty report does not show. */
@@ -55,6 +52,7 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
   const [remarks, setRemarks] = useState("");
   const [waiving, setWaiving] = useState(false);
   const vendors = useApi(() => api.getVendors());
+  const categories = useApi(() => api.getComplaintCategories());
 
   const vendorId = own ? String(own) : form.vendorId;
   const set = <K extends keyof Filters>(k: K, v: Filters[K]) => setForm((f) => ({ ...f, [k]: v }));
@@ -66,10 +64,12 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
     const monthly = MONTHLY.includes(applied.type);
     const res =
       applied.type === "register"
-        ? await api.getComplaintRegisterReport({ month: applied.month, vendor_id: vid, search: applied.q, page, limit })
+        ? await api.getComplaintRegisterReport({ month: applied.month, vendor_id: vid, search: applied.q, status: applied.status, category_id: applied.categoryId ? Number(applied.categoryId) : undefined, page, limit })
         : applied.type === "satisfaction"
           ? await api.getSatisfactionReport({ month: applied.month, vendor_id: vid })
-          : await api.getPenaltyReport({ report_type: applied.type, from_date: applied.from, to_date: applied.to, vendor_id: vid, search: applied.q, page, limit });
+          : applied.type === "benchmark"
+            ? await api.getBenchmarkReport({ month: applied.month, vendor_id: vid })
+            : await api.getPenaltyReport({ report_type: applied.type, from_date: applied.from, to_date: applied.to, vendor_id: vid, search: applied.q, page, limit });
     const list = rowsOf(res.data);
     const columns = Array.from(new Set(list.flatMap((r) => Object.keys(r).filter((k) => typeof r[k] !== "object" || r[k] === null)))).filter((k) => applied.type !== "penalty" || !HIDDEN_PENALTY.test(k));
     const sum = summaryOf(res.data);
@@ -173,6 +173,26 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
               ))}
             </Select>
           </Field>
+          {form.type === "register" && (
+            <>
+              <Field label="Complaint type">
+                <Select value={form.categoryId} onChange={(e) => set("categoryId", e.target.value)}>
+                  <option value="">All types</option>
+                  {categories.data?.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Status">
+                <Select value={form.status} onChange={(e) => set("status", e.target.value)}>
+                  <option value="ALL">All statuses</option>
+                  {STATUS_OPTIONS.map((s) => (
+                    <option key={s} value={apiStatusOf(s)}>{STATUS_META[s].label}</option>
+                  ))}
+                </Select>
+              </Field>
+            </>
+          )}
           <div className="relative md:col-span-2 xl:col-span-3">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
             <Input value={form.q} onChange={(e) => set("q", e.target.value)} placeholder="Search within the report — complaint ID, title, worker, site…" className="pl-9" />
