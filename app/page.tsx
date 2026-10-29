@@ -276,7 +276,7 @@ export default function LandingPage() {
             <span>© 2026 Amber Ltd</span>
           </div>
           <p>
-            Built by <span className="font-semibold text-slate-700">Nexintel Synergy Pvt Ltd</span>
+            Built by <span className="font-semibold text-slate-700">Nexzen Solutions </span>
           </p>
         </div>
       </footer>

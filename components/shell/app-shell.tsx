@@ -5,13 +5,9 @@ import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
   Bell,
-  Building,
-  Check,
-  ChevronDown,
   LogOut,
   Menu,
   Search,
-  Settings,
   UserRound,
   Wifi,
   X,
@@ -19,8 +15,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROLES, roleFromPath, type RoleKey } from "@/lib/roles";
-import { api } from "@/lib/api";
-import { useApi } from "@/lib/use-api";
 import { Avatar, Kbd, LiveDot } from "@/components/ui";
 import { WorkerShell } from "@/components/shell/worker-shell";
 import { clearSession, useSession } from "@/lib/session";
@@ -110,7 +104,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="mx-auto flex max-w-[1480px] flex-wrap items-center justify-between gap-2">
               <span>© 2026 Amber Ltd · {def.panel}</span>
               <span>
-                Built & supported by <span className="font-semibold text-slate-700">Nexintel Synergy Pvt Ltd</span>
+                Built & supported by <span className="font-semibold text-slate-700">Nexzen Solutions </span>
               </span>
             </div>
           </footer>
@@ -124,6 +118,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 function Sidebar({ role, pathname }: { role: RoleKey; pathname: string }) {
   const def = ROLES[role];
+  // One flat list for every role — sections are flattened and duplicate links dropped.
+  const items = def.nav.flatMap((s) => s.items).filter((it, i, all) => all.findIndex((x) => x.href === it.href) === i);
   const isActive = (href: string) =>
     href === def.home || href === "/complaints" ? pathname === href : pathname === href || pathname.startsWith(href + "/");
 
@@ -148,11 +144,10 @@ function Sidebar({ role, pathname }: { role: RoleKey; pathname: string }) {
       </div>
 
       <nav className="no-scrollbar flex-1 overflow-y-auto px-3 py-2">
-        {def.nav.map((section) => (
-          <div key={section.title} className="mb-5">
-            <p className="mb-1.5 px-3 text-[10px] font-semibold tracking-wider text-slate-500 uppercase">{section.title}</p>
+        {(
+          <div>
             <ul className="space-y-0.5">
-              {section.items.map((item) => {
+              {items.map((item) => {
                 const active = isActive(item.href);
                 return (
                   <li key={item.href}>
@@ -177,7 +172,7 @@ function Sidebar({ role, pathname }: { role: RoleKey; pathname: string }) {
               })}
             </ul>
           </div>
-        ))}
+        )}
       </nav>
     </div>
   );
@@ -187,13 +182,10 @@ function Sidebar({ role, pathname }: { role: RoleKey; pathname: string }) {
 
 function Topbar({ role, onMenu }: { role: RoleKey; onMenu: () => void }) {
   const def = ROLES[role];
-  const [open, setOpen] = useState<null | "notif" | "role" | "user" | "site">(null);
+  const [open, setOpen] = useState<null | "role" | "user">(null);
   const close = () => setOpen(null);
   const ref = useClickOutside(close);
   const session = useSession();
-  const sites = useApi(() => (session ? api.getBuildings() : Promise.resolve([])), [session?.user.id]);
-  const [picked, setPicked] = useState<string | null>(null);
-  const site = picked ?? sites.data?.[0]?.name ?? (sites.loading ? "Loading…" : "No site");
   const me = session ? { name: session.user.name, email: session.user.email, title: def.label } : { name: "", email: "", title: def.label };
 
   return (
@@ -215,72 +207,10 @@ function Topbar({ role, onMenu }: { role: RoleKey; onMenu: () => void }) {
         </div>
 
         <div className="flex flex-1 items-center justify-end gap-1.5 sm:gap-2">
-          {/* Site switcher */}
-          <div className="relative hidden sm:block">
-            <button
-              onClick={() => setOpen(open === "site" ? null : "site")}
-              className="flex h-10 items-center gap-2 rounded-xl px-3 text-[13px] font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
-            >
-              <Building className="size-4 text-slate-500" />
-              <span className="max-w-[140px] truncate">{site}</span>
-              <ChevronDown className="size-3.5 text-slate-400" />
-            </button>
-            {open === "site" && (
-              <Dropdown className="w-72">
-                <p className="px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wider text-slate-400 uppercase">Switch site</p>
-                {sites.data?.length === 0 && <p className="px-3 py-2 text-xs text-slate-500">No sites available.</p>}
-                {sites.error && <p className="px-3 py-2 text-xs text-rose-600">{sites.error}</p>}
-                {sites.data?.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => {
-                      setPicked(s.name);
-                      close();
-                    }}
-                    className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left hover:bg-slate-50"
-                  >
-                    <span>
-                      <span className="block text-[13px] font-semibold text-slate-800">{s.name}</span>
-                      <span className="block text-[11px] text-slate-500">
-                        {s.city || s.address}
-                      </span>
-                    </span>
-                    {site === s.name && <Check className="size-4 text-brand-600" />}
-                  </button>
-                ))}
-              </Dropdown>
-            )}
-          </div>
-
           <span className="hidden items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 xl:flex">
             <LiveDot /> Live
             <Wifi className="size-3.5" />
           </span>
-
-          {/* Notifications */}
-          <div className="relative">
-            <button
-              onClick={() => setOpen(open === "notif" ? null : "notif")}
-              className="relative grid size-10 place-items-center rounded-xl text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
-              aria-label="Notifications"
-            >
-              <Bell className="size-[18px]" />
-            </button>
-            {open === "notif" && (
-              <Dropdown className="w-[min(380px,calc(100vw-2rem))]">
-                <div className="flex items-center justify-between px-3 pt-2 pb-2">
-                  <p className="text-sm font-bold text-slate-900">Notifications</p>
-                  <span className="text-[11px] font-medium text-slate-500">Firebase push · real-time</span>
-                </div>
-                <div className="max-h-96 overflow-y-auto">
-                  <p className="px-3 py-6 text-center text-xs text-slate-500">No notifications yet.</p>
-                </div>
-                <Link href="/notifications" onClick={close} className="mt-1 block rounded-lg px-3 py-2 text-center text-[13px] font-semibold text-brand-600 hover:bg-brand-50">
-                  View all notifications
-                </Link>
-              </Dropdown>
-            )}
-          </div>
 
           {/* Signed-in user's role (fixed — panels can no longer be switched) */}
           <div
@@ -312,7 +242,6 @@ function Topbar({ role, onMenu }: { role: RoleKey; onMenu: () => void }) {
                 </div>
                 <div className="my-1 h-px bg-slate-100" />
                 <MenuLink href="#" icon={UserRound} label="My profile" />
-                <MenuLink href="/notifications" icon={Settings} label="Notification settings" />
                 <div className="my-1 h-px bg-slate-100" />
                 <MenuLink href="/login" icon={LogOut} label="Sign out" danger onClick={clearSession} />
               </Dropdown>

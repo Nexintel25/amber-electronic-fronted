@@ -63,8 +63,18 @@ export function priorityFromType(name: string | null | undefined): Priority {
 }
 export const typeForPriority = (p: Priority) => ({ Critical: "emergency", High: "major", Medium: "specialized", Low: "minor" })[p];
 
-const dateFmt = new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+const dateFmt = new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 export const fmtDate = (iso?: string | null) => (iso ? dateFmt.format(new Date(iso)) : "—");
+
+const ISO_DATETIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
+/** Table cell text: ISO timestamps (created_at, raised_at, …) are shown in Indian Standard Time, anything else as-is. */
+export function timeText(v: unknown, fallback = "—"): string {
+  if (typeof v === "string" && ISO_DATETIME.test(v)) {
+    const d = new Date(v);
+    if (!Number.isNaN(d.getTime())) return dateFmt.format(d);
+  }
+  return v === undefined || v === null || v === "" ? fallback : typeof v === "object" ? JSON.stringify(v) : String(v);
+}
 
 export function timeAgo(iso?: string | null): string {
   if (!iso) return "—";

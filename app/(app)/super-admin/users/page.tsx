@@ -1,18 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Ellipsis, KeyRound, Lock, Search, TriangleAlert, UserPlus } from "lucide-react";
-import { USERS } from "@/lib/data";
-import { api } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { Ellipsis, KeyRound, Loader2, Lock, Search, TriangleAlert, UserPlus } from "lucide-react";
+import { API_ROLE_BY_LABEL, api, pick, roleKeyFromApi, rowsOf, text, timeText, type Row } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { cn } from "@/lib/utils";
-import { Avatar, Badge, Button, Card, Input, NoData, NoDataRow, PageHeader, Progress, Select, td, th } from "@/components/ui";
+import { Avatar, Badge, Button, Card, EmptyState, Input, NoData, NoDataRow, PageHeader, Progress, Select, td, th } from "@/components/ui";
+import { Pager } from "@/components/pager";
 import { useToast } from "@/components/interactive";
 import { CreateSiteModal } from "@/components/create-site-modal";
 import { CreateUserModal } from "@/components/create-user-modal";
 import { CreateVendorModal } from "@/components/create-vendor-modal";
 import { Modal } from "@/components/interactive";
-import type { UserRoleLabel } from "@/lib/roles";
+import { ROLES, type UserRoleLabel } from "@/lib/roles";
 
 const ROLE_OPTIONS: UserRoleLabel[] = ["Super Admin", "Admin", "Project Manager", "Vendor", "Worker", "Complaint Creator"];
 
@@ -25,26 +25,41 @@ const roleTone: Record<string, string> = {
   Worker: "bg-amber-50 text-amber-700 ring-amber-600/20",
 };
 
+/** Treats missing flags as active; understands `status` strings and `is_active` booleans/numbers. */
+function userActive(u: Row): boolean {
+  const st = pick(u, "status");
+  if (typeof st === "string") return st.toLowerCase() === "active";
+  const f = pick(u, "is_active", "active");
+  return f === undefined ? true : f === true || Number(f) === 1;
+}
+
 export default function UsersPage() {
   const [q, setQ] = useState("");
+  const [search, setSearch] = useState("");
   const [role, setRole] = useState("");
   const [site, setSite] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [kind, setKind] = useState<"choose" | "building" | "admin" | "vendor" | null>(null);
   const toast = useToast();
   const dash = useApi(() => api.getAdminDashboard());
   const buildings = useApi(() => api.getBuildings());
   const SITES = dash.data?.sites ?? [];
 
-  const rows = useMemo(
-    () =>
-      USERS.filter(
-        (u) =>
-          (!role || u.role === role) &&
-          (!site || u.site === site) &&
-          (!q || u.name.toLowerCase().includes(q.toLowerCase()) || u.email.includes(q.toLowerCase())),
-      ),
-    [q, role, site],
+  // Debounce the search box so each keystroke does not hit the server.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(q);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const list = useApi(
+    () => api.getAllUsers({ role: role ? API_ROLE_BY_LABEL[role] : undefined, building_id: site ? Number(site) : undefined, search, page, limit }),
+    [role, site, search, page, limit],
   );
+  const rows = rowsOf(list.data?.data);
 
   return (
     <>
@@ -85,19 +100,18 @@ export default function UsersPage() {
         <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 p-4">
           <div className="relative min-w-[220px] flex-1">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name or email" className="pl-9" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email or phone" className="pl-9" />
           </div>
-          <Select value={role} onChange={(e) => setRole(e.target.value)} className="w-48">
+          <Select value={role} onChange={(e) => { setRole(e.target.value); setPage(1); }} className="w-48">
             <option value="">All roles</option>
             {ROLE_OPTIONS.map((r) => (
               <option key={r}>{r}</option>
             ))}
           </Select>
-          <Select value={site} onChange={(e) => setSite(e.target.value)} className="w-56">
+          <Select value={site} onChange={(e) => { setSite(e.target.value); setPage(1); }} className="w-56">
             <option value="">All sites</option>
-            <option>All Sites</option>
             {buildings.data?.map((s) => (
-              <option key={s.id}>{s.name}</option>
+              <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </Select>
         </div>
@@ -116,50 +130,59 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {rows.length === 0 && <NoDataRow cols={8} noApi />}
-              {rows.map((u) => (
-                <tr key={u.id} className="hover:bg-slate-50/60">
-                  <td className={td}>
-                    <div className="flex items-center gap-3">
-                      <Avatar name={u.name} size="sm" />
-                      <div>
-                        <p className="font-semibold text-slate-900">{u.name}</p>
-                        <p className="text-xs text-slate-500">{u.email}</p>
+              {list.loading && (
+                <tr><td colSpan={8} className="py-10 text-center text-slate-400"><Loader2 className="mx-auto size-5 animate-spin" /></td></tr>
+              )}
+              {!list.loading && !list.error && rows.length === 0 && <NoDataRow cols={8} noApi />}
+              {!list.loading && rows.map((u, i) => {
+                const name = text(pick(u, "name", "user_name", "full_name"));
+                const email = text(pick(u, "email", "user_email"), "");
+                const roleRaw = text(pick(u, "role", "role_name"), "");
+                const roleLabel = roleRaw ? ROLES[roleKeyFromApi(roleRaw)].label : "—";
+                const active = userActive(u);
+                return (
+                  <tr key={text(pick(u, "id", "user_id"), String(i))} className="hover:bg-slate-50/60">
+                    <td className={td}>
+                      <div className="flex items-center gap-3">
+                        <Avatar name={name} size="sm" />
+                        <div>
+                          <p className="font-semibold text-slate-900">{name}</p>
+                          <p className="text-xs text-slate-500">{email || text(pick(u, "phone"), "")}</p>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className={td}><Badge className={roleTone[u.role]}>{u.role}</Badge></td>
-                  <td className={td}>{u.reportsTo}</td>
-                  <td className={td}>{u.site}</td>
-                  <td className={td}>{u.org}</td>
-                  <td className={td}>
-                    <Badge
-                      className={u.status === "Active" ? "bg-emerald-50 text-emerald-700 ring-emerald-600/15" : u.status === "Locked" ? "bg-rose-50 text-rose-700 ring-rose-600/15" : "bg-slate-100 text-slate-600 ring-slate-500/15"}
-                      dot={u.status === "Active" ? "bg-emerald-500" : u.status === "Locked" ? "bg-rose-500" : "bg-slate-400"}
-                    >
-                      {u.status === "Locked" && <Lock className="size-3" />}
-                      {u.status}
-                    </Badge>
-                  </td>
-                  <td className={td}>{u.lastActive}</td>
-                  <td className={cn(td, "text-right")}>
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="sm" aria-label="Reset password" onClick={() => toast.show(`Password reset link sent to ${u.email}`)}>
-                        <KeyRound />
-                      </Button>
-                      <Button variant="ghost" size="sm" aria-label="More">
-                        <Ellipsis />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className={td}><Badge className={roleTone[roleLabel]}>{roleLabel}</Badge></td>
+                    <td className={td}>{text(pick(u, "reports_to", "reports_to_name", "created_by_name"))}</td>
+                    <td className={td}>{text(pick(u, "building_name", "site_name", "site"))}</td>
+                    <td className={td}>{text(pick(u, "vendor_name", "company_name", "organisation", "org"))}</td>
+                    <td className={td}>
+                      <Badge
+                        className={active ? "bg-emerald-50 text-emerald-700 ring-emerald-600/15" : "bg-rose-50 text-rose-700 ring-rose-600/15"}
+                        dot={active ? "bg-emerald-500" : "bg-rose-500"}
+                      >
+                        {!active && <Lock className="size-3" />}
+                        {active ? "Active" : "Inactive"}
+                      </Badge>
+                    </td>
+                    <td className={td}>{timeText(pick(u, "last_login_at", "last_active", "last_login"))}</td>
+                    <td className={cn(td, "text-right")}>
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="sm" aria-label="Reset password" onClick={() => toast.show(`Password reset link sent to ${email}`)}>
+                          <KeyRound />
+                        </Button>
+                        <Button variant="ghost" size="sm" aria-label="More">
+                          <Ellipsis />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
-        <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
-          Showing {rows.length} users
-        </div>
+        {list.error && <EmptyState icon={TriangleAlert} title="Could not load users" text={list.error} action={<Button onClick={list.reload}>Try again</Button>} />}
+        {list.data && <Pager page={page} limit={limit} total={list.data.pagination?.total} totalPages={list.data.pagination?.total_pages} onPage={setPage} onLimit={(l) => { setLimit(l); setPage(1); }} />}
       </Card>
 
       <Modal open={kind === "choose"} onClose={() => setKind(null)} title="Add user" description="What type of user do you want to create?" size="sm">
@@ -176,9 +199,9 @@ export default function UsersPage() {
           ))}
         </div>
       </Modal>
-      <CreateSiteModal open={kind === "building"} onClose={() => setKind(null)} onCreated={buildings.reload} />
-      <CreateUserModal open={kind === "admin"} onClose={() => setKind(null)} allowedRoles={ROLE_OPTIONS.filter((r) => r !== "Super Admin" && r !== "Vendor")} defaultRole="Admin" />
-      <CreateVendorModal open={kind === "vendor"} onClose={() => setKind(null)} />
+      <CreateSiteModal open={kind === "building"} onClose={() => setKind(null)} onCreated={() => { buildings.reload(); list.reload(); }} />
+      <CreateUserModal open={kind === "admin"} onClose={() => setKind(null)} onCreated={list.reload} allowedRoles={ROLE_OPTIONS.filter((r) => r !== "Super Admin" && r !== "Vendor")} defaultRole="Admin" />
+      <CreateVendorModal open={kind === "vendor"} onClose={() => setKind(null)} onCreated={list.reload} />
       {toast.node}
     </>
   );

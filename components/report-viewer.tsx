@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { FileSpreadsheet, FileText, FileSearch, Loader2, Search, TriangleAlert, X } from "lucide-react";
-import { api, pick, rowsOf, summaryOf, text, type Row } from "@/lib/api";
+import { Eye, FileSpreadsheet, FileText, FileSearch, Loader2, Search, TriangleAlert, X } from "lucide-react";
+import { api, pick, rowsOf, summaryOf, text, timeText, type Row } from "@/lib/api";
 import { downloadExcel, downloadPdf, type ReportResult } from "@/lib/report-export";
 import { useSession } from "@/lib/session";
 import { useApi } from "@/lib/use-api";
 import { Button, Card, EmptyState, Field, Input, Select, td, th } from "@/components/ui";
-import { useToast } from "@/components/interactive";
+import { Modal, useToast } from "@/components/interactive";
 import { Pager } from "@/components/pager";
 
 export type ReportKey = "complaints" | "sla" | "daily" | "vendor" | "worker" | "photo" | "penalty";
@@ -26,6 +26,10 @@ type Filters = { type: ReportKey; from: string; to: string; vendorId: string; q:
 type Loaded = { columns: string[]; rows: string[][]; summary: { label: string; value: string }[]; total?: number; totalPages?: number; meta: string; title: string };
 
 const EMPTY: Filters = { type: "complaints", from: "", to: "", vendorId: "", q: "" };
+/** Columns shown inline; the rest are opened with the row’s View button. */
+const MAX_COLS = 6;
+/** Columns the Penalty report does not show. */
+const HIDDEN_PENALTY = /^penalty_?status$|waive/i;
 const label = (k: string) => k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 /**
@@ -39,6 +43,7 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
   const [applied, setApplied] = useState<Filters | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [view, setView] = useState<string[] | null>(null);
   const [busy, setBusy] = useState<"pdf" | "xlsx" | null>(null);
   const toast = useToast();
   const vendors = useApi(() => api.getVendors());
@@ -59,7 +64,7 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
       limit,
     });
     const list = rowsOf(res.data);
-    const columns = Array.from(new Set(list.flatMap((r) => Object.keys(r).filter((k) => typeof r[k] !== "object" || r[k] === null))));
+    const columns = Array.from(new Set(list.flatMap((r) => Object.keys(r).filter((k) => typeof r[k] !== "object" || r[k] === null)))).filter((k) => applied.type !== "penalty" || !HIDDEN_PENALTY.test(k));
     const sum = summaryOf(res.data);
     const def = REPORT_TYPES.find((r) => r.key === applied.type);
     const vendorName = vendors.data?.find((v) => String(v.id) === applied.vendorId)?.company_name;
@@ -67,7 +72,7 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
     return {
       title: def?.label ?? "Report",
       columns: columns.map(label),
-      rows: list.map((r: Row) => columns.map((c) => text(pick(r, c)))),
+      rows: list.map((r: Row) => columns.map((c) => timeText(pick(r, c)))),
       summary: [{ label: "Records", value: String(res.pagination?.total ?? list.length) }, ...(sum ? Object.entries(sum).filter(([, v]) => typeof v !== "object").map(([k, v]) => ({ label: label(k), value: text(v) })) : [])],
       total: res.pagination?.total,
       totalPages: res.pagination?.total_pages,
@@ -184,17 +189,23 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
                 <table className="w-full">
                   <thead className="sticky top-0 bg-slate-50">
                     <tr>
-                      {result.columns.map((c) => (
+                      {result.columns.slice(0, MAX_COLS).map((c) => (
                         <th key={c} className={th}>{c}</th>
                       ))}
+                      {result.columns.length > MAX_COLS && <th className={th} />}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {result.rows.map((r, i) => (
                       <tr key={i} className="hover:bg-slate-50/60">
-                        {r.map((cell, j) => (
+                        {r.slice(0, MAX_COLS).map((cell, j) => (
                           <td key={j} className={td}>{cell}</td>
                         ))}
+                        {r.length > MAX_COLS && (
+                          <td className={td}>
+                            <Button variant="secondary" size="sm" onClick={() => setView(r)}><Eye /> View</Button>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -205,6 +216,16 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
           </>
         )}
       </Card>
+      <Modal open={!!view} onClose={() => setView(null)} title={result?.title ?? "Details"} description="Full record" size="lg" footer={<Button variant="secondary" onClick={() => setView(null)}>Close</Button>}>
+        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+          {view && result?.columns.map((c, i) => (
+            <div key={c} className="min-w-0">
+              <dt className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase">{c}</dt>
+              <dd className="text-sm break-words text-slate-800">{view[i]}</dd>
+            </div>
+          ))}
+        </dl>
+      </Modal>
       {toast.node}
     </>
   );

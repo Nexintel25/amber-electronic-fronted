@@ -1,7 +1,7 @@
-import { penaltyOf, type Complaint, type NotificationType } from "./complaint";
+import { penaltyOf, type Complaint } from "./complaint";
 import type { WorkerStatus } from "./worker-status";
 
-export { inr, penaltyOf, type Complaint, type NotificationType, type Penalty } from "./complaint";
+export { inr, penaltyOf, type Complaint, type Penalty } from "./complaint";
 export type { WorkerStatus } from "./worker-status";
 
 /*
@@ -19,7 +19,6 @@ export type Worker = {
 };
 export type AuditLog = { id: string; time: string; user: string; role: string; action: string; entity: string; ip: string; device: string; severity: string };
 export type PlatformUser = { id: string; name: string; email: string; role: string; site: string; org: string; reportsTo: string; status: string; lastActive: string };
-export type Notice = { id: string; type: NotificationType; title: string; body: string; time: string; day: "Today" | "Yesterday" | "Earlier"; read: boolean; link?: string };
 export type PhotoSet = { id: string; complaint: string; worker: string; site: string; before: number; after: number; gps: string; inFence: boolean; time: string; status: string };
 
 export const USER_CAP_PER_SITE = 0;
@@ -31,7 +30,6 @@ export const WORKERS: Worker[] = [];
 export const TEAMS: { id: string; name: string; focus: string; lead: string; vendor: string; site: string; members: string[]; utilization: number; open: number }[] = [];
 export const CATEGORIES: string[] = [];
 export const COMPLAINTS: Complaint[] = [];
-export const NOTIFICATIONS: Notice[] = [];
 export const AUDIT_LOGS: AuditLog[] = [];
 export const USERS: PlatformUser[] = [];
 export const PHOTO_SETS: PhotoSet[] = [];

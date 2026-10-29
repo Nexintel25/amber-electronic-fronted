@@ -93,7 +93,7 @@ export default function SupportPage() {
                 <Avatar name="Nexintel Synergy" size="lg" className="ring-2 ring-white/20" />
                 <div>
                   <p className="font-bold">Account Manager</p>
-                  <p className="text-sm text-slate-300">Nexintel Synergy Pvt Ltd</p>
+                  <p className="text-sm text-slate-300">Nexzen Solutions </p>
                 </div>
               </div>
             </div>

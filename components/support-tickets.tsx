@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Loader2, Search, Send, TriangleAlert, Wrench } from "lucide-react";
-import { api, num, pick, rowsOf, text, type Row } from "@/lib/api";
+import { api, num, pick, rowsOf, text, timeText, type Row } from "@/lib/api";
 import { useSession } from "@/lib/session";
 import { useApi } from "@/lib/use-api";
 import { Badge, Button, Card, CardHeader, EmptyState, Field, Input, NoData, Select, Textarea } from "@/components/ui";
@@ -220,7 +220,7 @@ export function AdminTickets({ canUpdate = false }: { canUpdate?: boolean }) {
               <div className="min-w-0 flex-1">
                 <p className="font-mono text-[11px] text-slate-400">{ticketNo(t)} · {text(pick(t, "area"))} · {text(pick(t, "severity"))}</p>
                 <p className="truncate text-[13px] font-semibold text-slate-800">{text(pick(t, "subject"))}</p>
-                <p className="truncate text-xs text-slate-500">{text(pick(t, "contact_name", "raised_by_name", "user_name"))} · {text(pick(t, "created_at"))}</p>
+                <p className="truncate text-xs text-slate-500">{text(pick(t, "contact_name", "raised_by_name", "user_name"))} · {timeText(pick(t, "created_at"))}</p>
               </div>
               <Badge className={statusTone(s)}>{s || "—"}</Badge>
               {canUpdate && <Button variant="secondary" size="sm" onClick={() => { setEdit(t); setStatus(s === "resolved" ? "open" : "resolved"); setNote(""); }}>Update</Button>}

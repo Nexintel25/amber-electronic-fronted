@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Battery, Clock, Crosshair, Loader2, MessageSquare, Phone, Search, Signal, TriangleAlert, WifiOff } from "lucide-react";
-import { api, pick, rowsOf, text } from "@/lib/api";
+import { api, pick, rowsOf, text, timeText } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { projector, toWorker, type MapWorker } from "@/lib/worker-map";
 import { WORKER_STATUS, type WorkerStatus } from "@/lib/worker-status";
@@ -145,7 +145,7 @@ export default function MonitoringPage() {
                     <li key={i} className="flex items-center gap-2.5 text-[13px]">
                       <Crosshair className="size-4 text-brand-500" />
                       <span className="flex-1 text-slate-700">{text(pick(a, "title", "description", "event"))}</span>
-                      <span className="text-xs text-slate-400">{text(pick(a, "time", "event_time", "created_at"))}</span>
+                      <span className="text-xs text-slate-400">{timeText(pick(a, "time", "event_time", "created_at"))}</span>
                     </li>
                   ))}
                 </ol>

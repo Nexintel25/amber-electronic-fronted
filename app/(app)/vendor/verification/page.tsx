@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { BadgeCheck, Flag, Loader2, RotateCcw, Search, TriangleAlert } from "lucide-react";
-import { api, num, pick, rowsOf, text, type Row } from "@/lib/api";
+import { api, num, pick, rowsOf, text, timeText, type Row } from "@/lib/api";
 import { useSession } from "@/lib/session";
 import { useApi } from "@/lib/use-api";
 import { workerView } from "@/lib/vendor-workers";
@@ -162,7 +162,7 @@ export default function VerificationPage() {
                     <Avatar name={workerName === "—" ? "W" : workerName} />
                     <div className="text-[13px]">
                       <p className="font-semibold text-slate-800">{workerName}</p>
-                      <p className="text-slate-500">Submitted {text(pick(r, "submitted_at", "updated_at"))}</p>
+                      <p className="text-slate-500">Submitted {timeText(pick(r, "submitted_at", "updated_at"))}</p>
                     </div>
                   </div>
                 </div>

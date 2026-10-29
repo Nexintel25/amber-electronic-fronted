@@ -1,4 +1,4 @@
-import { pick, num, text, type Row } from "./api";
+import { pick, num, text, timeText, type Row } from "./api";
 import type { WorkerStatus } from "./worker-status";
 
 export type MapWorker = {
@@ -35,7 +35,7 @@ export function toWorker(r: Row): MapWorker {
     site: text(pick(r, "building_name", "site"), ""),
     status: toStatus(pick(r, "status", "work_status", "availability")),
     battery: num(pick(r, "battery", "battery_pct", "battery_level")),
-    lastPing: text(pick(r, "last_ping", "last_seen", "last_seen_at", "last_location_at")),
+    lastPing: timeText(pick(r, "last_ping", "last_seen", "last_seen_at", "last_location_at")),
     lat: num(pick(r, "latitude", "lat")),
     lng: num(pick(r, "longitude", "lng")),
     x: 50,

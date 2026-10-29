@@ -46,7 +46,7 @@ export function ComplaintsTable({ complaints, showSite = true }: { complaints: C
 
   return (
     <Card>
-      <div className="flex flex-col gap-3 border-b border-slate-100 p-4 xl:flex-row xl:items-center xl:justify-between">
+      <div className="flex flex-col gap-3 border-b border-slate-100 p-4">
         <Tabs
           value={tab}
           onChange={setTab}
@@ -58,11 +58,11 @@ export function ComplaintsTable({ complaints, showSite = true }: { complaints: C
             { value: "done", label: "Closed", count: count("done") },
           ]}
         />
+        <div className="relative">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ID, title, location" className="pl-9" />
+        </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-[200px] flex-1 xl:w-64 xl:flex-none">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ID, title, location" className="pl-9" />
-          </div>
           <Select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-36">
             <option value="">All priorities</option>
             <option>Critical</option>

@@ -1,10 +1,6 @@
 import {
   Activity,
   BadgeCheck,
-  Bell,
-  Building,
-  Camera,
-  ChartColumn,
   ClipboardCheck,
   ClipboardList,
   FileChartColumn,
@@ -14,15 +10,10 @@ import {
   HardHat,
   Inbox,
   SquareKanban,
-  KeyRound,
   LayoutDashboard,
   LifeBuoy,
   ListChecks,
-  Map,
   MessageSquareWarning,
-  Network,
-  Radar,
-  ScrollText,
   ShieldCheck,
   Timer,
   Truck,
@@ -51,7 +42,6 @@ const common: NavSection = {
   items: [
     { label: "All Complaints", href: "/complaints", icon: ClipboardList },
     { label: "SLA Report", href: "/sla/report", icon: Timer },
-    { label: "Notifications", href: "/notifications", icon: Bell, badge: "3" },
     { label: "Help & Support", href: "/support", icon: LifeBuoy },
   ],
 };
@@ -77,7 +67,6 @@ export const ROLES: Record<RoleKey, RoleDef> = {
       {
         title: "General",
         items: [
-          { label: "Notifications", href: "/notifications", icon: Bell, badge: "3" },
           { label: "Help & Support", href: "/support", icon: LifeBuoy },
         ],
       },
@@ -117,7 +106,6 @@ export const ROLES: Record<RoleKey, RoleDef> = {
         items: [
           { label: "Dashboard", href: "/pm", icon: LayoutDashboard },
           { label: "My Vendors", href: "/pm/vendors", icon: Truck },
-          { label: "Field Monitoring", href: "/pm/monitoring", icon: Radar },
           { label: "Penalties", href: "/pm/penalties", icon: Gavel },
         ],
       },
@@ -138,7 +126,6 @@ export const ROLES: Record<RoleKey, RoleDef> = {
         items: [
           { label: "My Jobs", href: "/worker", icon: ListChecks },
           { label: "History", href: "/worker/history", icon: ClipboardList },
-          { label: "Alerts", href: "/notifications", icon: Bell, badge: "3" },
           { label: "Profile", href: "/worker/profile", icon: UserRound },
         ],
       },
@@ -173,28 +160,15 @@ export const ROLES: Record<RoleKey, RoleDef> = {
     description: "Full access — creates every user, roles, configurations, audit logs",
     nav: [
       {
-        title: "Control Center",
+        title: "",
         items: [
           { label: "Overview", href: "/super-admin", icon: Activity },
           { label: "User Management", href: "/super-admin/users", icon: Users },
-          { label: "Roles & Access", href: "/super-admin/roles", icon: KeyRound },
-          { label: "Sites", href: "/super-admin/sites", icon: Building },
-          { label: "Audit Logs", href: "/super-admin/audit-logs", icon: ScrollText },
-        ],
-      },
-      {
-        title: "Operations (full access)",
-        items: [
-          { label: "Role Hierarchy", href: "/super-admin/hierarchy", icon: Network },
-          { label: "Photo Review & Issues", href: "/super-admin/photo-review", icon: Camera },
-          { label: "Live Tracking", href: "/super-admin/live", icon: Map },
-          { label: "Live Status Board", href: "/super-admin/board", icon: SquareKanban },
-          { label: "Analytics", href: "/super-admin/analytics", icon: ChartColumn },
           { label: "Reports", href: "/super-admin/reports", icon: FileChartColumn },
           { label: "Penalty Report", href: "/super-admin/penalties", icon: Gavel },
+          ...common.items,
         ],
       },
-      common,
     ],
   },
 };

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSyncExternalStore, type ReactNode } from "react";
-import { Bell, WifiOff, Zap } from "lucide-react";
+import { WifiOff, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROLES } from "@/lib/roles";
 
@@ -37,9 +37,6 @@ export function WorkerShell({ pathname, children }: { pathname: string; children
               <p className="truncate text-[14px] font-bold">Amber</p>
               <p className="truncate text-[11px] text-slate-400">Worker Portal · Amber</p>
             </div>
-            <Link href="/notifications" className="relative grid size-10 place-items-center rounded-xl hover:bg-white/10" aria-label="Notifications">
-              <Bell className="size-5" />
-            </Link>
           </div>
           {!online && (
             <p className="flex items-center justify-center gap-2 bg-amber-500 px-4 py-1.5 text-xs font-semibold text-navy-950">
