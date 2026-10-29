@@ -108,7 +108,6 @@ export default function RaiseComplaintPage() {
     setSubmitting(draft ? "draft" : "submit");
     try {
       const media = uploads.map(({ kind, file_url, file_name, mime_type, file_size_kb }) => ({ kind, file_url, file_name, mime_type, file_size_kb }));
-      if (!draft) await api.checkMedia(media, MIN_PHOTOS);
       const res = await api.createComplaint({
         building_id: activeBuilding,
         category_id: activeCategory,
@@ -337,9 +336,6 @@ export default function RaiseComplaintPage() {
             <Button type="button" variant="ghost" className="mt-2 w-full" disabled={!!submitting} onClick={() => send(true)}>
               {submitting === "draft" ? <Loader2 className="animate-spin" /> : null} Save as draft
             </Button>
-            <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2.5 text-[12px] leading-relaxed text-amber-800">
-              <b>15-day commitment:</b> the vendor must complete this within 15 days. If they don’t, a per-day penalty is applied to the vendor.
-            </p>
           </Card>
 
           <Card className="p-5">

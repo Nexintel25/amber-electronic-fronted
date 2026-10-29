@@ -15,6 +15,8 @@ import {
   Flag,
   Gavel,
   Loader2,
+  ThumbsDown,
+  ThumbsUp,
   Lock,
   MapPin,
   Paperclip,
@@ -32,7 +34,7 @@ import { api, fmtDate, statusFromApi, toComplaintFromDetail, type ComplaintDetai
 import { useApi } from "@/lib/use-api";
 import { PENALTY_AFTER_DAYS, PENALTY_PER_DAY, STATUS_META, WORKFLOW } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
-import { Avatar, Button, Card, CardHeader, EmptyState, KeyValue, PriorityBadge, StatusBadge } from "@/components/ui";
+import { Avatar, Button, Card, CardHeader, EmptyState, KeyValue, PriorityBadge, StatusBadge, Textarea } from "@/components/ui";
 import { WorkflowStepper } from "@/components/workflow-stepper";
 import { GeoPhoto } from "@/components/geo-photo";
 import { LiveMap } from "@/components/live-map";
@@ -70,6 +72,65 @@ function MediaThumb({ m, kind, seed, lat, lng }: { m?: MediaItem; kind: "before"
       <img src={m.file_url} alt={m.file_name ?? "Complaint photo"} className="size-full object-cover" onError={() => setFailed(true)} />
       {m.created_at && <span className="absolute bottom-1.5 left-2 rounded bg-black/60 px-1.5 py-0.5 font-mono text-[9px] text-white">{fmtDate(m.created_at)}</span>}
     </div>
+  );
+}
+
+/** Complaint creator rates the finished work (satisfied / not satisfied) with a remark. */
+function FeedbackCard({ complaintId }: { complaintId: number }) {
+  const [satisfied, setSatisfied] = useState<boolean | null>(null);
+  const [remarks, setRemarks] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit() {
+    if (satisfied === null) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await api.recordComplaintFeedback(complaintId, satisfied, remarks.trim());
+      setDone(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not save your feedback.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader title="Your feedback" subtitle="Were you satisfied with the work done?" icon={ThumbsUp} />
+      <div className="px-5 pb-5">
+        {done ? (
+          <p className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-3 text-sm font-medium text-emerald-700">
+            <CheckCircle2 className="size-4" /> Thanks — your feedback has been recorded.
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { v: true, label: "Satisfied", icon: ThumbsUp, on: "border-emerald-500 bg-emerald-50 text-emerald-700" },
+                { v: false, label: "Not satisfied", icon: ThumbsDown, on: "border-red-500 bg-red-50 text-red-700" },
+              ].map((o) => (
+                <button
+                  key={o.label}
+                  type="button"
+                  onClick={() => setSatisfied(o.v)}
+                  className={cn("flex items-center justify-center gap-2 rounded-xl border-2 px-3 py-3 text-sm font-semibold transition", satisfied === o.v ? o.on : "border-slate-200 text-slate-600 hover:border-slate-300")}
+                >
+                  <o.icon className="size-4" /> {o.label}
+                </button>
+              ))}
+            </div>
+            <Textarea className="mt-3" rows={3} placeholder="Remarks (optional)" value={remarks} onChange={(e) => setRemarks(e.target.value)} />
+            {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+            <Button type="button" className="mt-3 w-full" disabled={satisfied === null || saving} onClick={submit}>
+              {saving ? <Loader2 className="animate-spin" /> : null} Submit feedback
+            </Button>
+          </>
+        )}
+      </div>
+    </Card>
   );
 }
 
@@ -307,6 +368,12 @@ function Body({ d, onChanged }: { d: Detail; onChanged: () => void }) {
         </div>
 
         <div className="space-y-6">
+          {c.status === "closed" && (
+            <RoleGate roles={["creator"]}>
+              <FeedbackCard complaintId={d.complaint_id} />
+            </RoleGate>
+          )}
+
           <Card>
             <CardHeader title="Assignment" icon={Users} />
             <div className="space-y-3 px-5 pb-5">

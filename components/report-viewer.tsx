@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, FileSpreadsheet, FileText, FileSearch, Loader2, Search, TriangleAlert, X } from "lucide-react";
-import { api, pick, rowsOf, summaryOf, text, timeText, type Row } from "@/lib/api";
+import { Eye, Gavel, FileSpreadsheet, FileText, FileSearch, Loader2, Search, TriangleAlert, X } from "lucide-react";
+import { api, pick, rowsOf, summaryOf, num, text, timeText, type Row } from "@/lib/api";
 import { downloadExcel, downloadPdf, type ReportResult } from "@/lib/report-export";
+import { useRole } from "@/components/shell/app-shell";
 import { useSession } from "@/lib/session";
 import { useApi } from "@/lib/use-api";
-import { Button, Card, EmptyState, Field, Input, Select, td, th } from "@/components/ui";
+import { Button, Card, EmptyState, Field, Input, Select, Textarea, td, th } from "@/components/ui";
 import { Modal, useToast } from "@/components/interactive";
 import { Pager } from "@/components/pager";
 
-export type ReportKey = "complaints" | "sla" | "daily" | "vendor" | "worker" | "photo" | "penalty";
+export type ReportKey = "complaints" | "sla" | "daily" | "vendor" | "worker" | "photo" | "penalty" | "register" | "satisfaction";
 
 export const REPORT_TYPES: { key: ReportKey; label: string; hint: string }[] = [
   { key: "complaints", label: "Complaint report", hint: "Every complaint with status, vendor and age" },
@@ -20,12 +21,15 @@ export const REPORT_TYPES: { key: ReportKey; label: string; hint: string }[] = [
   { key: "worker", label: "Worker productivity report", hint: "Jobs, speed and photo compliance per worker" },
   { key: "photo", label: "Photo report", hint: "Before/after photo sets with GPS check" },
   { key: "penalty", label: "Penalty report", hint: "Vendors past the 15-day window" },
+  { key: "register", label: "Complaint register", hint: "Month-wise register of every complaint" },
+  { key: "satisfaction", label: "Satisfaction report", hint: "Creator feedback on closed complaints, month-wise" },
 ];
+const MONTHLY: ReportKey[] = ["register", "satisfaction"];
 
-type Filters = { type: ReportKey; from: string; to: string; vendorId: string; q: string };
-type Loaded = { columns: string[]; rows: string[][]; summary: { label: string; value: string }[]; total?: number; totalPages?: number; meta: string; title: string };
+type Filters = { type: ReportKey; from: string; to: string; month: string; vendorId: string; q: string };
+type Loaded = { ids: (number | undefined)[]; waived: boolean[]; columns: string[]; rows: string[][]; summary: { label: string; value: string }[]; total?: number; totalPages?: number; meta: string; title: string };
 
-const EMPTY: Filters = { type: "complaints", from: "", to: "", vendorId: "", q: "" };
+const EMPTY: Filters = { type: "complaints", from: "", to: "", month: new Date().toISOString().slice(0, 7), vendorId: "", q: "" };
 /** Columns shown inline; the rest are opened with the row’s View button. */
 const MAX_COLS = 6;
 /** Columns the Penalty report does not show. */
@@ -46,6 +50,10 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
   const [view, setView] = useState<string[] | null>(null);
   const [busy, setBusy] = useState<"pdf" | "xlsx" | null>(null);
   const toast = useToast();
+  const isAdmin = useRole() === "admin";
+  const [waive, setWaive] = useState<{ id: number } | null>(null);
+  const [remarks, setRemarks] = useState("");
+  const [waiving, setWaiving] = useState(false);
   const vendors = useApi(() => api.getVendors());
 
   const vendorId = own ? String(own) : form.vendorId;
@@ -54,22 +62,24 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
 
   const report = useApi<Loaded | null>(async () => {
     if (!applied) return null;
-    const res = await api.getPenaltyReport({
-      report_type: applied.type,
-      from_date: applied.from,
-      to_date: applied.to,
-      vendor_id: applied.vendorId ? Number(applied.vendorId) : undefined,
-      search: applied.q,
-      page,
-      limit,
-    });
+    const vid = applied.vendorId ? Number(applied.vendorId) : undefined;
+    const monthly = MONTHLY.includes(applied.type);
+    const res =
+      applied.type === "register"
+        ? await api.getComplaintRegisterReport({ month: applied.month, vendor_id: vid, search: applied.q, page, limit })
+        : applied.type === "satisfaction"
+          ? await api.getSatisfactionReport({ month: applied.month, vendor_id: vid })
+          : await api.getPenaltyReport({ report_type: applied.type, from_date: applied.from, to_date: applied.to, vendor_id: vid, search: applied.q, page, limit });
     const list = rowsOf(res.data);
     const columns = Array.from(new Set(list.flatMap((r) => Object.keys(r).filter((k) => typeof r[k] !== "object" || r[k] === null)))).filter((k) => applied.type !== "penalty" || !HIDDEN_PENALTY.test(k));
     const sum = summaryOf(res.data);
     const def = REPORT_TYPES.find((r) => r.key === applied.type);
     const vendorName = vendors.data?.find((v) => String(v.id) === applied.vendorId)?.company_name;
-    const range = applied.from || applied.to ? `${applied.from || "start"} to ${applied.to || "today"}` : "All dates";
+    const range = monthly ? applied.month : applied.from || applied.to ? `${applied.from || "start"} to ${applied.to || "today"}` : "All dates";
+    const isWaived = (r: Row) => Object.entries(r).some(([k, v]) => /waive/i.test(k) && ["1", "true", "yes"].includes(String(v).toLowerCase()));
     return {
+      ids: list.map((r) => num(pick(r, "complaint_id"))),
+      waived: list.map(isWaived),
       title: def?.label ?? "Report",
       columns: columns.map(label),
       rows: list.map((r: Row) => columns.map((c) => timeText(pick(r, c)))),
@@ -106,6 +116,22 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
     }
   };
 
+  const canWaive = isAdmin && applied?.type === "penalty";
+  const submitWaive = async () => {
+    if (!waive) return;
+    setWaiving(true);
+    try {
+      await api.waiveFine(waive.id, remarks.trim());
+      toast.show("Fine waived");
+      setWaive(null);
+      report.reload();
+    } catch (e) {
+      toast.show(e instanceof Error ? e.message : "Could not waive the fine");
+    } finally {
+      setWaiving(false);
+    }
+  };
+
   const hint = typeOptions.find((r) => r.key === form.type)?.hint;
 
   return (
@@ -125,12 +151,20 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
               ))}
             </Select>
           </Field>
-          <Field label="From date">
-            <Input type="date" value={form.from} onChange={(e) => set("from", e.target.value)} />
-          </Field>
-          <Field label="To date" hint={invalid ? "“To” must be after “From”" : undefined}>
-            <Input type="date" value={form.to} onChange={(e) => set("to", e.target.value)} className={invalid ? "border-rose-400" : undefined} />
-          </Field>
+          {MONTHLY.includes(form.type) ? (
+            <Field label="Month" className="md:col-span-2 xl:col-span-2">
+              <Input type="month" value={form.month} onChange={(e) => set("month", e.target.value)} />
+            </Field>
+          ) : (
+            <>
+              <Field label="From date">
+                <Input type="date" value={form.from} onChange={(e) => set("from", e.target.value)} />
+              </Field>
+              <Field label="To date" hint={invalid ? "“To” must be after “From”" : undefined}>
+                <Input type="date" value={form.to} onChange={(e) => set("to", e.target.value)} className={invalid ? "border-rose-400" : undefined} />
+              </Field>
+            </>
+          )}
           <Field label="Vendor">
             <Select value={vendorId} disabled={!!own} onChange={(e) => set("vendorId", e.target.value)}>
               {!own && <option value="">All vendors</option>}
@@ -192,7 +226,7 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
                       {result.columns.slice(0, MAX_COLS).map((c) => (
                         <th key={c} className={th}>{c}</th>
                       ))}
-                      {result.columns.length > MAX_COLS && <th className={th} />}
+                      {(result.columns.length > MAX_COLS || canWaive) && <th className={th} />}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -201,9 +235,16 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
                         {r.slice(0, MAX_COLS).map((cell, j) => (
                           <td key={j} className={td}>{cell}</td>
                         ))}
-                        {r.length > MAX_COLS && (
+                        {(r.length > MAX_COLS || canWaive) && (
                           <td className={td}>
-                            <Button variant="secondary" size="sm" onClick={() => setView(r)}><Eye /> View</Button>
+                            <div className="flex gap-2">
+                              {r.length > MAX_COLS && <Button variant="secondary" size="sm" onClick={() => setView(r)}><Eye /> View</Button>}
+                              {canWaive && result.ids[i] !== undefined && (
+                                <Button variant="secondary" size="sm" disabled={result.waived[i]} onClick={() => { setRemarks(""); setWaive({ id: result.ids[i]! }); }}>
+                                  <Gavel /> {result.waived[i] ? "Waived" : "Waive fine"}
+                                </Button>
+                              )}
+                            </div>
                           </td>
                         )}
                       </tr>
@@ -225,6 +266,24 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
             </div>
           ))}
         </dl>
+      </Modal>
+      <Modal
+        open={!!waive}
+        onClose={() => setWaive(null)}
+        title="Waive fine"
+        description="The vendor will no longer be fined for this complaint."
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setWaive(null)}>Cancel</Button>
+            <Button disabled={waiving || !remarks.trim()} onClick={submitWaive}>
+              {waiving ? <Loader2 className="animate-spin" /> : <Gavel />} Waive fine
+            </Button>
+          </>
+        }
+      >
+        <Field label="Reason" required>
+          <Textarea rows={3} value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder="Why is the fine being waived?" />
+        </Field>
       </Modal>
       {toast.node}
     </>
