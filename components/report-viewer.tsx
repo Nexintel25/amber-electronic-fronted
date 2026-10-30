@@ -24,7 +24,8 @@ const STATUS_OPTIONS: StatusKey[] = ["new", "vendor_review", "worker_assigned", 
 const MONTHLY: ReportKey[] = ["register", "satisfaction", "benchmark"];
 
 type Filters = { type: ReportKey; from: string; to: string; month: string; vendorId: string; categoryId: string; status: string; q: string };
-type Loaded = { ids: (number | undefined)[]; waived: boolean[]; columns: string[]; rows: string[][]; summary: { label: string; value: string }[]; total?: number; totalPages?: number; meta: string; title: string };
+type Table = { name: string; ids: (number | undefined)[]; waived: boolean[]; columns: string[]; rows: string[][] };
+type Loaded = { tables: Table[]; summary: { label: string; value: string }[]; total?: number; totalPages?: number; meta: string; title: string };
 
 const EMPTY: Filters = { type: "register", from: "", to: "", month: new Date().toISOString().slice(0, 7), vendorId: "", categoryId: "", status: "ALL", q: "" };
 /** Columns shown inline; the rest are opened with the row’s View button. */
@@ -45,10 +46,11 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
   const typeOptions = REPORT_TYPES.filter((r) => !types || types.includes(r.key));
   const own = useSession()?.user.vendor_id ?? null;
   const [form, setForm] = useState<Filters>({ ...EMPTY, type: typeOptions[0].key });
-  const [applied, setApplied] = useState<Filters | null>(null);
+  // Loads the default report as soon as the page opens.
+  const [applied, setApplied] = useState<Filters | null>(() => ({ ...EMPTY, type: typeOptions[0].key, vendorId: own ? String(own) : "" }));
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
-  const [view, setView] = useState<string[] | null>(null);
+  const [view, setView] = useState<{ columns: string[]; row: string[] } | null>(null);
   const [busy, setBusy] = useState<"pdf" | "xlsx" | null>(null);
   const toast = useToast();
   const isAdmin = useRole() === "admin";
@@ -74,20 +76,23 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
           : applied.type === "benchmark"
             ? await api.getBenchmarkReport({ month: applied.month, vendor_id: vid })
             : await api.getPenaltyReport({ report_type: applied.type, from_date: applied.from, to_date: applied.to, vendor_id: vid, search: applied.q, page, limit });
-    const list = rowsOf(res.data);
-    const columns = Array.from(new Set(list.flatMap((r) => Object.keys(r).filter((k) => typeof r[k] !== "object" || r[k] === null)))).filter((k) => !RAW_ID.test(k) && (applied.type !== "penalty" || !HIDDEN_PENALTY.test(k)));
-    const sum = summaryOf(res.data);
+    // Satisfaction and benchmark put their sections (by_vendor, feedbacks…) at the top level of the response, with no `data` wrapper.
+    const src: unknown = res.data ?? res;
+    const isWaived = (r: Row) => Object.entries(r).some(([k, v]) => /waive/i.test(k) && ["1", "true", "yes"].includes(String(v).toLowerCase()));
+    const toTable = (name: string, list: Row[]): Table => {
+      const columns = Array.from(new Set(list.flatMap((r) => Object.keys(r).filter((k) => typeof r[k] !== "object" || r[k] === null)))).filter((k) => !RAW_ID.test(k) && (applied.type !== "penalty" || !HIDDEN_PENALTY.test(k)));
+      return { name, ids: list.map((r) => num(pick(r, "complaint_id"))), waived: list.map(isWaived), columns: columns.map(label), rows: list.map((r) => columns.map((c) => clean(timeText(pick(r, c))))) };
+    };
+    const sections = applied.type === "satisfaction" || applied.type === "benchmark" ? Object.entries(src as Row).filter(([, v]) => Array.isArray(v)) : [];
+    const tables = sections.length ? sections.map(([k, v]) => toTable(label(k), v as Row[])) : [toTable("", rowsOf(src))];
+    const sum = summaryOf(src);
     const def = REPORT_TYPES.find((r) => r.key === applied.type);
     const vendorName = vendors.data?.find((v) => String(v.id) === applied.vendorId)?.company_name;
     const range = monthly ? applied.month : applied.from || applied.to ? `${applied.from || "start"} to ${applied.to || "today"}` : "All dates";
-    const isWaived = (r: Row) => Object.entries(r).some(([k, v]) => /waive/i.test(k) && ["1", "true", "yes"].includes(String(v).toLowerCase()));
     return {
-      ids: list.map((r) => num(pick(r, "complaint_id"))),
-      waived: list.map(isWaived),
+      tables,
       title: def?.label ?? "Report",
-      columns: columns.map(label),
-      rows: list.map((r: Row) => columns.map((c) => clean(timeText(pick(r, c))))),
-      summary: [{ label: "Records", value: String(res.pagination?.total ?? list.length) }, ...(sum ? Object.entries(sum).filter(([k, v]) => typeof v !== "object" && !RAW_ID.test(k)).map(([k, v]) => ({ label: label(k), value: text(v) })) : [])],
+      summary: [{ label: "Records", value: String(res.pagination?.total ?? tables[0].rows.length) }, ...(sum ? Object.entries(sum).filter(([k, v]) => typeof v !== "object" && !RAW_ID.test(k) && k !== "month").map(([k, v]) => ({ label: label(k), value: text(v) })) : [])],
       total: res.pagination?.total,
       totalPages: res.pagination?.total_pages,
       meta: `${range} · ${vendorName ?? "All vendors"}${applied.q ? ` · search “${applied.q}”` : ""} · generated ${new Date().toLocaleString("en-IN")}`,
@@ -101,15 +106,16 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
   };
 
   const reset = () => {
-    setForm({ ...EMPTY, type: typeOptions[0].key });
-    setApplied(null);
+    const fresh = { ...EMPTY, type: typeOptions[0].key };
+    setForm(fresh);
+    setApplied({ ...fresh, vendorId: own ? String(own) : "" });
     setPage(1);
   };
 
   const result = report.data;
   const download = async (kind: "pdf" | "xlsx") => {
     if (!result) return;
-    const data: ReportResult = { title: result.title, columns: result.columns, rows: result.rows, summary: result.summary };
+    const data: ReportResult = { title: result.title, sections: result.tables.map((t) => ({ name: t.name, columns: t.columns, rows: t.rows })), summary: result.summary };
     setBusy(kind);
     try {
       await (kind === "pdf" ? downloadPdf : downloadExcel)(data, result.meta);
@@ -232,61 +238,69 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
                     {s.label}: <b className="text-slate-900">{s.value}</b>
                   </span>
                 ))}
-                <Button variant="secondary" size="sm" disabled={!result.rows.length || busy !== null} onClick={() => download("xlsx")}>
+                <Button variant="secondary" size="sm" disabled={!result.tables.some((t) => t.rows.length) || busy !== null} onClick={() => download("xlsx")}>
                   <FileSpreadsheet /> {busy === "xlsx" ? "Preparing…" : "Excel"}
                 </Button>
-                <Button variant="secondary" size="sm" disabled={!result.rows.length || busy !== null} onClick={() => download("pdf")}>
+                <Button variant="secondary" size="sm" disabled={!result.tables.some((t) => t.rows.length) || busy !== null} onClick={() => download("pdf")}>
                   <FileText /> {busy === "pdf" ? "Preparing…" : "PDF"}
                 </Button>
               </div>
             </div>
-            {result.rows.length === 0 ? (
-              <EmptyState icon={FileSearch} title="No data found" text="No records for these filters." />
-            ) : (
-              <div className="max-h-[560px] overflow-auto">
-                <table className="w-full">
-                  <thead className="sticky top-0 bg-slate-50">
-                    <tr>
-                      {result.columns.slice(0, MAX_COLS).map((c) => (
-                        <th key={c} className={th}>{c}</th>
-                      ))}
-                      {(result.columns.length > MAX_COLS || canWaive) && <th className={th} />}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {result.rows.map((r, i) => (
-                      <tr key={i} className="hover:bg-slate-50/60">
-                        {r.slice(0, MAX_COLS).map((cell, j) => (
-                          <td key={j} className={td}>{cell}</td>
+            {result.tables.map((t) => {
+              const cap = result.tables.length > 1 ? t.columns.length : MAX_COLS;
+              return (
+                <div key={t.name}>
+                  {t.name && <p className="border-b border-slate-100 bg-slate-50/60 px-4 py-2 text-sm font-semibold text-slate-800">{t.name} <span className="text-xs font-normal text-slate-400">{t.rows.length}</span></p>}
+                {t.rows.length === 0 ? (
+                  <EmptyState icon={FileSearch} title="No data found" text="No records for these filters." />
+                ) : (
+                  <div className="max-h-[560px] overflow-auto">
+                    <table className="w-full">
+                      <thead className="sticky top-0 bg-slate-50">
+                        <tr>
+                          {t.columns.slice(0, cap).map((c) => (
+                            <th key={c} className={th}>{c}</th>
+                          ))}
+                          {(t.columns.length > cap || canWaive) && <th className={th} />}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {t.rows.map((r, i) => (
+                          <tr key={i} className="hover:bg-slate-50/60">
+                            {r.slice(0, cap).map((cell, j) => (
+                              <td key={j} className={td}>{cell}</td>
+                            ))}
+                            {(r.length > cap || canWaive) && (
+                              <td className={td}>
+                                <div className="flex gap-2">
+                                  {r.length > cap && <Button variant="secondary" size="sm" onClick={() => setView({ columns: t.columns, row: r })}><Eye /> View</Button>}
+                                  {canWaive && t.ids[i] !== undefined && (
+                                    <Button variant="secondary" size="sm" disabled={t.waived[i]} onClick={() => { setRemarks(""); setWaive({ id: t.ids[i]! }); }}>
+                                      <Gavel /> {t.waived[i] ? "Waived" : "Waive fine"}
+                                    </Button>
+                                  )}
+                                </div>
+                              </td>
+                            )}
+                          </tr>
                         ))}
-                        {(r.length > MAX_COLS || canWaive) && (
-                          <td className={td}>
-                            <div className="flex gap-2">
-                              {r.length > MAX_COLS && <Button variant="secondary" size="sm" onClick={() => setView(r)}><Eye /> View</Button>}
-                              {canWaive && result.ids[i] !== undefined && (
-                                <Button variant="secondary" size="sm" disabled={result.waived[i]} onClick={() => { setRemarks(""); setWaive({ id: result.ids[i]! }); }}>
-                                  <Gavel /> {result.waived[i] ? "Waived" : "Waive fine"}
-                                </Button>
-                              )}
-                            </div>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                </div>
+              );
+            })}
             <Pager page={page} limit={limit} total={result.total} totalPages={result.totalPages} onPage={setPage} onLimit={(l) => { setLimit(l); setPage(1); }} />
           </>
         )}
       </Card>
       <Modal open={!!view} onClose={() => setView(null)} title={result?.title ?? "Details"} description="Full record" size="lg" footer={<Button variant="secondary" onClick={() => setView(null)}>Close</Button>}>
         <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-          {view && result?.columns.map((c, i) => (
+          {view?.columns.map((c, i) => (
             <div key={c} className="min-w-0">
               <dt className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase">{c}</dt>
-              <dd className="text-sm break-words text-slate-800">{view[i]}</dd>
+              <dd className="text-sm break-words text-slate-800">{view.row[i]}</dd>
             </div>
           ))}
         </dl>
