@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Loader2, Timer, TriangleAlert } from "lucide-react";
+import { Timer, TriangleAlert } from "lucide-react";
 import { api, toComplaint } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { STATUS_META, WORKFLOW, type StatusKey } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
-import { AvatarStack, Button, EmptyState, LiveDot, PageHeader, PriorityBadge } from "@/components/ui";
+import { AvatarStack, Button, EmptyState, LiveDot, PageHeader, PageSkeleton, PriorityBadge } from "@/components/ui";
 
 const columns: { step: number; label: string; owner: string; statuses: StatusKey[] }[] = WORKFLOW.map((w) => ({
   step: w.step,
@@ -18,7 +18,7 @@ const columns: { step: number; label: string; owner: string; statuses: StatusKey
 export default function StatusBoardPage() {
   const list = useApi(async () => (await api.getComplaints({ limit: 500 })).data.map(toComplaint));
   const COMPLAINTS = list.data ?? [];
-  if (list.loading) return <div className="grid place-items-center py-32 text-slate-400"><Loader2 className="size-6 animate-spin" /></div>;
+  if (list.loading) return <PageSkeleton />;
   if (list.error) return <EmptyState icon={TriangleAlert} title="Could not load the board" text={list.error} action={<Button onClick={list.reload}>Try again</Button>} />;
   return (
     <>

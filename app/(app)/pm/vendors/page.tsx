@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Building, Loader2, Mail, Phone, Plus, TriangleAlert, Truck } from "lucide-react";
+import { Building, Mail, Phone, Plus, TriangleAlert, Truck } from "lucide-react";
 import { api } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
-import { Avatar, Badge, Button, Card, EmptyState, PageHeader, td, th } from "@/components/ui";
+import { Avatar, Badge, Button, Card, EmptyState, ListSkeleton, PageHeader, td, th } from "@/components/ui";
 import { CreateUserModal } from "@/components/create-user-modal";
 
 export default function PMVendors() {
@@ -24,11 +24,7 @@ export default function PMVendors() {
         }
       />
 
-      {vendors.loading && (
-        <div className="grid place-items-center py-20 text-slate-400">
-          <Loader2 className="size-6 animate-spin" />
-        </div>
-      )}
+      {vendors.loading && <ListSkeleton />}
       {vendors.error && <EmptyState icon={TriangleAlert} title="Could not load vendors" text={vendors.error} action={<Button onClick={vendors.reload}>Try again</Button>} />}
       {vendors.data && vendors.data.length === 0 && <EmptyState icon={Truck} title="No vendors yet" text="Add a vendor to start assigning complaints." />}
 

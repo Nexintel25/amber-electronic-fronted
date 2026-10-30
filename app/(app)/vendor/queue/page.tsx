@@ -9,7 +9,7 @@ import { useSession } from "@/lib/session";
 import { workerView } from "@/lib/vendor-workers";
 import { PENALTY_AFTER_DAYS } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
-import { Avatar, Button, Card, EmptyState, Field, PageHeader, PriorityBadge, StatusBadge, Textarea } from "@/components/ui";
+import { Avatar, Button, Card, EmptyState, Field, ListSkeleton, PageHeader, PriorityBadge, StatusBadge, Textarea } from "@/components/ui";
 import { useToast } from "@/components/interactive";
 
 export default function VendorQueue() {
@@ -59,7 +59,7 @@ export default function VendorQueue() {
         description="Complaints arrive here at the same time as the Admin and Project Manager. Distribute the work to your workers on the mobile app."
       />
 
-      {list.loading && <div className="grid place-items-center py-24 text-slate-400"><Loader2 className="size-6 animate-spin" /></div>}
+      {list.loading && <ListSkeleton />}
       {list.error && <EmptyState icon={TriangleAlert} title="Could not load the queue" text={list.error} action={<Button onClick={list.reload}>Try again</Button>} />}
 
       {!list.loading && !list.error && items.length === 0 && (
@@ -96,7 +96,7 @@ export default function VendorQueue() {
 
           <div className="space-y-6">
             <Card>
-              {detail.loading && <div className="grid place-items-center py-16 text-slate-400"><Loader2 className="size-5 animate-spin" /></div>}
+              {detail.loading && <ListSkeleton rows={2} />}
               {detail.error && <p className="p-5 text-sm text-rose-600">{detail.error}</p>}
               {selected && detail.data && (
                 <>

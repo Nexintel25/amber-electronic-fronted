@@ -210,3 +210,190 @@ export type PmDashboard = {
   map_complaints: AdminDashboard["map_complaints"];
   buildings: Record<string, unknown>[];
 };
+
+export type CreatorDashboard = {
+  kpis: {
+    open_complaints: number;
+    building_names: string | null;
+    work_in_progress: number;
+    awaiting_verification: number;
+    closed_total: number;
+    resolved_this_month: number;
+    resolved_last_month: number;
+    resolved_change_pct: number | null;
+    overdue_open: number;
+    at_risk_open: number;
+    critical_open: number;
+    feedback_pending_count: number;
+    avg_resolution_hours: number | null;
+    drafts: number;
+    unread_notifications: number;
+  };
+  sla: {
+    sla_compliance_pct: number | null;
+    sla_target_pct: number;
+    green: number;
+    yellow: number;
+    red: number;
+    on_time: number;
+    at_risk: number;
+    outside_duration: number;
+    total_jobs: number;
+  };
+  active_complaints: {
+    complaint_id: number;
+    complaint_no: string;
+    title: string;
+    status: string;
+    priority: string;
+    stage_no: number;
+    stage_total: number;
+    complaint_type_name: string;
+    category_name: string;
+    area_location: string | null;
+    building_name: string;
+    vendor_name: string | null;
+    worker_name: string | null;
+    raised_by_name: string;
+    sla_applicable: number;
+    sla_hours: number | null;
+    sla_label: string | null;
+    deadline: string | null;
+    sla_state: string;
+    time_left_minutes: number | null;
+    elapsed_days: number;
+    sla_days: number | null;
+    is_overdue: number;
+    media_total: number;
+    raised_at: string;
+    updated_at: string;
+  }[];
+  // Row shape unknown yet (empty in the test data).
+  feedback_pending: Record<string, unknown>[];
+};
+
+export type WorkerJob = {
+  complaint_id: number;
+  complaint_no: string;
+  title: string;
+  status: string;
+  priority: string;
+  complaint_type_name: string;
+  category_name: string;
+  building_name: string;
+  area_location: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  geofence_radius_m: number;
+  contact_name: string | null;
+  contact_phone: string | null;
+  sla_hours: number | null;
+  sla_label: string | null;
+  deadline: string | null;
+  sla_state: string;
+  time_left_minutes: number | null;
+  rework_count: number;
+  rework_reason: string | null;
+  checked_in: number;
+  before_photo_done: number;
+  after_photo_done: number;
+  initial_media_count: number;
+  next_step: string;
+  assigned_at: string;
+  raised_at: string;
+};
+
+export type WorkerDashboard = {
+  kpis: {
+    new_jobs: number;
+    in_progress: number;
+    rework: number;
+    waiting_vendor: number;
+    active_jobs: number;
+    done_today: number;
+    closed_this_month: number;
+    overdue_jobs: number;
+    at_risk_jobs: number;
+    sla_green: number;
+    sla_yellow: number;
+    sla_red: number;
+    sla_compliance_pct: number | null;
+    unread_notifications: number;
+  };
+  jobs: WorkerJob[];
+  history: {
+    complaint_id: number;
+    complaint_no: string;
+    title: string;
+    status: string;
+    building_name: string;
+    area_location: string | null;
+    submitted_at: string | null;
+    closed_at: string | null;
+    sla_state: string;
+    first_time_fix: number;
+    rework_count: number;
+    minutes_taken: number;
+    feedback_satisfied: number | null;
+  }[];
+};
+
+export type MyProfile = {
+  user: {
+    user_id: number;
+    name: string;
+    email: string;
+    phone: string | null;
+    role: string;
+    is_active: number;
+    vendor_id: number | null;
+    vendor_name: string | null;
+    vendor_contact_name: string | null;
+    vendor_contact_phone: string | null;
+    vendor_contact_email: string | null;
+    member_since: string;
+    last_login_at: string | null;
+    active_sessions: number;
+  };
+  /** Creator fields and worker fields come back from the same endpoint; only the ones for the user's role are set. */
+  stats: Partial<{
+    total_raised: number;
+    open_complaints: number;
+    closed_complaints: number;
+    drafts: number;
+    feedback_given: number;
+    feedback_pending: number;
+  }> &
+    Partial<{
+      jobs_completed: number;
+      active_jobs: number;
+      first_time_fix_pct: number;
+      photo_compliance_pct: number;
+      avg_minutes_per_job: number;
+      rating: number;
+      feedback_count: number;
+    }>;
+  buildings: { building_id: number; name: string; code: string; city: string; address: string }[];
+  contacts: { id: number; name: string; type: string; phone: string | null; email: string | null }[];
+  sessions: {
+    session_id: number;
+    device_name: string;
+    device_type: string;
+    os: string | null;
+    browser: string | null;
+    app_version: string | null;
+    ip_address: string | null;
+    login_at: string;
+    last_active_at: string;
+  }[];
+};
+
+export type AppNotification = {
+  notification_id: number;
+  complaint_id: number | null;
+  complaint_no: string | null;
+  event_type: string;
+  message: string;
+  is_read: number;
+  created_at: string;
+};

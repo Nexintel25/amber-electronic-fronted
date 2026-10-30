@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Building, HardHat, Loader2, MapPin, Plus, TriangleAlert, Users } from "lucide-react";
+import { Building, HardHat, MapPin, Plus, TriangleAlert, Users } from "lucide-react";
 import { api, type AdminDashboard } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { cn } from "@/lib/utils";
-import { Button, Card, EmptyState, PageHeader, Progress } from "@/components/ui";
+import { Button, Card, EmptyState, ListSkeleton, PageHeader, Progress } from "@/components/ui";
 import { CreateSiteModal } from "@/components/create-site-modal";
 import { LiveMap } from "@/components/live-map";
 
@@ -32,11 +32,7 @@ export default function SitesPage() {
         }
       />
 
-      {buildings.loading && (
-        <div className="grid place-items-center py-20 text-slate-400">
-          <Loader2 className="size-6 animate-spin" />
-        </div>
-      )}
+      {buildings.loading && <ListSkeleton />}
       {buildings.error && <EmptyState icon={TriangleAlert} title="Could not load sites" text={buildings.error} action={<Button onClick={buildings.reload}>Try again</Button>} />}
 
       {buildings.data && (

@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ClipboardList, Gavel, Loader2, Radar, Timer, TriangleAlert, Truck } from "lucide-react";
+import { ClipboardList, Gavel, Radar, Timer, TriangleAlert, Truck } from "lucide-react";
 import { api, toComplaint } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { PENALTY_AFTER_DAYS } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
-import { Avatar, Button, Card, CardHeader, EmptyState, LinkButton, PageHeader, PriorityBadge, StatCard, StatusBadge } from "@/components/ui";
+import { Avatar, Button, Card, CardHeader, EmptyState, LinkButton, PageHeader, PageSkeleton, PriorityBadge, StatCard, StatusBadge } from "@/components/ui";
 
 const inr = (v: string | number) => `₹${Number(v).toLocaleString("en-IN")}`;
 
@@ -15,7 +15,7 @@ export default function PMDashboard() {
   // Extra KPIs from the PM dashboard endpoint, if the signed-in user is allowed to see it.
   const dash = useApi(() => api.getPmDashboard().catch(() => null));
 
-  if (complaints.loading) return <div className="grid place-items-center py-32 text-slate-400"><Loader2 className="size-6 animate-spin" /></div>;
+  if (complaints.loading) return <PageSkeleton />;
   if (complaints.error || !complaints.data)
     return <EmptyState icon={TriangleAlert} title="Could not load your dashboard" text={complaints.error ?? "No data"} action={<Button onClick={complaints.reload}>Try again</Button>} />;
 

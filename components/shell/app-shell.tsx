@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ROLES, roleFromPath, type RoleKey } from "@/lib/roles";
 import { Avatar, Kbd, LiveDot } from "@/components/ui";
+import { NotificationsBell } from "@/components/notifications-bell";
 import { WorkerShell } from "@/components/shell/worker-shell";
 import { clearSession, useSession } from "@/lib/session";
 import { roleKeyFromApi } from "@/lib/api";
@@ -211,6 +212,8 @@ function Topbar({ role, onMenu }: { role: RoleKey; onMenu: () => void }) {
             <LiveDot /> Live
             <Wifi className="size-3.5" />
           </span>
+
+          <NotificationsBell role={role} />
 
           {/* Signed-in user's role (fixed — panels can no longer be switched) */}
           <div

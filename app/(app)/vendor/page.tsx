@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BadgeCheck, Clock, Gavel, HardHat, Inbox, Loader2, TriangleAlert } from "lucide-react";
+import { BadgeCheck, Clock, Gavel, HardHat, Inbox, TriangleAlert } from "lucide-react";
 import { inr, penaltyOf } from "@/lib/complaint";
 import { api, toComplaint } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
@@ -9,7 +9,7 @@ import { useSession } from "@/lib/session";
 import { workerView } from "@/lib/vendor-workers";
 import { PENALTY_AFTER_DAYS } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
-import { Avatar, Button, Card, CardHeader, EmptyState, LinkButton, PageHeader, PriorityBadge, StatCard, StatusBadge } from "@/components/ui";
+import { Avatar, Button, Card, CardHeader, EmptyState, LinkButton, PageHeader, PageSkeleton, PriorityBadge, StatCard, StatusBadge } from "@/components/ui";
 import { Bars, SERIES } from "@/components/charts";
 
 export default function VendorDashboard() {
@@ -18,7 +18,7 @@ export default function VendorDashboard() {
   const complaints = useApi(async () => (await api.getComplaints({ limit: 200 })).data.map(toComplaint));
   const workersApi = useApi(async () => (session?.user.vendor_id ? (await api.getVendorWorkers(session.user.vendor_id)).map((w) => ({ ...workerView(w), open: Number((w as { open_jobs?: number }).open_jobs ?? 0) })) : []), [session?.user.vendor_id]);
 
-  if (complaints.loading) return <div className="grid place-items-center py-32 text-slate-400"><Loader2 className="size-6 animate-spin" /></div>;
+  if (complaints.loading) return <PageSkeleton />;
   if (complaints.error || !complaints.data)
     return <EmptyState icon={TriangleAlert} title="Could not load the dashboard" text={complaints.error ?? "No data"} action={<Button onClick={complaints.reload}>Try again</Button>} />;
 

@@ -7,7 +7,7 @@ import { api, num, pick, rowsOf, text, timeText, type Row } from "@/lib/api";
 import { useSession } from "@/lib/session";
 import { useApi } from "@/lib/use-api";
 import { workerView } from "@/lib/vendor-workers";
-import { Avatar, Badge, Button, Card, EmptyState, Field, Input, NoData, PageHeader, Select, Textarea } from "@/components/ui";
+import { Avatar, Badge, Button, Card, EmptyState, Field, Input, ListSkeleton, NoData, PageHeader, Select, Textarea } from "@/components/ui";
 import { Modal, Tabs, useToast } from "@/components/interactive";
 import { Pager } from "@/components/pager";
 
@@ -140,11 +140,7 @@ export default function VerificationPage() {
         <Button type="submit"><Search /> Search</Button>
       </form>
 
-      {list.loading && (
-        <div className="grid place-items-center py-20 text-slate-400">
-          <Loader2 className="size-6 animate-spin" />
-        </div>
-      )}
+      {list.loading && <ListSkeleton />}
       {list.error && <EmptyState icon={TriangleAlert} title="Could not load the list" text={list.error} action={<Button onClick={list.reload}>Try again</Button>} />}
       {list.data && items.length === 0 && (
         <Card>

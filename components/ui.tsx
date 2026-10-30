@@ -404,3 +404,94 @@ export function NoDataRow({ cols, noApi }: { cols: number; noApi?: boolean }) {
     </tr>
   );
 }
+
+/* ------------------------------- Skeletons ------------------------------- */
+
+export function Skeleton({ className }: { className?: string }) {
+  return <div aria-hidden className={cn("animate-pulse rounded-lg bg-slate-200/70", className)} />;
+}
+
+/** Placeholder rows for a list or table while its data loads. */
+export function ListSkeleton({ rows = 5, className }: { rows?: number; className?: string }) {
+  return (
+    <div role="status" aria-label="Loading" className={cn("divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-slate-200/70", className)}>
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="flex items-center gap-4 px-5 py-4">
+          <Skeleton className="size-10 shrink-0 rounded-xl" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-3 w-1/3" />
+          </div>
+          <Skeleton className="hidden h-6 w-24 rounded-full sm:block" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Full-page placeholder: header, stat tiles and a list. */
+export function PageSkeleton({ stats = 4, rows = 5 }: { stats?: number; rows?: number }) {
+  return (
+    <div role="status" aria-label="Loading">
+      <div className="mb-6 space-y-2">
+        <Skeleton className="h-3 w-32" />
+        <Skeleton className="h-7 w-64" />
+        <Skeleton className="h-4 w-96 max-w-full" />
+      </div>
+      {stats > 0 && (
+        <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: stats }, (_, i) => (
+            <Card key={i} className="space-y-3 p-5">
+              <div className="flex justify-between">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="size-9 rounded-xl" />
+              </div>
+              <Skeleton className="h-7 w-16" />
+              <Skeleton className="h-3 w-24" />
+            </Card>
+          ))}
+        </div>
+      )}
+      <ListSkeleton rows={rows} />
+    </div>
+  );
+}
+
+/** Mobile (worker) placeholder: greeting, two counters and job cards. */
+export function WorkerSkeleton({ cards = 3 }: { cards?: number }) {
+  return (
+    <div role="status" aria-label="Loading" className="space-y-5">
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-12" />
+        <Skeleton className="h-7 w-44" />
+      </div>
+      <div className="grid grid-cols-2 gap-2.5">
+        <Skeleton className="h-16 rounded-2xl" />
+        <Skeleton className="h-16 rounded-2xl" />
+      </div>
+      <JobCardsSkeleton cards={cards} />
+    </div>
+  );
+}
+
+export function JobCardsSkeleton({ cards = 3 }: { cards?: number }) {
+  return (
+    <ul role="status" aria-label="Loading" className="space-y-3">
+      {Array.from({ length: cards }, (_, i) => (
+        <li key={i} className="space-y-3 rounded-2xl bg-white p-4 shadow-soft ring-1 ring-slate-200/70">
+          <div className="flex justify-between">
+            <Skeleton className="h-3 w-28" />
+            <Skeleton className="h-5 w-14 rounded-full" />
+          </div>
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-3 w-1/2" />
+          <div className="flex justify-between">
+            <Skeleton className="h-6 w-28 rounded-full" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}

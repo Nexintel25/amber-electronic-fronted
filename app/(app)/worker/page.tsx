@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarClock, ChevronRight, Gavel, Loader2, MapPin, RotateCcw } from "lucide-react";
-import { api, toComplaint } from "@/lib/api";
+import { CalendarClock, ChevronRight, Gavel, MapPin, RotateCcw } from "lucide-react";
+import { api, priorityFromType, statusFromApi } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { useSession } from "@/lib/session";
-import { PENALTY_AFTER_DAYS } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
-import { PriorityBadge, StatusBadge } from "@/components/ui";
+import { PriorityBadge, StatusBadge, WorkerSkeleton } from "@/components/ui";
 
 const GROUPS: { title: string; statuses: string[] }[] = [
   { title: "Rework — fix again", statuses: ["rework"] },
@@ -16,13 +15,15 @@ const GROUPS: { title: string; statuses: string[] }[] = [
   { title: "Submitted to vendor", statuses: ["pending_verification", "issue_raised"] },
 ];
 
+const leftText = (m: number) => (m >= 2880 ? `${Math.floor(m / 1440)}d` : m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`);
+
 export default function WorkerHome() {
   const session = useSession();
-  const jobs = useApi(async () => (await api.getComplaints({ limit: 200 })).data.map(toComplaint));
-  const mine = (jobs.data ?? []).filter((c) => c.status !== "closed");
-  const todo = mine.filter((c) => ["rework", "worker_assigned", "in_progress"].includes(c.status)).length;
+  const jobs = useApi(() => api.getWorkerDashboard(50));
+  const mine = (jobs.data?.jobs ?? []).map((j) => ({ ...j, state: statusFromApi(j.status) }));
+  const todo = jobs.data?.kpis.active_jobs ?? 0;
 
-  if (jobs.loading) return <div className="grid place-items-center py-24 text-slate-400"><Loader2 className="size-6 animate-spin" /></div>;
+  if (jobs.loading) return <WorkerSkeleton />;
   if (jobs.error) return <p className="rounded-2xl bg-white p-8 text-center text-sm text-rose-600 ring-1 ring-slate-200/70">{jobs.error}</p>;
 
   return (
@@ -35,7 +36,7 @@ export default function WorkerHome() {
       <div className="grid grid-cols-2 gap-2.5 text-center">
         {[
           { v: todo, l: "To do" },
-          { v: mine.length - todo, l: "Submitted" },
+          { v: jobs.data?.kpis.closed_this_month ?? 0, l: "Submitted" },
         ].map((x) => (
           <div key={x.l} className="rounded-2xl bg-white p-3 shadow-soft ring-1 ring-slate-200/70">
             <p className="text-xl font-bold text-slate-900 tabular-nums">{x.v}</p>
@@ -45,7 +46,7 @@ export default function WorkerHome() {
       </div>
 
       {GROUPS.map((g) => {
-        const list = mine.filter((c) => g.statuses.includes(c.status));
+        const list = mine.filter((c) => g.statuses.includes(c.state));
         if (!list.length) return null;
         return (
           <section key={g.title}>
@@ -55,22 +56,22 @@ export default function WorkerHome() {
             </h2>
             <ul className="space-y-3">
               {list.map((c) => (
-                <li key={c.id}>
-                  <Link href={`/worker/tasks/${c.ref}`} className={cn("block rounded-2xl bg-white p-4 shadow-soft ring-1 transition active:scale-[0.99]", c.status === "rework" ? "ring-rose-300" : "ring-slate-200/70")}>
+                <li key={c.complaint_id}>
+                  <Link href={`/worker/tasks/${c.complaint_id}`} className={cn("block rounded-2xl bg-white p-4 shadow-soft ring-1 transition active:scale-[0.99]", c.state === "rework" ? "ring-rose-300" : "ring-slate-200/70")}>
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-xs font-bold text-brand-700">{c.id}</span>
-                      <PriorityBadge priority={c.priority} />
+                      <span className="font-mono text-xs font-bold text-brand-700">{c.complaint_no}</span>
+                      <PriorityBadge priority={priorityFromType(c.complaint_type_name)} />
                     </div>
                     <p className="mt-1.5 text-[15px] leading-snug font-semibold text-slate-900">{c.title}</p>
                     <p className="mt-1 flex items-center gap-1.5 text-[13px] text-slate-500">
                       <MapPin className="size-3.5 shrink-0" />
-                      <span className="truncate">{c.location}</span>
+                      <span className="truncate">{c.area_location ?? c.building_name}</span>
                     </p>
                     <div className="mt-3 flex items-center justify-between gap-2">
-                      <StatusBadge status={c.status} />
-                      <span className={cn("flex items-center gap-1 text-xs font-semibold", c.daysOpen > PENALTY_AFTER_DAYS ? "text-rose-600" : c.daysOpen >= 12 ? "text-amber-600" : "text-slate-500")}>
-                        {c.daysOpen > PENALTY_AFTER_DAYS ? <Gavel className="size-3.5" /> : <CalendarClock className="size-3.5" />}
-                        Day {c.daysOpen}/{PENALTY_AFTER_DAYS}
+                      <StatusBadge status={c.state} />
+                      <span className={cn("flex items-center gap-1 text-xs font-semibold", c.sla_state === "red" ? "text-rose-600" : c.sla_state === "yellow" ? "text-amber-600" : "text-slate-500")}>
+                        {c.sla_state === "red" ? <Gavel className="size-3.5" /> : <CalendarClock className="size-3.5" />}
+                        {c.time_left_minutes === null ? "No SLA" : c.time_left_minutes < 0 ? `${leftText(-c.time_left_minutes)} overdue` : `${leftText(c.time_left_minutes)} left`}
                       </span>
                       <ChevronRight className="size-5 text-slate-300" />
                     </div>

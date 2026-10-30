@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Battery, Clock, Crosshair, Loader2, MessageSquare, Phone, Search, Signal, TriangleAlert, WifiOff } from "lucide-react";
+import { Battery, Clock, Crosshair, MessageSquare, Phone, Search, Signal, TriangleAlert, WifiOff } from "lucide-react";
 import { api, pick, rowsOf, text, timeText } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { projector, toWorker, type MapWorker } from "@/lib/worker-map";
 import { WORKER_STATUS, type WorkerStatus } from "@/lib/worker-status";
 import { cn } from "@/lib/utils";
-import { Avatar, Badge, Button, Card, EmptyState, Input, LiveDot, NoData, PageHeader } from "@/components/ui";
+import { Avatar, Badge, Button, Card, EmptyState, Input, ListSkeleton, LiveDot, NoData, PageHeader } from "@/components/ui";
 import { Tabs } from "@/components/interactive";
 import { LiveMap, MapLegend } from "@/components/live-map";
 
@@ -67,7 +67,7 @@ export default function MonitoringPage() {
               <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find worker" className="pl-9" />
             </div>
           </div>
-          {dash.loading && <div className="grid place-items-center py-6 text-slate-400"><Loader2 className="size-5 animate-spin" /></div>}
+          {dash.loading && <ListSkeleton rows={4} className="rounded-none shadow-none ring-0" />}
           {dash.error && <EmptyState icon={TriangleAlert} title="Could not load workers" text={dash.error} action={<Button onClick={dash.reload}>Try again</Button>} />}
           <ul className="max-h-[560px] divide-y divide-slate-100 overflow-y-auto">
             {!dash.loading && list.length === 0 && <li><NoData /></li>}

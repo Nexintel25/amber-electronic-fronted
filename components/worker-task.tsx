@@ -6,7 +6,7 @@ import { ArrowLeft, Camera, Check, CheckCircle2, Clock, Crosshair, Loader2, Lock
 import type { Complaint } from "@/lib/complaint";
 import { cn } from "@/lib/utils";
 import { PENALTY_AFTER_DAYS } from "@/lib/workflow";
-import { PriorityBadge, StatusBadge, Textarea } from "@/components/ui";
+import { JobCardsSkeleton, PriorityBadge, StatusBadge, Textarea } from "@/components/ui";
 import { useToast } from "@/components/interactive";
 import { useOnline } from "@/components/shell/worker-shell";
 import { GeoPhoto } from "@/components/geo-photo";
@@ -19,7 +19,7 @@ const MIN_PHOTOS = 2;
 /** Fetches one job from the API, then shows the mobile task screen. */
 export function WorkerTaskLoader({ id }: { id: string }) {
   const { data, error, loading } = useApi(() => api.getComplaintDetail(Number(id)), [id]);
-  if (loading) return <div className="grid place-items-center py-24 text-slate-400"><Loader2 className="size-6 animate-spin" /></div>;
+  if (loading) return <JobCardsSkeleton cards={3} />;
   if (error || !data) return <p className="rounded-2xl bg-white p-8 text-center text-sm text-rose-600 ring-1 ring-slate-200/70">{error ?? "Job not found."}</p>;
   return <WorkerTask complaint={toComplaintFromDetail(data)} />;
 }

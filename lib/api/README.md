@@ -10,7 +10,8 @@
 | `complaint-types.ts` | `getComplaintTypes`, `getComplaintCategories`, `getBuildingComplaintTypes` |
 | `complaints.ts` | `createComplaint`, `getComplaints`, `getComplaintDetail`, `assignWorker`, `recordComplaintFeedback` |
 | `worker.ts` | `workerCheckin`, `workerStart`, `workerSubmit` |
-| `dashboard.ts` | `getAdminDashboard`, `getPmDashboard` |
+| `dashboard.ts` | `getAdminDashboard`, `getPmDashboard`, `getCreatorDashboard`, `getWorkerDashboard` |
+| `profile.ts` | `getMyProfile`, `getNotifications`, `markNotificationsRead` |
 | `types.ts` / `mappers.ts` | response types / API → UI model mapping |
 
 Import everything from `@/lib/api`. Base URL: `NEXT_PUBLIC_API_URL` (defaults to the Vercel deployment).

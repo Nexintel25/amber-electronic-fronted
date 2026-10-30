@@ -12,7 +12,7 @@ export class ApiError extends Error {
   }
 }
 
-export type Envelope<T> = { success: boolean; code: number; message: string; data: T; pagination?: Pagination };
+export type Envelope<T> = { success: boolean; code: number; message: string; data: T; pagination?: Pagination; unread_count?: number };
 export type Pagination = { page: number; limit: number; total: number; total_pages: number };
 
 export async function call<T>(path: string, body: Record<string, unknown> = {}): Promise<Envelope<T>> {

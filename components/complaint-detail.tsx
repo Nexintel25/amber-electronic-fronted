@@ -34,7 +34,7 @@ import { api, fmtDate, statusFromApi, toComplaintFromDetail, type ComplaintDetai
 import { useApi } from "@/lib/use-api";
 import { PENALTY_AFTER_DAYS, PENALTY_PER_DAY, STATUS_META, WORKFLOW } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
-import { Avatar, Button, Card, CardHeader, EmptyState, KeyValue, PriorityBadge, StatusBadge, Textarea } from "@/components/ui";
+import { Avatar, Button, Card, CardHeader, EmptyState, KeyValue, PageSkeleton, PriorityBadge, StatusBadge, Textarea } from "@/components/ui";
 import { WorkflowStepper } from "@/components/workflow-stepper";
 import { GeoPhoto } from "@/components/geo-photo";
 import { LiveMap } from "@/components/live-map";
@@ -151,12 +151,7 @@ function FeedbackCard({ complaintId, locked }: { complaintId: number; locked: bo
 export function ComplaintDetailView({ id }: { id: string }) {
   const { data: d, error, loading, reload } = useApi(() => api.getComplaintDetail(Number(id)), [id]);
 
-  if (loading)
-    return (
-      <div className="grid place-items-center py-32 text-slate-400">
-        <Loader2 className="size-6 animate-spin" />
-      </div>
-    );
+  if (loading) return <PageSkeleton stats={0} rows={4} />;
   if (error || !d)
     return (
       <>

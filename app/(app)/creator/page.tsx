@@ -1,25 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { BadgeCheck, CircleDashed, FilePlus, Hammer, Headset, Hourglass, Loader2, TriangleAlert } from "lucide-react";
-import { api, toComplaint } from "@/lib/api";
+import { BadgeCheck, CircleDashed, FilePlus, Hammer, Headset, Hourglass, TriangleAlert } from "lucide-react";
+import { api, priorityFromType, statusFromApi, timeAgo } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { useSession } from "@/lib/session";
 import { STATUS_META, WORKFLOW } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
-import { Button, Card, CardHeader, EmptyState, LinkButton, PageHeader, PriorityBadge, StageMeter, StatCard, StatusBadge } from "@/components/ui";
+import { Button, Card, CardHeader, EmptyState, LinkButton, PageHeader, PageSkeleton, PriorityBadge, StageMeter, StatCard, StatusBadge } from "@/components/ui";
 
 export default function CreatorDashboard() {
   const session = useSession();
-  // The API scopes the list to the signed-in user, so everything returned here is "mine".
-  const complaints = useApi(async () => (await api.getComplaints({ limit: 200 })).data.map(toComplaint));
+  const dash = useApi(() => api.getCreatorDashboard({ active_limit: 5 }));
 
-  if (complaints.loading) return <div className="grid place-items-center py-32 text-slate-400"><Loader2 className="size-6 animate-spin" /></div>;
-  if (complaints.error || !complaints.data)
-    return <EmptyState icon={TriangleAlert} title="Could not load your complaints" text={complaints.error ?? "No data"} action={<Button onClick={complaints.reload}>Try again</Button>} />;
+  if (dash.loading) return <PageSkeleton />;
+  if (dash.error || !dash.data)
+    return <EmptyState icon={TriangleAlert} title="Could not load your complaints" text={dash.error ?? "No data"} action={<Button onClick={dash.reload}>Try again</Button>} />;
 
-  const mine = complaints.data;
-  const active = mine.filter((c) => !["closed", "rejected"].includes(c.status));
+  const { kpis, active_complaints: active } = dash.data;
   return (
     <>
       <PageHeader
@@ -39,10 +37,10 @@ export default function CreatorDashboard() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Open complaints" value={active.length} icon={CircleDashed} tone="sky" hint="not yet closed" />
-        <StatCard label="Work in progress" value={mine.filter((c) => ["worker_assigned", "in_progress", "rework"].includes(c.status)).length} icon={Hammer} tone="amber" hint="field teams on it" />
-        <StatCard label="Awaiting verification" value={mine.filter((c) => ["pending_verification", "issue_raised"].includes(c.status)).length} icon={Hourglass} tone="violet" hint="vendor verification" />
-        <StatCard label="Closed" value={mine.filter((c) => c.status === "closed").length} icon={BadgeCheck} tone="emerald" hint="resolved complaints" />
+        <StatCard label="Open complaints" value={kpis.open_complaints} icon={CircleDashed} tone="sky" hint={kpis.overdue_open ? `${kpis.overdue_open} overdue` : "not yet closed"} />
+        <StatCard label="Work in progress" value={kpis.work_in_progress} icon={Hammer} tone="amber" hint="field teams on it" />
+        <StatCard label="Awaiting verification" value={kpis.awaiting_verification} icon={Hourglass} tone="violet" hint="vendor verification" />
+        <StatCard label="Closed" value={kpis.closed_total} icon={BadgeCheck} tone="emerald" hint={`${kpis.resolved_this_month} resolved this month`} />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -58,29 +56,34 @@ export default function CreatorDashboard() {
           />
           <ul className="divide-y divide-slate-100">
             {active.length === 0 && <li className="px-5 py-10 text-center text-sm text-slate-400">No active complaints.</li>}
-            {active.map((c) => (
-              <li key={c.id}>
-                <Link href={`/complaints/${c.ref}`} className="flex flex-col gap-3 px-5 py-4 hover:bg-slate-50/70 sm:flex-row sm:items-center">
-                  <span className={cn("hidden size-10 shrink-0 place-items-center rounded-xl sm:grid", STATUS_META[c.status].badge, "ring-1")}>
-                    <span className={cn("size-2.5 rounded-full", STATUS_META[c.status].dot)} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs font-semibold text-brand-700">{c.id}</span>
-                      <PriorityBadge priority={c.priority} />
+            {active.map((c) => {
+              const status = statusFromApi(c.status);
+              const priority = priorityFromType(c.complaint_type_name);
+              return (
+                <li key={c.complaint_id}>
+                  <Link href={`/complaints/${c.complaint_id}`} className="flex flex-col gap-3 px-5 py-4 hover:bg-slate-50/70 sm:flex-row sm:items-center">
+                    <span className={cn("hidden size-10 shrink-0 place-items-center rounded-xl sm:grid", STATUS_META[status].badge, "ring-1")}>
+                      <span className={cn("size-2.5 rounded-full", STATUS_META[status].dot)} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-xs font-semibold text-brand-700">{c.complaint_no}</span>
+                        <PriorityBadge priority={priority} />
+                        {c.is_overdue ? <span className="text-[11px] font-semibold text-rose-600">Overdue</span> : null}
+                      </div>
+                      <p className="mt-0.5 truncate font-semibold text-slate-900">{c.title}</p>
+                      <p className="text-xs text-slate-500">
+                        {c.area_location ?? c.building_name} · Updated {timeAgo(c.updated_at)}
+                      </p>
                     </div>
-                    <p className="mt-0.5 truncate font-semibold text-slate-900">{c.title}</p>
-                    <p className="text-xs text-slate-500">
-                      {c.location} · Updated {c.updatedAt}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-start gap-1.5 sm:items-end">
-                    <StatusBadge status={c.status} />
-                    <StageMeter status={c.status} />
-                  </div>
-                </Link>
-              </li>
-            ))}
+                    <div className="flex flex-col items-start gap-1.5 sm:items-end">
+                      <StatusBadge status={status} />
+                      <StageMeter status={status} />
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </Card>
 

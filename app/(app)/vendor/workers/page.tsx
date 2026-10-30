@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Mail, Phone, TriangleAlert, UserPlus, Users } from "lucide-react";
+import { Mail, Phone, TriangleAlert, UserPlus, Users } from "lucide-react";
 import { api } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { useSession } from "@/lib/session";
 import { workerView } from "@/lib/vendor-workers";
 import { CreateUserModal } from "@/components/create-user-modal";
-import { Avatar, Badge, Button, Card, EmptyState, PageHeader, td, th } from "@/components/ui";
+import { Avatar, Badge, Button, Card, EmptyState, ListSkeleton, PageHeader, td, th } from "@/components/ui";
 
 export default function WorkersPage() {
   const session = useSession();
@@ -32,11 +32,7 @@ export default function WorkersPage() {
         }
       />
 
-      {loading && (
-        <div className="grid place-items-center py-20 text-slate-400">
-          <Loader2 className="size-6 animate-spin" />
-        </div>
-      )}
+      {loading && <ListSkeleton />}
       {error && <EmptyState icon={TriangleAlert} title="Could not load workers" text={error} action={<Button onClick={() => { vendorId.reload(); workers.reload(); }}>Try again</Button>} />}
 
       {!loading && !error && (

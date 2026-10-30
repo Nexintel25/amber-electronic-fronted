@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Ellipsis, KeyRound, Loader2, Lock, Search, TriangleAlert, UserPlus } from "lucide-react";
+import { Ellipsis, KeyRound, Lock, Search, TriangleAlert, UserPlus } from "lucide-react";
 import { API_ROLE_BY_LABEL, api, pick, roleKeyFromApi, rowsOf, text, timeText, type Row } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { cn } from "@/lib/utils";
-import { Avatar, Badge, Button, Card, EmptyState, Input, NoDataRow, PageHeader, Select, td, th } from "@/components/ui";
+import { Avatar, Badge, Button, Card, EmptyState, Input, ListSkeleton, NoDataRow, PageHeader, Select, td, th } from "@/components/ui";
 import { Pager } from "@/components/pager";
 import { useToast } from "@/components/interactive";
 import { CreateSiteModal } from "@/components/create-site-modal";
@@ -107,7 +107,7 @@ export default function UsersPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {list.loading && (
-                <tr><td colSpan={8} className="py-10 text-center text-slate-400"><Loader2 className="mx-auto size-5 animate-spin" /></td></tr>
+                <tr><td colSpan={8} className="p-4"><ListSkeleton rows={4} className="rounded-none shadow-none ring-0" /></td></tr>
               )}
               {!list.loading && !list.error && rows.length === 0 && <NoDataRow cols={8} noApi />}
               {!list.loading && rows.map((u, i) => {

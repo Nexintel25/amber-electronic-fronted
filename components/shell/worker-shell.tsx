@@ -5,6 +5,7 @@ import { useSyncExternalStore, type ReactNode } from "react";
 import { WifiOff, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROLES } from "@/lib/roles";
+import { NotificationsBell } from "@/components/notifications-bell";
 
 const subscribeOnline = (cb: () => void) => {
   window.addEventListener("online", cb);
@@ -37,6 +38,7 @@ export function WorkerShell({ pathname, children }: { pathname: string; children
               <p className="truncate text-[14px] font-bold">Amber</p>
               <p className="truncate text-[11px] text-slate-400">Worker Portal · Amber</p>
             </div>
+            <NotificationsBell role="worker" tone="dark" />
           </div>
           {!online && (
             <p className="flex items-center justify-center gap-2 bg-amber-500 px-4 py-1.5 text-xs font-semibold text-navy-950">

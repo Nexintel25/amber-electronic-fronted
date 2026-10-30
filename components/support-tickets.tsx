@@ -5,7 +5,7 @@ import { Loader2, Search, Send, TriangleAlert, Wrench } from "lucide-react";
 import { api, num, pick, rowsOf, text, timeText, type Row } from "@/lib/api";
 import { useSession } from "@/lib/session";
 import { useApi } from "@/lib/use-api";
-import { Badge, Button, Card, CardHeader, EmptyState, Field, Input, NoData, Select, Textarea } from "@/components/ui";
+import { Badge, Button, Card, CardHeader, EmptyState, Field, Input, ListSkeleton, NoData, Select, Textarea } from "@/components/ui";
 import { Modal, useToast } from "@/components/interactive";
 import { Pager } from "@/components/pager";
 
@@ -117,7 +117,7 @@ export function MyTickets({ refreshKey = 0 }: { refreshKey?: number }) {
           </Select>
         }
       />
-      {list.loading && <div className="grid place-items-center py-8 text-slate-400"><Loader2 className="size-5 animate-spin" /></div>}
+      {list.loading && <ListSkeleton rows={3} />}
       {list.error && <EmptyState icon={TriangleAlert} title="Could not load tickets" text={list.error} action={<Button onClick={list.reload}>Try again</Button>} />}
       {list.data && rows.length === 0 && <NoData />}
       <ul className="space-y-2 px-5 pb-4">
@@ -209,7 +209,7 @@ export function AdminTickets({ canUpdate = false }: { canUpdate?: boolean }) {
         <Button type="submit" className="sm:col-span-2 lg:col-span-1"><Search /> Search</Button>
       </form>
 
-      {list.loading && <div className="grid place-items-center py-8 text-slate-400"><Loader2 className="size-5 animate-spin" /></div>}
+      {list.loading && <ListSkeleton rows={3} />}
       {list.error && <EmptyState icon={TriangleAlert} title="Could not load tickets" text={list.error} action={<Button onClick={list.reload}>Try again</Button>} />}
       {list.data && rows.length === 0 && <NoData />}
       <ul className="space-y-2 px-5 pb-4">

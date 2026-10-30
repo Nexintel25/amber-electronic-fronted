@@ -8,7 +8,7 @@ import { downloadExcel, downloadPdf, type ReportResult } from "@/lib/report-expo
 import { useRole } from "@/components/shell/app-shell";
 import { useSession } from "@/lib/session";
 import { useApi } from "@/lib/use-api";
-import { Button, Card, EmptyState, Field, Input, Select, Textarea, td, th } from "@/components/ui";
+import { Button, Card, EmptyState, Field, Input, ListSkeleton, Select, Textarea, td, th } from "@/components/ui";
 import { Modal, useToast } from "@/components/interactive";
 import { Pager } from "@/components/pager";
 
@@ -31,6 +31,10 @@ const EMPTY: Filters = { type: "register", from: "", to: "", month: new Date().t
 const MAX_COLS = 6;
 /** Columns the Penalty report does not show. */
 const HIDDEN_PENALTY = /^penalty_?status$|waive/i;
+/** Raw database keys (complaint_id, vendor_id, building_id, category_id…) mean nothing to a reader; the name / number columns carry the same information. */
+const RAW_ID = /(^|_)id$/i;
+/** Turns snake_case values such as `worker_assigned` into “Worker Assigned”; other text is left alone. */
+const clean = (v: string) => (/^[a-z0-9]+(_[a-z0-9]+)+$/.test(v) ? v.replace(/_/g, " ").replace(/\b[a-z]/g, (c) => c.toUpperCase()) : v);
 const label = (k: string) => k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 /**
@@ -71,7 +75,7 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
             ? await api.getBenchmarkReport({ month: applied.month, vendor_id: vid })
             : await api.getPenaltyReport({ report_type: applied.type, from_date: applied.from, to_date: applied.to, vendor_id: vid, search: applied.q, page, limit });
     const list = rowsOf(res.data);
-    const columns = Array.from(new Set(list.flatMap((r) => Object.keys(r).filter((k) => typeof r[k] !== "object" || r[k] === null)))).filter((k) => applied.type !== "penalty" || !HIDDEN_PENALTY.test(k));
+    const columns = Array.from(new Set(list.flatMap((r) => Object.keys(r).filter((k) => typeof r[k] !== "object" || r[k] === null)))).filter((k) => !RAW_ID.test(k) && (applied.type !== "penalty" || !HIDDEN_PENALTY.test(k)));
     const sum = summaryOf(res.data);
     const def = REPORT_TYPES.find((r) => r.key === applied.type);
     const vendorName = vendors.data?.find((v) => String(v.id) === applied.vendorId)?.company_name;
@@ -82,8 +86,8 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
       waived: list.map(isWaived),
       title: def?.label ?? "Report",
       columns: columns.map(label),
-      rows: list.map((r: Row) => columns.map((c) => timeText(pick(r, c)))),
-      summary: [{ label: "Records", value: String(res.pagination?.total ?? list.length) }, ...(sum ? Object.entries(sum).filter(([, v]) => typeof v !== "object").map(([k, v]) => ({ label: label(k), value: text(v) })) : [])],
+      rows: list.map((r: Row) => columns.map((c) => clean(timeText(pick(r, c))))),
+      summary: [{ label: "Records", value: String(res.pagination?.total ?? list.length) }, ...(sum ? Object.entries(sum).filter(([k, v]) => typeof v !== "object" && !RAW_ID.test(k)).map(([k, v]) => ({ label: label(k), value: text(v) })) : [])],
       total: res.pagination?.total,
       totalPages: res.pagination?.total_pages,
       meta: `${range} · ${vendorName ?? "All vendors"}${applied.q ? ` · search “${applied.q}”` : ""} · generated ${new Date().toLocaleString("en-IN")}`,
@@ -212,7 +216,7 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
         {!applied ? (
           <EmptyState icon={FileSearch} title="No report yet" text="Pick a report type, set the date range and vendor, then press Search to load the data table." />
         ) : report.loading ? (
-          <div className="grid place-items-center py-16 text-slate-400"><Loader2 className="size-6 animate-spin" /></div>
+          <ListSkeleton rows={6} />
         ) : report.error || !result ? (
           <EmptyState icon={TriangleAlert} title="Could not load the report" text={report.error ?? "No response."} action={<Button onClick={report.reload}>Try again</Button>} />
         ) : (

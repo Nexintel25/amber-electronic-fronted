@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { BadgeCheck, CircleDashed, ClipboardList, Download, HardHat, Loader2, Timer, Target, TriangleAlert } from "lucide-react";
+import { BadgeCheck, CircleDashed, ClipboardList, Download, HardHat, Timer, Target, TriangleAlert } from "lucide-react";
 import { api, statusFromApi, timeAgo } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { STATUS_META } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
-import { Button, Card, CardHeader, EmptyState, LinkButton, LiveDot, PageHeader, Progress, StatCard, td, th } from "@/components/ui";
+import { Button, Card, CardHeader, EmptyState, LinkButton, LiveDot, PageHeader, PageSkeleton, Progress, StatCard, td, th } from "@/components/ui";
 import { Donut, Legend, SERIES, TrendArea } from "@/components/charts";
 import { LiveMap, MapLegend } from "@/components/live-map";
 
@@ -15,7 +15,7 @@ const pct = (n: number | null) => (n == null ? undefined : `${Math.abs(n)}%`);
 export default function AdminOverview() {
   const { data: d, error, loading, reload } = useApi(() => api.getAdminDashboard());
 
-  if (loading) return <div className="grid place-items-center py-32 text-slate-400"><Loader2 className="size-6 animate-spin" /></div>;
+  if (loading) return <PageSkeleton />;
   if (error || !d) return <EmptyState icon={TriangleAlert} title="Could not load the dashboard" text={error ?? "No data"} action={<Button onClick={reload}>Try again</Button>} />;
 
   const k = d.kpis;
