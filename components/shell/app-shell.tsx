@@ -15,10 +15,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROLES, roleFromPath, type RoleKey } from "@/lib/roles";
-import { Avatar, Kbd, LiveDot } from "@/components/ui";
+import { Kbd, LiveDot } from "@/components/ui";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { WorkerShell } from "@/components/shell/worker-shell";
 import { useSession } from "@/lib/session";
+import { UserAvatar } from "@/components/user-avatar";
 import { api, roleKeyFromApi } from "@/lib/api";
 
 const RoleContext = createContext<RoleKey>("admin");
@@ -188,7 +189,9 @@ function Topbar({ role, onMenu }: { role: RoleKey; onMenu: () => void }) {
   const close = () => setOpen(null);
   const ref = useClickOutside(close);
   const session = useSession();
-  const me = session ? { name: session.user.name, email: session.user.email, title: def.label } : { name: "", email: "", title: def.label };
+  const me = session
+    ? { name: session.user.name, email: session.user.email, photo: session.user.profile_photo ?? null, company: session.user.company_name ?? null, title: def.label }
+    : { name: "", email: "", photo: null, company: null, title: def.label };
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
@@ -229,19 +232,20 @@ function Topbar({ role, onMenu }: { role: RoleKey; onMenu: () => void }) {
           {/* User menu */}
           <div className="relative">
             <button onClick={() => setOpen(open === "user" ? null : "user")} className="flex items-center gap-2 rounded-xl p-1 hover:bg-slate-100" aria-label="Account">
-              <Avatar name={me.name} />
+              <UserAvatar name={me.name} src={me.photo} />
               <span className="hidden text-left leading-tight 2xl:block">
                 <span className="block text-[13px] font-semibold text-slate-800">{me.name}</span>
-                <span className="block text-[11px] text-slate-500">{me.title}</span>
+                <span className="block text-[11px] text-slate-500">{me.company ? `${me.title} · ${me.company}` : me.title}</span>
               </span>
             </button>
             {open === "user" && (
               <Dropdown className="w-64">
                 <div className="flex items-center gap-3 px-3 py-2">
-                  <Avatar name={me.name} size="lg" />
+                  <UserAvatar name={me.name} src={me.photo} size="lg" />
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-slate-900">{me.name}</p>
                     <p className="truncate text-xs text-slate-500">{me.email}</p>
+                    {me.company && <p className="truncate text-xs text-slate-500">{me.company}</p>}
                   </div>
                 </div>
                 <div className="my-1 h-px bg-slate-100" />

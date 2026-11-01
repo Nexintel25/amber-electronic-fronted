@@ -10,3 +10,11 @@ export const getCreatorDashboard = (p: { only_mine?: boolean; active_limit?: num
 
 export const getWorkerDashboard = (jobsLimit = 10) =>
   post<WorkerDashboard>("complaint-types/getWorkerDashboard", { user_id: currentUserId(), jobs_limit: jobsLimit });
+
+/** Public platform figures for the landing page; needs no sign-in. */
+export type PublicOverview = {
+  kpis: { open_now: number; resolved_today: number; sla_compliance_pct: number | null; complaints_managed: number; avg_resolution_hours: number | null; sites_connected: number };
+  last_10_days: { day: string; raised: number; resolved: number }[];
+  open_by_category: Record<string, unknown>[];
+};
+export const getPublicOverview = () => post<PublicOverview>("complaints/getPublicOverview", {}, { auth: false });

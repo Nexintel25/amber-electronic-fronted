@@ -1,4 +1,4 @@
-export type ApiUser = { id: number; name: string; email: string; phone: string | null; role: string; vendor_id: number | null; must_change_password?: number };
+export type ApiUser = { id: number; name: string; email: string; phone: string | null; role: string; vendor_id: number | null; must_change_password?: number; profile_photo?: string | null; company_name?: string | null };
 export type LoginResult = { user: ApiUser; session_id: number; access_token: string; refresh_token: string; refresh_token_expires_at: string };
 
 export type Building = {
@@ -352,6 +352,8 @@ export type MyProfile = {
     vendor_contact_name: string | null;
     vendor_contact_phone: string | null;
     vendor_contact_email: string | null;
+    profile_photo?: string | null;
+    company_name?: string | null;
     member_since: string;
     last_login_at: string | null;
     active_sessions: number;
@@ -373,6 +375,14 @@ export type MyProfile = {
       avg_minutes_per_job: number;
       rating: number;
       feedback_count: number;
+    }> &
+    Partial<{
+      buildings_count: number;
+      workers_count: number;
+      project_managers_count: number;
+      overdue_open: number;
+      closed_this_month: number;
+      closed_total: number;
     }>;
   buildings: { building_id: number; name: string; code: string; city: string; address: string }[];
   contacts: { id: number; name: string; type: string; phone: string | null; email: string | null }[];

@@ -25,3 +25,5 @@ export * from "./types";
 export * from "./mappers";
 export * from "./shape";
 export type { MailProfile } from "./mail";
+export type { PublicOverview } from "./dashboard";
+export type { ProfileChanges, ProfileHistoryRow } from "./profile";

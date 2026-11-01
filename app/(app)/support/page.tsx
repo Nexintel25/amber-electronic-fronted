@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Avatar, Card, CardHeader, PageHeader } from "@/components/ui";
 import { useSession } from "@/lib/session";
+import { SUPPORT_EMAIL } from "@/lib/contact";
 import { AdminTickets, MyTickets, TicketForm } from "@/components/support-tickets";
 
 const FAQ = [
@@ -98,12 +99,13 @@ export default function SupportPage() {
             </div>
             <div className="space-y-2 p-5">
               {[
-                { i: Mail, t: "support@nexintelsynergy.com" },
-                { i: Phone, t: "+91 80 4000 2026" },
+                { i: Mail, t: SUPPORT_EMAIL, href: `mailto:${SUPPORT_EMAIL}` },
+                { i: Phone, t: "+91 80 4000 2026", href: "tel:+918040002026" },
                 { i: Clock, t: "Mon–Sat · 9:00 AM – 7:00 PM IST" },
               ].map((c) => (
                 <p key={c.t} className="flex items-center gap-2.5 text-[13.5px] text-slate-700">
-                  <c.i className="size-4 text-slate-400" /> {c.t}
+                  <c.i className="size-4 text-slate-400" />
+                  {c.href ? <a href={c.href} className="font-medium text-brand-700 hover:underline">{c.t}</a> : c.t}
                 </p>
               ))}
             </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Ellipsis, KeyRound, Lock, Search, Truck, TriangleAlert, UserPlus } from "lucide-react";
+import { Ellipsis, History, KeyRound, Lock, Search, Truck, TriangleAlert, UserPlus } from "lucide-react";
 import { API_ROLE_BY_LABEL, api, pick, roleKeyFromApi, rowsOf, text, timeText, type Row } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ import { CreateClientOrgModal } from "@/components/create-client-org-modal";
 import { CreateUserModal } from "@/components/create-user-modal";
 import { CreateVendorModal } from "@/components/create-vendor-modal";
 import { ResetPasswordModal } from "@/components/reset-password-modal";
+import { ProfileHistory } from "@/components/profile-history";
 import { Modal } from "@/components/interactive";
 import { ROLES, type UserRoleLabel } from "@/lib/roles";
 
@@ -46,6 +47,7 @@ export default function UsersPage() {
   // `null` = closed, `{}` = open with no PM preselected, a row = open for that PM.
   const [assignFor, setAssignFor] = useState<Row | null>(null);
   const [resetFor, setResetFor] = useState<{ id: number; name: string; email: string } | null>(null);
+  const [historyFor, setHistoryFor] = useState<{ id: number; name: string; email: string } | null>(null);
   const buildings = useApi(() => api.getBuildings());
 
   // Debounce the search box so each keystroke does not hit the server.
@@ -165,6 +167,16 @@ export default function UsersPage() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          aria-label="Profile change history"
+                          title="Profile change history"
+                          disabled={!Number(pick(u, "user_id", "id"))}
+                          onClick={() => setHistoryFor({ id: Number(pick(u, "user_id", "id")), name, email })}
+                        >
+                          <History />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           aria-label="Reset password"
                           title="Reset password"
                           disabled={!Number(pick(u, "user_id", "id"))}
@@ -217,6 +229,15 @@ export default function UsersPage() {
       <CreateUserModal open={kind === "admin"} onClose={() => setKind(null)} onCreated={list.reload} allowedRoles={ROLE_OPTIONS.filter((r) => r !== "Super Admin" && r !== "Vendor")} defaultRole="Admin" />
       <CreateVendorModal open={kind === "vendor"} onClose={() => setKind(null)} onCreated={list.reload} />
       <ResetPasswordModal user={resetFor} onClose={() => setResetFor(null)} />
+      <Modal
+        open={!!historyFor}
+        onClose={() => setHistoryFor(null)}
+        title="Profile change history"
+        description={historyFor ? `${historyFor.name}${historyFor.email ? ` · ${historyFor.email}` : ""}` : undefined}
+        size="xl"
+      >
+        {historyFor && <div className="-mx-6 -my-5"><ProfileHistory userId={historyFor.id} /></div>}
+      </Modal>
       <AssignVendorsModal open={!!assignFor} onClose={() => setAssignFor(null)} pm={assignFor && Object.keys(assignFor).length ? assignFor : null} onSaved={list.reload} />
     </>
   );

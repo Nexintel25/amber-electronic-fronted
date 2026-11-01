@@ -143,9 +143,9 @@ const avatarTones = [
   "bg-rose-100 text-rose-800",
 ];
 
-export function Avatar({ name, size = "md", className }: { name: string; size?: "xs" | "sm" | "md" | "lg"; className?: string }) {
+export function Avatar({ name, size = "md", className }: { name: string; size?: "xs" | "sm" | "md" | "lg" | "xl"; className?: string }) {
   const tone = avatarTones[name.length % avatarTones.length];
-  const s = { xs: "size-6 text-[10px]", sm: "size-8 text-xs", md: "size-9 text-[13px]", lg: "size-12 text-base" }[size];
+  const s = { xs: "size-6 text-[10px]", sm: "size-8 text-xs", md: "size-9 text-[13px]", lg: "size-12 text-base", xl: "size-20 text-2xl sm:size-24 sm:text-3xl" }[size];
   return (
     <span className={cn("inline-grid shrink-0 place-items-center rounded-full font-bold", tone, s, className)}>
       {initials(name)}

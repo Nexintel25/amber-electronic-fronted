@@ -2,7 +2,18 @@
 
 import { useSyncExternalStore } from "react";
 
-export type SessionUser = { id: number; name: string; email: string; phone: string | null; role: string; vendor_id: number | null };
+export type SessionUser = {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: string;
+  vendor_id: number | null;
+  /** Display-picture URL; empty or missing → initials. */
+  profile_photo?: string | null;
+  /** Vendor / worker: own company. Client / client admin: vendor company of their buildings. */
+  company_name?: string | null;
+};
 export type Session = { user: SessionUser; access_token: string; refresh_token: string; refresh_token_expires_at?: string; session_id?: number };
 
 const KEY = "amber-session";
@@ -71,6 +82,12 @@ export const isAccessTokenExpired = (token: string | undefined) => {
 export function updateTokens(t: Partial<Session> & { access_token: string }) {
   const s = getSession();
   if (s) setSession({ ...s, ...Object.fromEntries(Object.entries(t).filter(([, v]) => v)) });
+}
+
+/** Merges updated profile fields (e.g. after a profile edit) into the stored user. */
+export function updateSessionUser(u: Partial<SessionUser>) {
+  const s = getSession();
+  if (s) setSession({ ...s, user: { ...s.user, ...u } });
 }
 
 /** True once the stored refresh token is past its `refresh_token_expires_at`. */
