@@ -29,7 +29,7 @@ export function CreateClientOrgModal({ open, onClose, onCreated }: { open: boole
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const toast = useToast();
-  const vendors = useApi(() => api.getVendors(), [open]);
+  const vendors = useApi(() => api.getVendors(), [open], { enabled: open });
 
   const set = (k: keyof typeof EMPTY) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
 

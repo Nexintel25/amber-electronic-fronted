@@ -17,7 +17,7 @@ export function CreateVendorModal({ open, onClose, onCreated }: { open: boolean;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
-  const buildings = useApi(() => api.getBuildings(), [open]);
+  const buildings = useApi(() => api.getBuildings(), [open], { enabled: open });
 
   const set = (k: keyof typeof EMPTY) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const toggle = (id: number) => setSiteIds((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));

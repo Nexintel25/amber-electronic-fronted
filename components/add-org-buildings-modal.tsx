@@ -32,9 +32,9 @@ export function AddOrgBuildingsModal({ open, onClose, onCreated }: { open: boole
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const toast = useToast();
-  const vendors = useApi(() => api.getVendors(), [open]);
-  const creators = useApi(() => api.getAllUsers({ role: "client", page: 1, limit: 100 }), [open]);
-  const admins = useApi(() => api.getAllUsers({ role: "client_admin", page: 1, limit: 100 }), [open]);
+  const vendors = useApi(() => api.getVendors(), [open], { enabled: open });
+  const creators = useApi(() => api.getAllUsers({ role: "client", page: 1, limit: 100 }), [open], { enabled: open });
+  const admins = useApi(() => api.getAllUsers({ role: "client_admin", page: 1, limit: 100 }), [open], { enabled: open });
 
   const set = (k: keyof typeof EMPTY) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
 

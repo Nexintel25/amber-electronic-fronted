@@ -40,8 +40,8 @@ export function CreateUserModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const buildings = useApi(() => api.getBuildings(), [open]);
-  const vendors = useApi(() => api.getVendors(), [open]);
+  const buildings = useApi(() => api.getBuildings(), [open], { enabled: open });
+  const vendors = useApi(() => api.getVendors(), [open], { enabled: open });
 
   const needsVendor = role === "Vendor" || role === "Worker";
   const ownVendorId = session?.user.role === "vendor" ? session.user.vendor_id : null;

@@ -26,8 +26,8 @@ export function managedVendorNames(u: Row): string[] {
 /** Admin: choose which vendors a Project Manager is responsible for (setPmVendors). Replaces the PM's whole list. */
 export function AssignVendorsModal({ open, onClose, pm, onSaved }: { open: boolean; onClose: () => void; pm?: Row | null; onSaved?: () => void }) {
   const toast = useToast();
-  const vendors = useApi(() => api.getVendors(), [open]);
-  const pms = useApi(() => api.getAllUsers({ role: "project_manager", page: 1, limit: 100 }), [open]);
+  const vendors = useApi(() => api.getVendors(), [open], { enabled: open });
+  const pms = useApi(() => api.getAllUsers({ role: "project_manager", page: 1, limit: 100 }), [open], { enabled: open });
   const pmRows = rowsOf(pms.data?.data);
   const idOf = (u: Row | null | undefined) => text(pick(u, "user_id", "id"), "");
 

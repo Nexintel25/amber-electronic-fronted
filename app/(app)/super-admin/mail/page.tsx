@@ -217,7 +217,7 @@ function ProfileModal({ edit, onClose, onSaved }: { edit: { profile: MailProfile
 
 /** Map a set of buildings to one profile (admin/mail-profiles/assign). */
 function AssignModal({ open, profiles, onClose, onSaved }: { open: boolean; profiles: MailProfile[]; onClose: () => void; onSaved: (count: number, code: string) => void }) {
-  const buildings = useApi(() => api.getBuildings("", false), [open]);
+  const buildings = useApi(() => api.getBuildings("", false), [open], { enabled: open });
   const [code, setCode] = useState("");
   const [picked, setPicked] = useState<number[]>([]);
   const [saving, setSaving] = useState(false);

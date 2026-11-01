@@ -7,8 +7,9 @@ export type ApiState<T> = { data: T | null; error: string | null; loading: boole
 /**
  * Runs `fetcher` on mount and whenever `deps` change (deps must be primitives) or `reload()` is called.
  * `fetcher` is read through a ref, so callers can pass an inline arrow without causing a refetch loop.
+ * With `enabled: false` nothing is fetched (e.g. a dialog that is closed); it loads as soon as it turns true.
  */
-export function useApi<T>(fetcher: () => Promise<T>, deps: unknown[] = []): ApiState<T> {
+export function useApi<T>(fetcher: () => Promise<T>, deps: unknown[] = [], { enabled = true }: { enabled?: boolean } = {}): ApiState<T> {
   const ref = useRef(fetcher);
   useEffect(() => {
     ref.current = fetcher;
@@ -19,6 +20,7 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: unknown[] = []): ApiS
   const reload = useCallback(() => setTick((t) => t + 1), []);
 
   useEffect(() => {
+    if (!enabled) return;
     let live = true;
     ref.current().then(
       (data) => live && setResult({ key, data, error: null }),
@@ -27,8 +29,8 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: unknown[] = []): ApiS
     return () => {
       live = false;
     };
-  }, [key]);
+  }, [key, enabled]);
 
   const settled = result?.key === key;
-  return { data: settled ? result.data : null, error: settled ? result.error : null, loading: !settled, reload };
+  return { data: settled ? result.data : null, error: settled ? result.error : null, loading: enabled && !settled, reload };
 }

@@ -87,7 +87,24 @@ export function refreshSession(): Promise<string | null> {
   return refreshing;
 }
 
-export async function call<T>(path: string, body: Record<string, unknown> = {}, opts: CallOptions = {}): Promise<Envelope<T>> {
+/** Read-only calls: GET, `…/getSomething` endpoints, and a few POST reads with other names. */
+const READ_PATHS = /\/(admin)?[gG]et[A-Z]|^admin\/system-overview|^auth\/check-session/;
+// Identical reads already in flight, so a page that asks for the same data several times
+// (several widgets, or React running effects twice in development) sends one request.
+const inflight = new Map<string, Promise<Envelope<unknown>>>();
+
+export function call<T>(path: string, body: Record<string, unknown> = {}, opts: CallOptions = {}): Promise<Envelope<T>> {
+  const method = opts.method ?? "POST";
+  if (method !== "GET" && !READ_PATHS.test(path)) return request<T>(path, body, opts);
+  const key = `${method} ${path} ${JSON.stringify(body)} ${opts.auth === false ? "public" : getSession()?.user.id ?? ""}`;
+  const running = inflight.get(key);
+  if (running) return running as Promise<Envelope<T>>;
+  const p = request<T>(path, body, opts).finally(() => inflight.delete(key));
+  inflight.set(key, p as Promise<Envelope<unknown>>);
+  return p;
+}
+
+async function request<T>(path: string, body: Record<string, unknown>, opts: CallOptions): Promise<Envelope<T>> {
   const method = opts.method ?? "POST";
   let token = opts.auth === false || PUBLIC_PATHS.includes(path) ? undefined : getSession()?.access_token;
   if (token && isAccessTokenExpired(token)) {

@@ -291,7 +291,7 @@ function DistributeModal({
   rework: boolean;
   onDone: (msg: string) => void;
 }) {
-  const workers = useApi(async () => (open && c.vendorId ? (await api.getVendorWorkers(c.vendorId)).map(workerView) : []), [open, c.vendorId]);
+  const workers = useApi(async () => (open && c.vendorId ? (await api.getVendorWorkers(c.vendorId)).map(workerView) : []), [open, c.vendorId], { enabled: open });
   const [workerId, setWorkerId] = useState<number | null>(null);
   const [remarks, setRemarks] = useState("");
   const [saving, setSaving] = useState(false);
