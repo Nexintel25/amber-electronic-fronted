@@ -1,34 +1,42 @@
 import type { LoginResult } from "./types";
 import { expireSession, getSession, isAccessTokenExpired, isRefreshTokenExpired, updateTokens } from "../session";
 
-/** HTTP client — every Amber endpoint is a JSON POST, authorised with the signed-in user's access token. */
+/** HTTP client — JSON over POST (most endpoints), GET and PUT, authorised with the signed-in user's access token. */
 export const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "https://amber-electronic-api.vercel.app").replace(/\/$/, "");
 
 export class ApiError extends Error {
   constructor(
     message: string,
     public code?: number,
+    /** HTTP status, when the server answered. */
+    public status?: number,
+    /** The raw error body, for extra fields such as `attempts_left`. */
+    public body?: Record<string, unknown>,
   ) {
     super(message);
   }
 }
 
-export type Envelope<T> = { success: boolean; code: number; message: string; data: T; pagination?: Pagination; unread_count?: number };
+export type Envelope<T> = { success: boolean; code: number; error_code?: number; message: string; data: T; pagination?: Pagination; unread_count?: number };
+type Method = "GET" | "POST" | "PUT";
+/** `auth: false` sends no access token (public endpoints such as the forgot-password flow). */
+export type CallOptions = { method?: Method; auth?: boolean };
 export type Pagination = { page: number; limit: number; total: number; total_pages: number };
 
-/** The server's answer to a missing, invalid or expired access token. */
+/** The server's answer to a missing, invalid or expired access token (1401), or a session revoked elsewhere (1412). */
 const TOKEN_REJECTED = 1401;
+const SESSION_REVOKED = 1412;
 const EXPIRED_MESSAGE = "Your session has expired. Please sign in again.";
 /** Endpoints called without the stored access token. */
-const PUBLIC_PATHS = ["auth/login", "auth/refresh-token"];
+const PUBLIC_PATHS = ["auth/login", "auth/refresh-token", "auth/forgot-password"];
 
-async function send<T>(path: string, body: Record<string, unknown>, token: string | undefined) {
+async function send<T>(path: string, body: Record<string, unknown>, token: string | undefined, method: Method = "POST") {
   let res: Response;
   try {
     res = await fetch(`${API_BASE}/api/${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify(body),
+      method,
+      headers: { ...(method === "GET" ? {} : { "Content-Type": "application/json" }), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: method === "GET" ? undefined : JSON.stringify(body),
     });
   } catch {
     throw new ApiError("Cannot reach the server. Check your connection and try again.");
@@ -37,7 +45,8 @@ async function send<T>(path: string, body: Record<string, unknown>, token: strin
   try {
     json = (await res.json()) as Envelope<T>;
   } catch {}
-  return { res, json, rejected: !!token && (res.status === 401 || json?.code === TOKEN_REJECTED) };
+  const code = json?.code ?? json?.error_code;
+  return { res, json, rejected: !!token && (res.status === 401 || code === TOKEN_REJECTED || code === SESSION_REVOKED) };
 }
 
 // One refresh at a time: every request that finds the token expired waits on the same promise.
@@ -78,28 +87,31 @@ export function refreshSession(): Promise<string | null> {
   return refreshing;
 }
 
-export async function call<T>(path: string, body: Record<string, unknown> = {}): Promise<Envelope<T>> {
-  let token = PUBLIC_PATHS.includes(path) ? undefined : getSession()?.access_token;
+export async function call<T>(path: string, body: Record<string, unknown> = {}, opts: CallOptions = {}): Promise<Envelope<T>> {
+  const method = opts.method ?? "POST";
+  let token = opts.auth === false || PUBLIC_PATHS.includes(path) ? undefined : getSession()?.access_token;
   if (token && isAccessTokenExpired(token)) {
     token = (await refreshSession()) ?? undefined;
     if (!token) throw new ApiError(EXPIRED_MESSAGE, TOKEN_REJECTED);
   }
-  let { res, json, rejected } = await send<T>(path, body, token);
+  let { res, json, rejected } = await send<T>(path, body, token, method);
   // The server refused the token (expired early or revoked): renew once and retry.
   if (rejected) {
     token = (await refreshSession()) ?? undefined;
     if (!token) throw new ApiError(EXPIRED_MESSAGE, TOKEN_REJECTED);
-    ({ res, json, rejected } = await send<T>(path, body, token));
+    ({ res, json, rejected } = await send<T>(path, body, token, method));
     if (rejected) {
       expireSession();
       throw new ApiError(EXPIRED_MESSAGE, TOKEN_REJECTED);
     }
   }
-  if (!json || !json.success) throw new ApiError(json?.message ?? `Request failed (${res.status})`, json?.code);
+  if (!json || !json.success) throw new ApiError(json?.message ?? `Request failed (${res.status})`, json?.code ?? json?.error_code, res.status, (json ?? undefined) as Record<string, unknown> | undefined);
   return json;
 }
 
-export const post = async <T>(path: string, body?: Record<string, unknown>) => (await call<T>(path, body)).data;
+export const post = async <T>(path: string, body?: Record<string, unknown>, opts?: CallOptions) => (await call<T>(path, body, opts)).data;
+export const get = async <T>(path: string) => (await call<T>(path, {}, { method: "GET" })).data;
+export const put = async <T>(path: string, body: Record<string, unknown>) => (await call<T>(path, body, { method: "PUT" })).data;
 
 /** The signed-in user's id — the API identifies the caller by `user_id` in the request body. */
 export function currentUserId(): number {

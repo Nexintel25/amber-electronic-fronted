@@ -5,6 +5,7 @@ import { useSyncExternalStore, type ReactNode } from "react";
 import { WifiOff, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROLES } from "@/lib/roles";
+import { useSession } from "@/lib/session";
 import { NotificationsBell } from "@/components/notifications-bell";
 
 const subscribeOnline = (cb: () => void) => {
@@ -24,6 +25,7 @@ export const useOnline = () => useSyncExternalStore(subscribeOnline, () => navig
 export function WorkerShell({ pathname, children }: { pathname: string; children: ReactNode }) {
   const tabs = ROLES.worker.nav[0].items;
   const online = useOnline();
+  const userName = useSession()?.user.name;
   const active = (href: string) => (href === "/worker" ? pathname === "/worker" || pathname.startsWith("/worker/tasks") : pathname === href || pathname.startsWith(href + "/"));
 
   return (
@@ -35,8 +37,8 @@ export function WorkerShell({ pathname, children }: { pathname: string; children
               <Zap className="size-4 fill-white text-white" />
             </span>
             <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate text-[14px] font-bold">Amber</p>
-              <p className="truncate text-[11px] text-slate-400">Worker Portal · Amber</p>
+              <p className="truncate text-[14px] font-bold">{userName || "Complaint Management"}</p>
+              <p className="truncate text-[11px] text-slate-400">Worker Portal · Complaint Management</p>
             </div>
             <NotificationsBell role="worker" tone="dark" />
           </div>

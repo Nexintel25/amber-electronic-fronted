@@ -7,6 +7,7 @@ import { useApi } from "@/lib/use-api";
 import { ROLES } from "@/lib/roles";
 import { useSession } from "@/lib/session";
 import { Avatar, Badge, Card, CardHeader, KeyValue, PageHeader } from "@/components/ui";
+import { EmailNotificationsToggle } from "@/components/email-notifications";
 
 const NONE = "—";
 
@@ -72,6 +73,7 @@ export default function MyProfilePage() {
           </Card>
         </div>
       )}
+      <EmailNotificationsToggle className="mt-6" />
       <Link href="/login" onClick={api.signOut} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-rose-600 hover:text-rose-700">
         <LogOut className="size-4" /> Sign out
       </Link>

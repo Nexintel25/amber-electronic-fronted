@@ -58,10 +58,7 @@ export default function LandingPage() {
               <span className="grid size-9 place-items-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/40">
                 <Zap className="size-5 fill-white text-white" />
               </span>
-              <span className="leading-tight">
-                <span className="block text-[15px] font-bold">Amber</span>
-                <span className="block text-[11px] text-slate-400">Complaint Management</span>
-              </span>
+              <span className="text-[15px] leading-tight font-bold">Complaint Management</span>
             </Link>
 
             <nav className="hidden items-center gap-1 md:flex">
@@ -273,7 +270,7 @@ export default function LandingPage() {
             <span className="grid size-7 place-items-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600">
               <Zap className="size-4 fill-white text-white" />
             </span>
-            <span>© 2026 Amber Ltd</span>
+            <span>© 2026 Complaint Management</span>
           </div>
           <p>
             Built by <span className="font-semibold text-slate-700">Nexzen Solutions </span>
@@ -310,7 +307,7 @@ function HeroMockup() {
           <span className="size-2.5 rounded-full bg-amber-400" />
           <span className="size-2.5 rounded-full bg-emerald-400" />
           <span className="ml-3 flex-1 truncate rounded-md bg-white px-3 py-1 text-[11px] text-slate-400 ring-1 ring-slate-200">
-            app.Amber.com/admin
+            complaint-management/admin
           </span>
         </div>
 

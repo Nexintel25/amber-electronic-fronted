@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { useSession } from "@/lib/session";
 import { Avatar } from "@/components/ui";
+import { EmailNotificationsToggle } from "@/components/email-notifications";
 
 const NONE = "—";
 
@@ -67,6 +68,8 @@ export default function WorkerProfile() {
           ))}
         </div>
       )}
+
+      <EmailNotificationsToggle />
 
       <Link href="/login" onClick={api.signOut} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white text-[15px] font-semibold text-rose-600 shadow-soft ring-1 ring-rose-200 active:bg-rose-50">
         <LogOut className="size-5" /> Sign out

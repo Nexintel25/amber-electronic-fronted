@@ -9,7 +9,7 @@ export default function ComplaintsPage() {
       <PageHeader
         eyebrow="Complaint Register"
         title="All Complaints"
-        description="Every Amber complaint with its current workflow stage, owner, priority and SLA."
+        description="Every complaint with its current workflow stage, owner, priority and SLA."
         actions={
           <CreatorOnly>
             <LinkButton href="/creator/new">

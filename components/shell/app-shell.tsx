@@ -103,7 +103,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <main className="mx-auto w-full max-w-[1480px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
           <footer className="border-t border-slate-200/70 px-4 py-4 text-xs text-slate-500 sm:px-6 lg:px-8">
             <div className="mx-auto flex max-w-[1480px] flex-wrap items-center justify-between gap-2">
-              <span>© 2026 Amber Ltd · {def.panel}</span>
+              <span>© 2026 Complaint Management · {def.panel}</span>
               <span>
                 Built & supported by <span className="font-semibold text-slate-700">Nexzen Solutions </span>
               </span>
@@ -119,6 +119,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 function Sidebar({ role, pathname }: { role: RoleKey; pathname: string }) {
   const def = ROLES[role];
+  const userName = useSession()?.user.name;
   // One flat list for every role — sections are flattened and duplicate links dropped.
   const items = def.nav.flatMap((s) => s.items).filter((it, i, all) => all.findIndex((x) => x.href === it.href) === i);
   const isActive = (href: string) =>
@@ -130,8 +131,8 @@ function Sidebar({ role, pathname }: { role: RoleKey; pathname: string }) {
         <span className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/30">
           <Zap className="size-5 fill-white text-white" />
         </span>
-        <div className="leading-tight">
-          <p className="text-[15px] font-bold tracking-tight text-white">Amber</p>
+        <div className="min-w-0 leading-tight">
+          <p className="truncate text-[15px] font-bold tracking-tight text-white" title={userName}>{userName || "Complaint Management"}</p>
           <p className="text-[11px] font-medium text-slate-400">Complaint Management</p>
         </div>
       </div>

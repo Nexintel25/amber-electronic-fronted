@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CircleAlert, Eye, EyeOff, Loader2, Lock, Mail, RefreshCw, ShieldCheck } from "lucide-react";
+import { ArrowRight, CircleAlert, CircleCheck, Eye, EyeOff, Loader2, Lock, Mail, RefreshCw, ShieldCheck } from "lucide-react";
 import { ROLES } from "@/lib/roles";
 import { api, roleKeyFromApi } from "@/lib/api";
 import { setSession, takeSessionExpired } from "@/lib/session";
@@ -14,7 +14,7 @@ type Errors = { email?: string; password?: string; captcha?: string; form?: stri
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^\+?[0-9\s-]{10,15}$/;
 
-export function LoginForm() {
+export function LoginForm({ notice, onForgot }: { notice?: string; onForgot?: (email: string) => void }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -79,6 +79,11 @@ export function LoginForm() {
 
   return (
     <>
+      {notice && (
+        <p role="status" className="mt-6 flex items-start gap-2 rounded-xl bg-emerald-50 p-3 text-[13px] font-medium text-emerald-800">
+          <CircleCheck className="mt-0.5 size-4 shrink-0" /> {notice}
+        </p>
+      )}
       <form onSubmit={submit} noValidate className="mt-8 space-y-5">
         <div>
           <label htmlFor="email" className="mb-1.5 block text-[13px] font-semibold text-slate-700">
@@ -110,9 +115,13 @@ export function LoginForm() {
             <label htmlFor="password" className="text-[13px] font-semibold text-slate-700">
               Password
             </label>
-            <a href="#" className="text-xs font-semibold text-brand-600 hover:text-brand-700">
+            <button
+              type="button"
+              onClick={() => onForgot?.(EMAIL_RE.test(email.trim()) ? email.trim().toLowerCase() : "")}
+              className="text-xs font-semibold text-brand-600 hover:text-brand-700"
+            >
               Forgot password?
-            </a>
+            </button>
           </div>
           <div className="relative">
             <Lock className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-slate-400" />
