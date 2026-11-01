@@ -27,7 +27,7 @@ export const checkSession = () => post<unknown>("auth/check-session");
 /* ----------------------------- Forgot password ----------------------------- */
 
 /** Sends a 6-digit reset code to the email. The server answers the same whether or not the email is registered. */
-export const forgotPassword = (email: string) => post<unknown>("auth/forgot-password", { email }, { auth: false });
+export const forgotPassword = (email: string) => post<unknown>("auth/change-password", { email }, { auth: false });
 
 /** Sets a new password with the emailed code. Signs the user out everywhere; they then log in again. */
 export const resetPasswordWithCode = (email: string, otp: string, newPassword: string) =>
