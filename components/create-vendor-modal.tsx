@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { cn } from "@/lib/utils";
 import { Button, Field, Input } from "@/components/ui";
-import { Modal, useToast } from "@/components/interactive";
+import { Modal, useToast, PasswordInput } from "@/components/interactive";
 
 const EMPTY = { company_name: "", contact_phone: "", user_name: "", user_email: "", password: "" };
 
@@ -61,7 +61,7 @@ export function CreateVendorModal({ open, onClose, onCreated }: { open: boolean;
           <p className="text-[13px] font-semibold text-slate-700 sm:col-span-2">Vendor user</p>
           <Field label="Full name" required><Input value={form.user_name} onChange={set("user_name")} placeholder="e.g. Vikram Sharma" /></Field>
           <Field label="Email" required><Input type="email" value={form.user_email} onChange={set("user_email")} placeholder="name@company.com" /></Field>
-          <Field label="Password" required className="sm:col-span-2"><Input type="password" value={form.password} onChange={set("password")} autoComplete="new-password" /></Field>
+          <Field label="Password" required className="sm:col-span-2"><PasswordInput value={form.password} onChange={set("password")} autoComplete="new-password" /></Field>
           <Field label="Sites" className="sm:col-span-2">
             <div className="flex flex-wrap gap-2">
               {buildings.data?.length === 0 && <span className="text-xs text-slate-500">No sites yet</span>}

@@ -7,7 +7,6 @@ import { api, fmtDate, toComplaint, toComplaintFromDetail } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { useSession } from "@/lib/session";
 import { workerView } from "@/lib/vendor-workers";
-import { PENALTY_AFTER_DAYS } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 import { Avatar, Button, Card, EmptyState, Field, ListSkeleton, PageHeader, PriorityBadge, StatusBadge, Textarea } from "@/components/ui";
 import { useToast } from "@/components/interactive";
@@ -39,6 +38,7 @@ export default function VendorQueue() {
       await api.assignWorker(Number(ref), chosen, remarks.trim());
       toast.show("Work distributed — pushed to the worker’s mobile app");
       setRemarks("");
+      setWorkerId(null);
       setSelectedRef(null);
       list.reload();
     } catch (e) {
@@ -128,7 +128,15 @@ export default function VendorQueue() {
                       {selected.deadline && <span>Deadline: <b className="text-slate-700">{selected.deadline}</b></span>}
                     </div>
                     <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2.5 text-[13px] text-amber-800">
-                      Close this within <b>{PENALTY_AFTER_DAYS} days</b> of {selected.raisedAt.split(",")[0]} — every extra day is charged as a penalty.
+                      {selected.slaLabel ? (
+                        <>
+                          SLA <b>{selected.slaLabel}</b>
+                          {selected.deadline && <> — close this by <b>{selected.deadline}</b></>}
+                          {selected.slaLeft && <> ({selected.slaLeft.endsWith("overdue") ? selected.slaLeft : `${selected.slaLeft} left`})</>}.
+                        </>
+                      ) : (
+                        "This complaint type has no SLA deadline."
+                      )}
                     </p>
                   </div>
                 </>

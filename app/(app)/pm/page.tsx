@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ClipboardList, Gavel, Radar, Timer, TriangleAlert, Truck } from "lucide-react";
+import { ClipboardList, Gavel, Timer, TriangleAlert, Truck } from "lucide-react";
 import { api, toComplaint } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
-import { PENALTY_AFTER_DAYS } from "@/lib/workflow";
+import { bySlaUrgency, isOverdue, slaText, slaTone } from "@/lib/complaint";
 import { cn } from "@/lib/utils";
 import { Avatar, Button, Card, CardHeader, EmptyState, LinkButton, PageHeader, PageSkeleton, PriorityBadge, StatCard, StatusBadge } from "@/components/ui";
 
@@ -21,7 +21,7 @@ export default function PMDashboard() {
 
   const all = complaints.data;
   const open = all.filter((c) => c.status !== "closed" && c.status !== "rejected");
-  const late = open.filter((c) => c.daysOpen > PENALTY_AFTER_DAYS);
+  const late = open.filter(isOverdue);
   const vendors = [...new Set(all.map((c) => c.vendor).filter((v): v is string => !!v))];
   const k = dash.data?.kpis;
 
@@ -30,16 +30,11 @@ export default function PMDashboard() {
       <PageHeader
         eyebrow="Project Manager Panel"
         title="My vendors"
-        description="You are responsible for the vendors below. Every complaint reaches you at the same time as the vendor — follow it, chase delays and watch the penalty clock."
+        description="You are responsible for the vendors below. Every complaint reaches you at the same time as the vendor — follow it, chase delays and watch the SLA deadlines."
         actions={
-          <>
-            <LinkButton href="/pm/monitoring" variant="secondary">
-              <Radar /> Live monitoring
-            </LinkButton>
-            <LinkButton href="/pm/vendors">
-              <Truck /> Manage vendors
-            </LinkButton>
-          </>
+          <LinkButton href="/pm/vendors">
+            <Truck /> Manage vendors
+          </LinkButton>
         }
       />
 
@@ -68,7 +63,7 @@ export default function PMDashboard() {
                     {[
                       { l: "Total", v: mine.length },
                       { l: "Open", v: o.length },
-                      { l: "Late", v: o.filter((c) => c.daysOpen > PENALTY_AFTER_DAYS).length },
+                      { l: "Overdue", v: o.filter(isOverdue).length },
                     ].map((x) => (
                       <div key={x.l} className="rounded-lg bg-slate-50 py-2">
                         <p className="text-sm font-bold text-slate-900">{x.v}</p>
@@ -83,10 +78,10 @@ export default function PMDashboard() {
         </Card>
 
         <Card>
-          <CardHeader title="Needs a nudge" subtitle="Oldest open complaints" />
+          <CardHeader title="Needs a nudge" subtitle="Closest to (or past) their SLA deadline" />
           <ul className="divide-y divide-slate-100">
             {open.length === 0 && <li className="px-5 py-6 text-center text-sm text-slate-400">Nothing open right now.</li>}
-            {[...open].sort((a, b) => b.daysOpen - a.daysOpen).slice(0, 5).map((c) => (
+            {[...open].sort(bySlaUrgency).slice(0, 5).map((c) => (
               <li key={c.id}>
                 <Link href={`/complaints/${c.ref}`} className="block px-5 py-3.5 hover:bg-slate-50">
                   <div className="flex items-center gap-2">
@@ -96,8 +91,8 @@ export default function PMDashboard() {
                   <p className="mt-1 truncate text-[13.5px] font-semibold text-slate-900">{c.title}</p>
                   <div className="mt-1 flex items-center gap-2">
                     <PriorityBadge priority={c.priority} />
-                    <span className={cn("flex items-center gap-1 text-xs font-semibold", c.daysOpen > PENALTY_AFTER_DAYS ? "text-rose-600" : "text-slate-500")}>
-                      <Timer className="size-3" /> Day {c.daysOpen}/{PENALTY_AFTER_DAYS}
+                    <span className={cn("flex items-center gap-1 text-xs font-semibold", slaTone(c))}>
+                      <Timer className="size-3" /> {slaText(c)}
                     </span>
                   </div>
                 </Link>

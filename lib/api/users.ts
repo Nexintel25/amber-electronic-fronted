@@ -9,6 +9,25 @@ export const createUser = (u: { name: string; email: string; phone: string; pass
 export const createVendor = (v: { company_name: string; contact_phone: string; user_name: string; user_email: string; password: string; building_ids: number[] }) =>
   post<unknown>("users/createVendor", { ...v, created_by: currentUserId() });
 
+/**
+ * Creates a client organisation in one go: its buildings, a Complaint Creator and a Client Admin
+ * (both given access to every building). Building codes are generated from `code_prefix`.
+ */
+export const createClientOrg = (o: {
+  code_prefix: string;
+  city: string;
+  vendor_id: number | null;
+  buildings: string[];
+  creator_name: string;
+  creator_email: string;
+  creator_phone: string;
+  creator_password: string;
+  admin_name: string;
+  admin_email: string;
+  admin_phone: string;
+  admin_password: string;
+}) => post<unknown>("users/createClientOrg", { ...o, created_by: currentUserId() });
+
 /** Every user, filterable and paged. Returns the envelope so callers can read `pagination`. */
 export const getAllUsers = (f: { role?: string; status?: string; vendor_id?: number; building_id?: number; search?: string; page: number; limit: number }) =>
   call<Row[]>("complaints/getAllUsers", {

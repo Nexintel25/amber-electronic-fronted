@@ -4,7 +4,7 @@ import Link from "next/link";
 import { LogOut, Star } from "lucide-react";
 import { api } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
-import { clearSession, useSession } from "@/lib/session";
+import { useSession } from "@/lib/session";
 import { Avatar } from "@/components/ui";
 
 const NONE = "—";
@@ -68,7 +68,7 @@ export default function WorkerProfile() {
         </div>
       )}
 
-      <Link href="/login" onClick={clearSession} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white text-[15px] font-semibold text-rose-600 shadow-soft ring-1 ring-rose-200 active:bg-rose-50">
+      <Link href="/login" onClick={api.signOut} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white text-[15px] font-semibold text-rose-600 shadow-soft ring-1 ring-rose-200 active:bg-rose-50">
         <LogOut className="size-5" /> Sign out
       </Link>
     </div>

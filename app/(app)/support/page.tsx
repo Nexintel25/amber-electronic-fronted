@@ -10,7 +10,6 @@ import {
   Mail,
   MessageSquare,
   Phone,
-  PlayCircle,
   ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -108,26 +107,6 @@ export default function SupportPage() {
                 </p>
               ))}
             </div>
-          </Card>
-
-          <Card>
-            <CardHeader title="Training resources" icon={GraduationCap} />
-            <ul className="space-y-2 px-5 pb-5">
-              {[
-                ["Complaint Creator Portal walkthrough", "6 min"],
-                ["Vendor Panel: review & assign", "8 min"],
-                ["PM: team assignment & verification", "11 min"],
-                ["Worker app: check-in to completion", "7 min"],
-                ["Admin dashboard & reports", "9 min"],
-                ["Super Admin: users, roles & config", "12 min"],
-              ].map(([t, d]) => (
-                <li key={t} className="flex items-center gap-3 rounded-xl p-2 hover:bg-slate-50">
-                  <PlayCircle className="size-5 text-brand-500" />
-                  <span className="flex-1 text-[13px] font-medium text-slate-700">{t}</span>
-                  <span className="text-xs text-slate-400">{d}</span>
-                </li>
-              ))}
-            </ul>
           </Card>
 
           {!isSuperAdmin && <MyTickets refreshKey={ticketTick} />}

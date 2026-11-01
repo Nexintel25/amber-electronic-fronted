@@ -10,6 +10,7 @@ export function roleKeyFromApi(role: string): RoleKey {
     case "superadmin":
       return "superadmin";
     case "admin":
+    case "client_admin":
       return "admin";
     case "pm":
     case "project_manager":
@@ -97,6 +98,8 @@ function slaLeft(deadline: string | null, status: StatusKey): { slaLeft?: string
 
 export function toComplaint(r: ComplaintRow): Complaint {
   const status = statusFromApi(r.status);
+  // Some payloads (e.g. worker jobs) omit `sla_applicable`; then a deadline means the SLA applies.
+  const hasSla = r.sla_applicable === undefined || r.sla_applicable === null ? !!r.deadline : !!r.sla_applicable;
   return {
     id: r.complaint_no,
     ref: String(r.complaint_id),
@@ -112,18 +115,18 @@ export function toComplaint(r: ComplaintRow): Complaint {
     raisedBy: "",
     raisedAt: fmtDate(r.raised_at),
     updatedAt: timeAgo(r.created_at),
-    deadline: r.sla_applicable ? fmtDate(r.deadline) : undefined,
+    deadline: hasSla && r.deadline ? fmtDate(r.deadline) : undefined,
     vendor: r.vendor_name ?? undefined,
     workers: r.worker_name ? [r.worker_name] : undefined,
     media: { photos: r.photo_count ?? 0, videos: r.video_count ?? 0 },
     lat: 0,
     lng: 0,
     daysOpen: r.elapsed_days,
-    slaLabel: r.sla_applicable ? (r.sla_label ?? undefined) : undefined,
-    slaDays: r.sla_applicable ? r.sla_days : undefined,
-    timeLeftMinutes: r.sla_applicable ? (r.time_left_minutes ?? undefined) : undefined,
+    slaLabel: hasSla ? (r.sla_label ?? (r.sla_hours ? `${r.sla_hours} hour${r.sla_hours === 1 ? "" : "s"}` : undefined)) : undefined,
+    slaDays: hasSla ? r.sla_days : undefined,
+    timeLeftMinutes: hasSla ? (r.time_left_minutes ?? undefined) : undefined,
     raisedAtIso: r.raised_at,
-    ...slaLeft(r.sla_applicable ? r.deadline : null, status),
+    ...slaLeft(hasSla ? r.deadline : null, status),
   };
 }
 

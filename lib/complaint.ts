@@ -65,6 +65,22 @@ export function penaltyOf(c: Complaint): Penalty {
   return { complaint: c, pm: c.pm, days, overdueDays, amount: overdueDays * PENALTY_PER_DAY, state, daysLeft };
 }
 
+/* ---------------------------- SLA (from the API) ---------------------------- */
+
+const isOpen = (c: Complaint) => c.status !== "closed" && c.status !== "rejected";
+
+/** Open and past its SLA deadline. */
+export const isOverdue = (c: Complaint) => isOpen(c) && (c.timeLeftMinutes !== undefined ? c.timeLeftMinutes < 0 : !!c.slaLeft?.endsWith("overdue"));
+
+/** Short SLA status for lists: "2h 51m left", "1h 5m overdue", "No SLA". */
+export const slaText = (c: Complaint) => (!c.slaLabel ? "No SLA" : !isOpen(c) ? `SLA ${c.slaLabel}` : !c.slaLeft ? `SLA ${c.slaLabel}` : c.slaLeft.endsWith("overdue") ? c.slaLeft : `${c.slaLeft} left`);
+
+/** Text colour for `slaText`: red overdue, amber close to the deadline, grey otherwise. */
+export const slaTone = (c: Complaint) => (isOverdue(c) ? "text-rose-600" : isOpen(c) && c.slaRisk ? "text-amber-600" : "text-slate-500");
+
+/** Most urgent first: overdue, then least time left; complaints without an SLA go last. */
+export const bySlaUrgency = (a: Complaint, b: Complaint) => (a.timeLeftMinutes ?? Infinity) - (b.timeLeftMinutes ?? Infinity);
+
 export const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 
 export type NotificationType = "new" | "assigned" | "progress" | "verify" | "rework" | "closed" | "sla" | "system";

@@ -4,6 +4,7 @@ import type { ComplaintDetail, ComplaintRow, MediaItem } from "./types";
 export const createComplaint = (c: {
   building_id: number;
   category_id: number;
+  subcategory_id?: number | "";
   complaint_type_id: number;
   title: string;
   description: string;
@@ -15,6 +16,7 @@ export const createComplaint = (c: {
   location_accuracy?: number | null;
   contact_name?: string;
   contact_phone?: string;
+  contact_designation?: string;
   media: MediaItem[];
   is_draft?: boolean;
 }) => post<{ complaint_id?: number; complaint_no?: string; [k: string]: unknown }>("users/createComplaint", { ...c, user_id: currentUserId(), created_by: currentUserId(), is_draft: c.is_draft ? 1 : 0 });

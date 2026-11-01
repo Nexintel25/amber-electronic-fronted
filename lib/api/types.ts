@@ -1,5 +1,5 @@
-export type ApiUser = { id: number; name: string; email: string; phone: string | null; role: string; vendor_id: number | null };
-export type LoginResult = { user: ApiUser; access_token: string; refresh_token: string; refresh_token_expires_at: string };
+export type ApiUser = { id: number; name: string; email: string; phone: string | null; role: string; vendor_id: number | null; must_change_password?: number };
+export type LoginResult = { user: ApiUser; session_id: number; access_token: string; refresh_token: string; refresh_token_expires_at: string };
 
 export type Building = {
   id: number;
@@ -46,7 +46,8 @@ export type BuildingComplaintType = {
   has_penalty: number;
 };
 
-export type Category = { id: number; code: string; name: string; icon: string };
+export type Subcategory = { id: number; category_id: number; code: string; name: string };
+export type Category = { id: number; code: string; name: string; icon: string; subcategories?: Subcategory[] };
 
 export type ComplaintRow = {
   complaint_id: number;

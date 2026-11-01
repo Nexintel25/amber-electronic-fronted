@@ -225,7 +225,7 @@ export function ComplaintActions({ complaint: c, onChanged }: { complaint: Compl
         }
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">You have verified the worker’s photos. Closing stops the 15-day penalty clock, notifies the complaint creator and locks the record.</p>
+          <p className="text-sm text-slate-600">You have verified the worker’s photos. Closing stops the SLA clock, notifies the complaint creator and locks the record.</p>
           <Field label="Closure remarks">
             <Textarea placeholder="Root cause, parts replaced, recommendations…" />
           </Field>
@@ -306,6 +306,7 @@ function DistributeModal({
     try {
       await api.assignWorker(Number(c.ref), chosen, remarks.trim());
       setRemarks("");
+      setWorkerId(null);
       onDone(rework ? "Rework assigned — worker app notified" : "Work distributed — push notification sent to worker app");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not assign the worker.");
@@ -355,7 +356,9 @@ function DistributeModal({
         </Field>
         {error && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-[13px] font-medium text-rose-700">{error}</p>}
         <p className="rounded-xl bg-amber-50 px-3 py-2.5 text-[13px] text-amber-800">
-          The 15-day completion window started when the complaint was raised — {Math.max(0, 15 - c.daysOpen)} day(s) left before the per-day penalty applies.
+          {c.slaLabel
+            ? `SLA ${c.slaLabel}${c.deadline ? ` — complete by ${c.deadline}` : ""}${c.slaLeft ? ` (${c.slaLeft.endsWith("overdue") ? c.slaLeft : `${c.slaLeft} left`})` : ""}.`
+            : "This complaint type has no SLA deadline."}
         </p>
       </div>
     </Modal>

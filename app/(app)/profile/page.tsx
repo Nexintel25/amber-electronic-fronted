@@ -5,7 +5,7 @@ import { LogOut } from "lucide-react";
 import { api, fmtDate, roleKeyFromApi } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { ROLES } from "@/lib/roles";
-import { clearSession, useSession } from "@/lib/session";
+import { useSession } from "@/lib/session";
 import { Avatar, Badge, Card, CardHeader, KeyValue, PageHeader } from "@/components/ui";
 
 const NONE = "—";
@@ -72,7 +72,7 @@ export default function MyProfilePage() {
           </Card>
         </div>
       )}
-      <Link href="/login" onClick={clearSession} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-rose-600 hover:text-rose-700">
+      <Link href="/login" onClick={api.signOut} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-rose-600 hover:text-rose-700">
         <LogOut className="size-4" /> Sign out
       </Link>
     </div>

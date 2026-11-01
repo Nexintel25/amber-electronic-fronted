@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Eye, Gavel, FileSpreadsheet, FileText, FileSearch, Loader2, Search, TriangleAlert, X } from "lucide-react";
 import { STATUS_META, type StatusKey } from "@/lib/workflow";
-import { api, apiStatusOf, pick, rowsOf, summaryOf, num, text, timeText, type Row } from "@/lib/api";
+import { api, apiStatusOf, pick, rowsOf, statusFromApi, summaryOf, num, text, timeText, type Row } from "@/lib/api";
 import { downloadExcel, downloadPdf, type ReportResult } from "@/lib/report-export";
 import { useRole } from "@/components/shell/app-shell";
 import { useSession } from "@/lib/session";
@@ -11,6 +11,7 @@ import { useApi } from "@/lib/use-api";
 import { Button, Card, EmptyState, Field, Input, ListSkeleton, Select, Textarea, td, th } from "@/components/ui";
 import { Modal, useToast } from "@/components/interactive";
 import { Pager } from "@/components/pager";
+import { cn } from "@/lib/utils";
 
 export type ReportKey = "register" | "satisfaction" | "benchmark" | "penalty";
 
@@ -18,7 +19,7 @@ export const REPORT_TYPES: { key: ReportKey; label: string; hint: string }[] = [
   { key: "register", label: "Complaint register", hint: "Month-wise register of every complaint" },
   { key: "satisfaction", label: "Satisfaction report", hint: "Creator feedback on closed complaints, month-wise" },
   { key: "benchmark", label: "Benchmark report", hint: "Vendor benchmark for the month" },
-  { key: "penalty", label: "Penalty report", hint: "Vendors past the 15-day window" },
+  { key: "penalty", label: "Penalty report", hint: "Vendors past the SLA deadline" },
 ];
 const STATUS_OPTIONS: StatusKey[] = ["new", "vendor_review", "worker_assigned", "in_progress", "pending_verification", "rework", "closed", "rejected"];
 const MONTHLY: ReportKey[] = ["register", "satisfaction", "benchmark"];
@@ -28,15 +29,48 @@ type Table = { name: string; ids: (number | undefined)[]; waived: boolean[]; col
 type Loaded = { tables: Table[]; summary: { label: string; value: string }[]; total?: number; totalPages?: number; meta: string; title: string };
 
 const EMPTY: Filters = { type: "register", from: "", to: "", month: new Date().toISOString().slice(0, 7), vendorId: "", categoryId: "", status: "ALL", q: "" };
-/** Columns shown inline; the rest are opened with the row’s View button. */
-const MAX_COLS = 6;
 /** Columns the Penalty report does not show. */
 const HIDDEN_PENALTY = /^penalty_?status$|waive/i;
 /** Raw database keys (complaint_id, vendor_id, building_id, category_id…) mean nothing to a reader; the name / number columns carry the same information. */
 const RAW_ID = /(^|_)id$/i;
 /** Turns snake_case values such as `worker_assigned` into “Worker Assigned”; other text is left alone. */
 const clean = (v: string) => (/^[a-z0-9]+(_[a-z0-9]+)+$/.test(v) ? v.replace(/_/g, " ").replace(/\b[a-z]/g, (c) => c.toUpperCase()) : v);
-const label = (k: string) => k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const label = (k: string) => LABELS[k] ?? k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+/** Clearer headings for API keys whose plain conversion reads badly. */
+const LABELS: Record<string, string> = {
+  complaint_no: "Complaint No",
+  type_name: "Complaint Type",
+  area_location: "Area / Location",
+  asset_code: "Asset Code",
+  received_at: "Received",
+  attended_at: "Attended",
+  resolved_at: "Resolved",
+  closed_at: "Closed",
+  attend_minutes: "Time to Attend",
+  resolve_minutes: "Time to Resolve",
+  avg_attend_minutes: "Avg Time to Attend",
+  avg_resolve_minutes: "Avg Time to Resolve",
+  open_count: "Open",
+  green: "SLA Green",
+  yellow: "SLA Yellow",
+  red: "SLA Red",
+  feedback_remarks: "Feedback Remarks",
+  satisfied: "Satisfied",
+};
+/** Minutes as "22 min", "3h 5m", "2d 4h". */
+const minutesText = (m: number) => (m >= 1440 ? `${Math.floor(m / 1440)}d ${Math.floor((m % 1440) / 60)}h` : m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m} min`);
+/** One cell, formatted by what its key holds: durations, yes/no flags, statuses, dates, enum codes. */
+function cell(key: string, v: unknown): string {
+  if (v === null || v === undefined || v === "") return "—";
+  if (/minutes$/.test(key) && num(v) !== undefined) return minutesText(Math.round(num(v)!));
+  if (key === "satisfied") return ["1", "true", "yes"].includes(String(v).toLowerCase()) ? "Yes" : ["0", "false", "no"].includes(String(v).toLowerCase()) ? "No" : text(v);
+  if (key === "status" && typeof v === "string" && /^[A-Z_]+$/.test(v)) {
+    const k = statusFromApi(v);
+    // statusFromApi falls back to "new" for codes it does not know; show those as plain text instead.
+    return k === "new" && v !== "NEW" ? clean(v.toLowerCase()) : STATUS_META[k].label;
+  }
+  return clean(timeText(v));
+}
 
 /**
  * Filter → search → data table → PDF / Excel, loaded from `getPenaltyReport`.
@@ -81,7 +115,7 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
     const isWaived = (r: Row) => Object.entries(r).some(([k, v]) => /waive/i.test(k) && ["1", "true", "yes"].includes(String(v).toLowerCase()));
     const toTable = (name: string, list: Row[]): Table => {
       const columns = Array.from(new Set(list.flatMap((r) => Object.keys(r).filter((k) => typeof r[k] !== "object" || r[k] === null)))).filter((k) => !RAW_ID.test(k) && (applied.type !== "penalty" || !HIDDEN_PENALTY.test(k)));
-      return { name, ids: list.map((r) => num(pick(r, "complaint_id"))), waived: list.map(isWaived), columns: columns.map(label), rows: list.map((r) => columns.map((c) => clean(timeText(pick(r, c))))) };
+      return { name, ids: list.map((r) => num(pick(r, "complaint_id"))), waived: list.map(isWaived), columns: columns.map(label), rows: list.map((r) => columns.map((c) => cell(c, r[c]))) };
     };
     const sections = applied.type === "satisfaction" || applied.type === "benchmark" ? Object.entries(src as Row).filter(([, v]) => Array.isArray(v)) : [];
     const tables = sections.length ? sections.map(([k, v]) => toTable(label(k), v as Row[])) : [toTable("", rowsOf(src))];
@@ -92,7 +126,7 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
     return {
       tables,
       title: def?.label ?? "Report",
-      summary: [{ label: "Records", value: String(res.pagination?.total ?? tables[0].rows.length) }, ...(sum ? Object.entries(sum).filter(([k, v]) => typeof v !== "object" && !RAW_ID.test(k) && k !== "month").map(([k, v]) => ({ label: label(k), value: text(v) })) : [])],
+      summary: [{ label: "Records", value: String(res.pagination?.total ?? tables[0].rows.length) }, ...(sum ? Object.entries(sum).filter(([k, v]) => typeof v !== "object" && !RAW_ID.test(k) && k !== "month").map(([k, v]) => ({ label: label(k), value: cell(k, v) })) : [])],
       total: res.pagination?.total,
       totalPages: res.pagination?.total_pages,
       meta: `${range} · ${vendorName ?? "All vendors"}${applied.q ? ` · search “${applied.q}”` : ""} · generated ${new Date().toLocaleString("en-IN")}`,
@@ -134,6 +168,7 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
       await api.waiveFine(waive.id, remarks.trim());
       toast.show("Fine waived");
       setWaive(null);
+      setRemarks("");
       report.reload();
     } catch (e) {
       toast.show(e instanceof Error ? e.message : "Could not waive the fine");
@@ -247,7 +282,6 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
               </div>
             </div>
             {result.tables.map((t) => {
-              const cap = result.tables.length > 1 ? t.columns.length : MAX_COLS;
               return (
                 <div key={t.name}>
                   {t.name && <p className="border-b border-slate-100 bg-slate-50/60 px-4 py-2 text-sm font-semibold text-slate-800">{t.name} <span className="text-xs font-normal text-slate-400">{t.rows.length}</span></p>}
@@ -258,22 +292,21 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
                     <table className="w-full">
                       <thead className="sticky top-0 bg-slate-50">
                         <tr>
-                          {t.columns.slice(0, cap).map((c) => (
+                          {t.columns.map((c) => (
                             <th key={c} className={th}>{c}</th>
                           ))}
-                          {(t.columns.length > cap || canWaive) && <th className={th} />}
+                          <th className={th} />
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {t.rows.map((r, i) => (
                           <tr key={i} className="hover:bg-slate-50/60">
-                            {r.slice(0, cap).map((cell, j) => (
-                              <td key={j} className={td}>{cell}</td>
+                            {r.map((value, j) => (
+                              <td key={j} className={cn(td, "max-w-[260px] truncate")} title={value.length > 30 ? value : undefined}>{value}</td>
                             ))}
-                            {(r.length > cap || canWaive) && (
-                              <td className={td}>
+                            <td className={td}>
                                 <div className="flex gap-2">
-                                  {r.length > cap && <Button variant="secondary" size="sm" onClick={() => setView({ columns: t.columns, row: r })}><Eye /> View</Button>}
+                                  <Button variant="secondary" size="sm" onClick={() => setView({ columns: t.columns, row: r })}><Eye /> View</Button>
                                   {canWaive && t.ids[i] !== undefined && (
                                     <Button variant="secondary" size="sm" disabled={t.waived[i]} onClick={() => { setRemarks(""); setWaive({ id: t.ids[i]! }); }}>
                                       <Gavel /> {t.waived[i] ? "Waived" : "Waive fine"}
@@ -281,7 +314,6 @@ export function ReportViewer({ types }: { types?: ReportKey[] }) {
                                   )}
                                 </div>
                               </td>
-                            )}
                           </tr>
                         ))}
                       </tbody>

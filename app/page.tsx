@@ -31,7 +31,7 @@ const features = [
   { icon: Camera, title: "GPS-tagged photo proof", text: "Timestamped before/after photos at every task stage, locked to the site geofence." },
   { icon: Radar, title: "Live field tracking", text: "See every technician and open complaint on a live map, updated in real time." },
   { icon: Bell, title: "Instant push alerts", text: "The right people are notified the moment a complaint is raised, assigned or escalated." },
-  { icon: Clock, title: "15-day penalty clock", text: "Vendors must close every complaint within 15 days or a per-day penalty is levied — with a full penalty report." },
+  { icon: Clock, title: "SLA deadlines", text: "Every complaint type has its own SLA — vendors see the deadline and time left, with a full penalty report for late closures." },
   { icon: ChartColumn, title: "Analytics & reports", text: "Trends, resolution time and SLA compliance by site, vendor and category." },
   { icon: ShieldCheck, title: "Role-based security", text: "JWT authentication, encrypted APIs and a full audit trail of every action." },
 ];

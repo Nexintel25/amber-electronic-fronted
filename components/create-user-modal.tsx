@@ -7,7 +7,7 @@ import { useApi } from "@/lib/use-api";
 import { useSession } from "@/lib/session";
 import type { UserRoleLabel } from "@/lib/roles";
 import { Button, Field, Input, Select } from "@/components/ui";
-import { Modal, useToast } from "@/components/interactive";
+import { Modal, useToast, PasswordInput } from "@/components/interactive";
 
 const EMPTY = { name: "", phone: "", email: "", password: "", building_id: "", vendor_id: "" };
 
@@ -65,6 +65,7 @@ export function CreateUserModal({
       });
       toast.show(`${role} created`);
       setForm(EMPTY);
+      setRole(defaultRole ?? allowedRoles[0]);
       onCreated?.();
       onClose();
     } catch (e) {
@@ -94,7 +95,7 @@ export function CreateUserModal({
           <Field label="Full name" required><Input value={form.name} onChange={set("name")} placeholder="e.g. Pooja Negi" /></Field>
           <Field label="Phone"><Input value={form.phone} onChange={set("phone")} placeholder="+91" /></Field>
           <Field label="Email" required><Input type="email" value={form.email} onChange={set("email")} placeholder="name@company.com" /></Field>
-          <Field label="Password" required><Input type="password" value={form.password} onChange={set("password")} autoComplete="new-password" /></Field>
+          <Field label="Password" required><PasswordInput value={form.password} onChange={set("password")} autoComplete="new-password" /></Field>
           <Field label="Role" required>
             <Select value={role} onChange={(e) => setRole(e.target.value as UserRoleLabel)} disabled={allowedRoles.length === 1}>
               {allowedRoles.map((r) => <option key={r}>{r}</option>)}

@@ -5,6 +5,7 @@ import { Timer, TriangleAlert } from "lucide-react";
 import { api, toComplaint } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { STATUS_META, WORKFLOW, type StatusKey } from "@/lib/workflow";
+import { isOverdue, slaText, slaTone } from "@/lib/complaint";
 import { cn } from "@/lib/utils";
 import { AvatarStack, Button, EmptyState, LiveDot, PageHeader, PageSkeleton, PriorityBadge } from "@/components/ui";
 
@@ -57,7 +58,7 @@ export default function StatusBoardPage() {
                       href={`/complaints/${c.ref}`}
                       className={cn(
                         "block rounded-xl border-l-4 bg-white p-3 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift",
-                        c.status === "rework" ? "border-rose-500" : c.status === "issue_raised" ? "border-fuchsia-500" : c.daysOpen > 15 ? "border-red-600" : c.slaRisk ? "border-orange-500" : "border-transparent",
+                        c.status === "rework" ? "border-rose-500" : c.status === "issue_raised" ? "border-fuchsia-500" : isOverdue(c) ? "border-red-600" : c.slaRisk ? "border-orange-500" : "border-transparent",
                       )}
                     >
                       <div className="flex items-center justify-between">
@@ -72,8 +73,8 @@ export default function StatusBoardPage() {
                         {c.workers ? <AvatarStack names={c.workers} /> : <span className="text-[11px] text-slate-400">{c.vendor ?? "Awaiting vendor"}</span>}
                         <div className="flex items-center gap-2 text-[11px] text-slate-500">
                           {c.status !== "closed" && (
-                            <span className={cn("flex items-center gap-0.5 font-semibold", c.daysOpen > 15 ? "text-rose-600" : c.daysOpen >= 12 ? "text-amber-600" : "")}>
-                              <Timer className="size-3" />Day {c.daysOpen}/15
+                            <span className={cn("flex items-center gap-0.5 font-semibold", slaTone(c))}>
+                              <Timer className="size-3" />{slaText(c)}
                             </span>
                           )}
                         </div>

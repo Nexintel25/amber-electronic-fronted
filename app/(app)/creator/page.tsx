@@ -89,7 +89,7 @@ export default function CreatorDashboard() {
 
         <div className="space-y-6">
           <Card>
-            <CardHeader title="How your complaint moves" subtitle="7 defined stages — vendor must finish within 15 days" />
+            <CardHeader title="How your complaint moves" subtitle="7 defined stages — vendor must finish within the complaint type’s SLA" />
             <ol className="space-y-3 px-5 pb-5">
               {WORKFLOW.map((w) => (
                 <li key={w.step} className="flex items-start gap-3">

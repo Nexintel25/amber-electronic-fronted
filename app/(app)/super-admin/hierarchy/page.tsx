@@ -6,8 +6,8 @@ import { Avatar, Card, CardHeader, NoData, PageHeader } from "@/components/ui";
 const LEVELS = [
   { role: "Super Admin", icon: Crown, tone: "bg-navy-950 text-white", creates: CAN_CREATE.superadmin, note: "Full access to every panel. Creates every user." },
   { role: "Admin", icon: ShieldCheck, tone: "bg-navy-100 text-navy-800", creates: CAN_CREATE.admin, note: "Reviews worker photos, raises issues to the vendor, owns reports & penalties." },
-  { role: "Project Manager", icon: UserCog, tone: "bg-indigo-50 text-indigo-700", creates: CAN_CREATE.pm, note: "Responsible for a set of vendors; monitors their work and penalties." },
-  { role: "Vendor", icon: Truck, tone: "bg-violet-50 text-violet-700", creates: CAN_CREATE.vendor, note: "Accepts complaints, distributes to workers, verifies and closes within 15 days." },
+  { role: "Project Manager", icon: UserCog, tone: "bg-indigo-50 text-indigo-700", creates: CAN_CREATE.pm, note: "Responsible for the vendors assigned by the Super Admin; monitors their work and SLA deadlines." },
+  { role: "Vendor", icon: Truck, tone: "bg-violet-50 text-violet-700", creates: CAN_CREATE.vendor, note: "Accepts complaints, distributes to workers, verifies and closes within the SLA." },
   { role: "Worker", icon: HardHat, tone: "bg-amber-50 text-amber-700", creates: [] as string[], note: "Works on the mobile app: GPS check-in and before/after photos." },
 ];
 

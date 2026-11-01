@@ -65,6 +65,11 @@ export default function VerificationPage() {
     try {
       await api.vendorApprove(id, remarks[id] ?? "");
       toast.show(`${text(pick(r, "complaint_no"), `#${id}`)} verified & closed`);
+      setRemarks((all) => {
+        const next = { ...all };
+        delete next[id];
+        return next;
+      });
       list.reload();
     } catch (e) {
       toast.show(e instanceof Error ? e.message : "Could not approve");
@@ -81,6 +86,8 @@ export default function VerificationPage() {
       await api.vendorRework(id, reason.trim(), Number(reworkWorker));
       toast.show(`${text(pick(rework, "complaint_no"), `#${id}`)} sent for rework`);
       setRework(null);
+      setReason("");
+      setReworkWorker("");
       list.reload();
     } catch (e) {
       toast.show(e instanceof Error ? e.message : "Could not send for rework");
@@ -264,7 +271,7 @@ export default function VerificationPage() {
         open={!!rework}
         onClose={() => setRework(null)}
         title="Send for rework"
-        description="The complaint goes back to the chosen worker. The 15-day clock keeps running."
+        description="The complaint goes back to the chosen worker. The SLA clock keeps running."
         size="sm"
         footer={
           <>

@@ -2,10 +2,9 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { ArrowLeft, Camera, Check, CheckCircle2, Clock, Crosshair, Loader2, Lock, MapPin, Navigation, RotateCcw, Save, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, CalendarClock, Camera, Check, CheckCircle2, Clock, Crosshair, Loader2, Lock, MapPin, Navigation, RotateCcw, Save, Send, Trash2 } from "lucide-react";
 import type { Complaint } from "@/lib/complaint";
 import { cn } from "@/lib/utils";
-import { PENALTY_AFTER_DAYS } from "@/lib/workflow";
 import { JobCardsSkeleton, PriorityBadge, StatusBadge, Textarea } from "@/components/ui";
 import { useToast } from "@/components/interactive";
 import { useOnline } from "@/components/shell/worker-shell";
@@ -163,10 +162,23 @@ function TaskScreen({ complaint: c, draft }: { complaint: Complaint; draft: Draf
           <a href={`https://www.google.com/maps?q=${c.lat},${c.lng}`} target="_blank" rel="noreferrer" className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-100 text-sm font-semibold text-slate-700 active:bg-slate-200">
             <Navigation className="size-4" /> Navigate
           </a>
-          <div className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-50 text-sm font-semibold text-amber-700">
-            <Clock className="size-4" /> Day {c.daysOpen}/{PENALTY_AFTER_DAYS}
+          <div
+            className={cn(
+              "flex min-h-11 flex-col items-center justify-center rounded-xl px-2 py-1.5 text-center",
+              !c.slaLabel ? "bg-slate-100 text-slate-600" : c.slaLeft?.endsWith("overdue") ? "bg-rose-50 text-rose-700" : c.slaRisk ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700",
+            )}
+          >
+            <span className="flex items-center gap-1.5 text-sm font-semibold">
+              <Clock className="size-4" /> {c.slaLabel ? `SLA ${c.slaLabel}` : "No SLA"}
+            </span>
+            {c.slaLeft && <span className="text-[11px] font-medium opacity-90">{c.slaLeft.endsWith("overdue") ? c.slaLeft : `${c.slaLeft} left`}</span>}
           </div>
         </div>
+        {c.deadline && (
+          <p className="mt-2 flex items-center gap-1.5 text-[13px] text-slate-500">
+            <CalendarClock className="size-4 shrink-0" /> Deadline <b className="font-semibold text-slate-700">{c.deadline}</b>
+          </p>
+        )}
       </div>
 
       {c.status === "rework" && (

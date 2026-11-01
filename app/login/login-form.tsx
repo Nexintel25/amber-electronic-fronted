@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, CircleAlert, Eye, EyeOff, Loader2, Lock, Mail, RefreshCw, ShieldCheck } from "lucide-react";
 import { ROLES } from "@/lib/roles";
 import { api, roleKeyFromApi } from "@/lib/api";
-import { setSession } from "@/lib/session";
+import { setSession, takeSessionExpired } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { Button, Input } from "@/components/ui";
 
@@ -30,8 +30,12 @@ export function LoginForm() {
     setAnswer("");
   }, []);
   // Generated after mount so the server-rendered HTML matches the first client render.
+  // The "session expired" notice is read then too, since it lives in sessionStorage.
   useEffect(() => {
-    const t = setTimeout(newCaptcha, 0);
+    const t = setTimeout(() => {
+      newCaptcha();
+      if (takeSessionExpired()) setErrors({ form: "Your session has expired. Please sign in again." });
+    }, 0);
     return () => clearTimeout(t);
   }, [newCaptcha]);
 
@@ -58,7 +62,13 @@ export function LoginForm() {
     setLoading(true);
     try {
       const res = await api.login(email.trim(), password);
-      setSession({ user: res.user, access_token: res.access_token, refresh_token: res.refresh_token });
+      setSession({
+        user: res.user,
+        access_token: res.access_token,
+        refresh_token: res.refresh_token,
+        refresh_token_expires_at: res.refresh_token_expires_at,
+        session_id: res.session_id,
+      });
       router.push(ROLES[roleKeyFromApi(res.user.role)].home);
     } catch (err) {
       setErrors({ form: err instanceof Error ? err.message : "Could not sign in." });

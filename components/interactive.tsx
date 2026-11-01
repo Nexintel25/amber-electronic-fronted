@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
-import { CircleCheck, X } from "lucide-react";
+import { useEffect, useState, type ComponentProps, type ReactNode } from "react";
+import { CircleCheck, Eye, EyeOff, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui";
 
 export function Modal({
   open,
@@ -126,4 +127,23 @@ export function useToast() {
     </div>
   ) : null;
   return { show: setMsg, node };
+}
+
+/** Password field with an eye button that shows or hides what was typed. */
+export function PasswordInput({ className, ...rest }: Omit<ComponentProps<"input">, "type">) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <Input type={show ? "text" : "password"} className={cn("pr-10", className)} {...rest} />
+      <button
+        type="button"
+        onClick={() => setShow((v) => !v)}
+        aria-label={show ? "Hide password" : "Show password"}
+        aria-pressed={show}
+        className="absolute top-1/2 right-1.5 grid size-7 -translate-y-1/2 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+      >
+        {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+      </button>
+    </div>
+  );
 }

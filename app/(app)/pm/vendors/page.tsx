@@ -1,14 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Building, Mail, Phone, Plus, TriangleAlert, Truck } from "lucide-react";
+import { Building, Mail, Phone, TriangleAlert, Truck } from "lucide-react";
 import { api } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { Avatar, Badge, Button, Card, EmptyState, ListSkeleton, PageHeader, td, th } from "@/components/ui";
-import { CreateUserModal } from "@/components/create-user-modal";
 
 export default function PMVendors() {
-  const [open, setOpen] = useState(false);
   const vendors = useApi(() => api.getVendors("", false));
 
   return (
@@ -16,12 +13,7 @@ export default function PMVendors() {
       <PageHeader
         eyebrow="Project Manager Panel"
         title="My vendors"
-        description="Create vendor accounts and see the sites and workers each vendor covers. Vendors create and manage their own workers."
-        actions={
-          <Button onClick={() => setOpen(true)}>
-            <Plus /> Add vendor
-          </Button>
-        }
+        description="See the sites and workers each vendor you manage covers. Vendors create and manage their own workers."
       />
 
       {vendors.loading && <ListSkeleton />}
@@ -96,7 +88,6 @@ export default function PMVendors() {
         </>
       )}
 
-      <CreateUserModal open={open} onClose={() => setOpen(false)} allowedRoles={["Vendor"]} onCreated={vendors.reload} />
     </>
   );
 }

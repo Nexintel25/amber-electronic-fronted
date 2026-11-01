@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Ellipsis, KeyRound, Lock, Search, TriangleAlert, UserPlus } from "lucide-react";
+import { Ellipsis, KeyRound, Lock, Search, Truck, TriangleAlert, UserPlus } from "lucide-react";
 import { API_ROLE_BY_LABEL, api, pick, roleKeyFromApi, rowsOf, text, timeText, type Row } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { cn } from "@/lib/utils";
 import { Avatar, Badge, Button, Card, EmptyState, Input, ListSkeleton, NoDataRow, PageHeader, Select, td, th } from "@/components/ui";
 import { Pager } from "@/components/pager";
-import { useToast } from "@/components/interactive";
-import { CreateSiteModal } from "@/components/create-site-modal";
+import { AddOrgBuildingsModal } from "@/components/add-org-buildings-modal";
+import { AssignVendorsModal, managedVendorNames } from "@/components/assign-vendors-modal";
+import { CreateClientOrgModal } from "@/components/create-client-org-modal";
 import { CreateUserModal } from "@/components/create-user-modal";
 import { CreateVendorModal } from "@/components/create-vendor-modal";
+import { ResetPasswordModal } from "@/components/reset-password-modal";
 import { Modal } from "@/components/interactive";
 import { ROLES, type UserRoleLabel } from "@/lib/roles";
 
@@ -40,8 +42,10 @@ export default function UsersPage() {
   const [site, setSite] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
-  const [kind, setKind] = useState<"choose" | "building" | "admin" | "vendor" | null>(null);
-  const toast = useToast();
+  const [kind, setKind] = useState<"choose" | "org" | "building" | "admin" | "vendor" | null>(null);
+  // `null` = closed, `{}` = open with no PM preselected, a row = open for that PM.
+  const [assignFor, setAssignFor] = useState<Row | null>(null);
+  const [resetFor, setResetFor] = useState<{ id: number; name: string; email: string } | null>(null);
   const buildings = useApi(() => api.getBuildings());
 
   // Debounce the search box so each keystroke does not hit the server.
@@ -116,6 +120,8 @@ export default function UsersPage() {
                 const roleRaw = text(pick(u, "role", "role_name"), "");
                 const roleLabel = roleRaw ? ROLES[roleKeyFromApi(roleRaw)].label : "—";
                 const active = userActive(u);
+                const isPm = roleLabel === "Project Manager";
+                const pmVendors = isPm ? managedVendorNames(u) : [];
                 return (
                   <tr key={text(pick(u, "id", "user_id"), String(i))} className="hover:bg-slate-50/60">
                     <td className={td}>
@@ -130,7 +136,15 @@ export default function UsersPage() {
                     <td className={td}><Badge className={roleTone[roleLabel]}>{roleLabel}</Badge></td>
                     <td className={td}>{text(pick(u, "reports_to", "reports_to_name", "created_by_name"))}</td>
                     <td className={td}>{text(pick(u, "building_name", "site_name", "site"))}</td>
-                    <td className={td}>{text(pick(u, "vendor_name", "company_name", "organisation", "org"))}</td>
+                    <td className={td}>
+                      {isPm ? (
+                        <span className="block max-w-[220px] truncate" title={pmVendors.join(", ")}>
+                          {pmVendors.length ? pmVendors.join(", ") : <span className="text-slate-400">No vendors assigned</span>}
+                        </span>
+                      ) : (
+                        text(pick(u, "vendor_name", "company_name", "organisation", "org"))
+                      )}
+                    </td>
                     <td className={td}>
                       <Badge
                         className={active ? "bg-emerald-50 text-emerald-700 ring-emerald-600/15" : "bg-rose-50 text-rose-700 ring-rose-600/15"}
@@ -143,7 +157,19 @@ export default function UsersPage() {
                     <td className={td}>{timeText(pick(u, "last_login_at", "last_active", "last_login"))}</td>
                     <td className={cn(td, "text-right")}>
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="sm" aria-label="Reset password" onClick={() => toast.show(`Password reset link sent to ${email}`)}>
+                        {isPm && (
+                          <Button variant="ghost" size="sm" aria-label="Assign vendors" title="Assign vendors" onClick={() => setAssignFor(u)}>
+                            <Truck />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          aria-label="Reset password"
+                          title="Reset password"
+                          disabled={!Number(pick(u, "user_id", "id"))}
+                          onClick={() => setResetFor({ id: Number(pick(u, "user_id", "id")), name, email })}
+                        >
                           <KeyRound />
                         </Button>
                         <Button variant="ghost" size="sm" aria-label="More">
@@ -164,21 +190,34 @@ export default function UsersPage() {
       <Modal open={kind === "choose"} onClose={() => setKind(null)} title="Add user" description="What type of user do you want to create?" size="sm">
         <div className="space-y-2">
           {([
-            ["building", "Building", "A site together with its sign-in user"],
+            ["org", "Client organisation", "Buildings plus their Complaint Creator and Client Admin"],
+            ["building", "Buildings for an organisation", "Add buildings to an existing Complaint Creator & Client Admin"],
             ["admin", "Admin & other roles", "Admin, Project Manager, Worker, Complaint Creator"],
             ["vendor", "Vendor", "A vendor company with its sign-in user and sites"],
+            ["assign", "Assign vendors to Project Manager", "Choose which vendors a Project Manager is responsible for"],
           ] as const).map(([k, t, d]) => (
-            <button key={k} onClick={() => setKind(k)} className="w-full rounded-xl border border-slate-200 p-3 text-left transition hover:border-brand-300 hover:bg-brand-50/30">
+            <button
+              key={k}
+              onClick={() => {
+                if (k === "assign") {
+                  setKind(null);
+                  setAssignFor({});
+                } else setKind(k);
+              }}
+              className="w-full rounded-xl border border-slate-200 p-3 text-left transition hover:border-brand-300 hover:bg-brand-50/30"
+            >
               <p className="text-sm font-semibold text-slate-900">{t}</p>
               <p className="text-xs text-slate-500">{d}</p>
             </button>
           ))}
         </div>
       </Modal>
-      <CreateSiteModal open={kind === "building"} onClose={() => setKind(null)} onCreated={() => { buildings.reload(); list.reload(); }} />
+      <CreateClientOrgModal open={kind === "org"} onClose={() => setKind(null)} onCreated={() => { buildings.reload(); list.reload(); }} />
+      <AddOrgBuildingsModal open={kind === "building"} onClose={() => setKind(null)} onCreated={() => { buildings.reload(); list.reload(); }} />
       <CreateUserModal open={kind === "admin"} onClose={() => setKind(null)} onCreated={list.reload} allowedRoles={ROLE_OPTIONS.filter((r) => r !== "Super Admin" && r !== "Vendor")} defaultRole="Admin" />
       <CreateVendorModal open={kind === "vendor"} onClose={() => setKind(null)} onCreated={list.reload} />
-      {toast.node}
+      <ResetPasswordModal user={resetFor} onClose={() => setResetFor(null)} />
+      <AssignVendorsModal open={!!assignFor} onClose={() => setAssignFor(null)} pm={assignFor && Object.keys(assignFor).length ? assignFor : null} onSaved={list.reload} />
     </>
   );
 }

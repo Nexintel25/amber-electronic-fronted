@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { BadgeCheck, Clock, Gavel, HardHat, Inbox, TriangleAlert } from "lucide-react";
-import { inr, penaltyOf } from "@/lib/complaint";
+import { bySlaUrgency, isOverdue, slaText, slaTone } from "@/lib/complaint";
 import { api, toComplaint } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { useSession } from "@/lib/session";
 import { workerView } from "@/lib/vendor-workers";
-import { PENALTY_AFTER_DAYS } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 import { Avatar, Button, Card, CardHeader, EmptyState, LinkButton, PageHeader, PageSkeleton, PriorityBadge, StatCard, StatusBadge } from "@/components/ui";
 import { Bars, SERIES } from "@/components/charts";
@@ -26,8 +25,9 @@ export default function VendorDashboard() {
   const queue = mineAll.filter((c) => c.status === "new" || c.status === "vendor_review");
   const field = mineAll.filter((c) => ["worker_assigned", "in_progress", "rework"].includes(c.status));
   const verify = mineAll.filter((c) => c.status === "pending_verification" || c.status === "issue_raised");
-  const penalty = mineAll.map(penaltyOf).reduce((a, p) => a + p.amount, 0);
-  const clock = mineAll.filter((c) => c.status !== "closed" && c.status !== "rejected").sort((a, b) => b.daysOpen - a.daysOpen).slice(0, 5);
+  const openAll = mineAll.filter((c) => c.status !== "closed" && c.status !== "rejected");
+  const overdue = openAll.filter(isOverdue).length;
+  const clock = [...openAll].sort(bySlaUrgency).slice(0, 5);
   const workers = workersApi.data ?? [];
   const company = mineAll.find((c) => c.vendor)?.vendor ?? session?.user.name ?? "Vendor";
 
@@ -36,7 +36,7 @@ export default function VendorDashboard() {
       <PageHeader
         eyebrow={`Vendor Panel · ${company}`}
         title="Vendor dashboard"
-        description="New complaints reach you together with the Admin and Project Manager. Distribute them to your workers, verify their photos and close within 15 days."
+        description="New complaints reach you together with the Admin and Project Manager. Distribute them to your workers, verify their photos and close each one within its SLA."
         actions={
           <LinkButton href="/vendor/queue">
             <Inbox /> Review & distribute
@@ -48,7 +48,7 @@ export default function VendorDashboard() {
         <StatCard label="Awaiting review" value={queue.length} icon={Inbox} tone="violet" hint="new complaints" />
         <StatCard label="With my workers" value={field.length} icon={HardHat} tone="amber" hint="in the field / rework" />
         <StatCard label="To verify" value={verify.length} icon={BadgeCheck} tone="emerald" hint="worker photos & admin issues" />
-        <StatCard label="Penalty exposure" value={inr(penalty)} icon={Gavel} tone="rose" hint={`beyond ${PENALTY_AFTER_DAYS} days`} />
+        <StatCard label="Past SLA" value={overdue} icon={Gavel} tone="rose" hint="open complaints past their deadline" />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
@@ -96,7 +96,7 @@ export default function VendorDashboard() {
         </Card>
 
         <Card>
-          <CardHeader title="15-day clock" subtitle="Oldest first — penalty after day 15" icon={Clock} />
+          <CardHeader title="SLA clock" subtitle="Closest to (or past) the deadline first" icon={Clock} />
           <ul className="space-y-3 px-5 pb-5">
             {clock.map((c) => (
               <li key={c.id}>
@@ -106,9 +106,9 @@ export default function VendorDashboard() {
                     <p className="truncate text-[13px] font-semibold text-slate-800">{c.title}</p>
                     <p className="text-xs text-slate-500">{c.workers?.[0] ?? "Not distributed yet"}</p>
                   </div>
-                  <span className={cn("flex items-center gap-1 text-xs font-bold whitespace-nowrap", c.daysOpen > PENALTY_AFTER_DAYS ? "text-rose-600" : c.daysOpen >= 12 ? "text-amber-600" : "text-slate-600")}>
-                    <Gavel className="size-3.5" />
-                    Day {c.daysOpen}/{PENALTY_AFTER_DAYS}
+                  <span className={cn("flex items-center gap-1 text-xs font-bold whitespace-nowrap", slaTone(c))}>
+                    <Clock className="size-3.5" />
+                    {slaText(c)}
                   </span>
                 </Link>
               </li>

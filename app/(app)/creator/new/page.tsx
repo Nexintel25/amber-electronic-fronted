@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   BadgeCheck,
+  Building2,
   Camera,
   CircleCheck,
   CloudUpload,
@@ -14,6 +15,7 @@ import {
   Plug,
   Send,
   ShieldCheck,
+  Sparkles,
   Trash2,
   Zap,
   type LucideIcon,
@@ -31,7 +33,7 @@ import { Modal } from "@/components/interactive";
 const MIN_PHOTOS = 2;
 const MAX_PHOTOS = 10;
 
-const CATEGORY_ICONS: Record<string, LucideIcon> = { zap: Zap, plug: Plug, shield: ShieldCheck, lightbulb: Lightbulb, "check-circle": CircleCheck, "map-pin": MapPin, badge: BadgeCheck };
+const CATEGORY_ICONS: Record<string, LucideIcon> = { zap: Zap, plug: Plug, shield: ShieldCheck, lightbulb: Lightbulb, "check-circle": CircleCheck, "map-pin": MapPin, badge: BadgeCheck, building: Building2, sparkles: Sparkles };
 
 type Upload = MediaItem & { id: number; size: string };
 type Gps = { lat: number; lng: number; acc: number };
@@ -55,14 +57,18 @@ function RaiseComplaintPage() {
 
   const [buildingId, setBuildingId] = useState<number | null>(null);
   const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [subcategoryId, setSubcategoryId] = useState<number | null>(null);
   const [typeId, setTypeId] = useState<number | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [area, setArea] = useState("");
   const [asset, setAsset] = useState("");
   const [visit, setVisit] = useState(VISIT_WINDOWS[0]);
-  const [contactName, setContactName] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
+  const [contactName, setContactName] = useState<string | null>(null);
+  const [contactPhone, setContactPhone] = useState<string | null>(null);
+  const [designation, setDesignation] = useState("");
+  const contactNameValue = contactName ?? session?.user.name ?? "";
+  const contactPhoneValue = contactPhone ?? session?.user.phone ?? "";
   const [gpsOn, setGpsOn] = useState(false);
   const [gps, setGps] = useState<Gps | null>(null);
   const [gpsError, setGpsError] = useState<string | null>(null);
@@ -77,6 +83,8 @@ function RaiseComplaintPage() {
   const activeCategory = categoryId ?? categories.data?.[0]?.id ?? null;
   const activeType = typeId ?? types.data?.[0]?.id ?? null;
   const category = categories.data?.find((c) => c.id === activeCategory);
+  const subcategories = category?.subcategories ?? [];
+  const subcategory = subcategories.find((c) => c.id === subcategoryId);
   const type = types.data?.find((t) => t.id === activeType);
 
   const toggleGps = () => {
@@ -119,6 +127,7 @@ function RaiseComplaintPage() {
       const res = await api.createComplaint({
         building_id: activeBuilding,
         category_id: activeCategory,
+        subcategory_id: subcategory?.id ?? "",
         complaint_type_id: activeType,
         title: title.trim(),
         description: description.trim(),
@@ -128,12 +137,14 @@ function RaiseComplaintPage() {
         latitude: gps?.lat ?? null,
         longitude: gps?.lng ?? null,
         location_accuracy: gps?.acc ?? null,
-        contact_name: contactName.trim() || session?.user.name,
-        contact_phone: contactPhone.trim() || session?.user.phone || undefined,
+        contact_name: contactNameValue.trim() || session?.user.name,
+        contact_phone: contactPhoneValue.trim() || session?.user.phone || undefined,
+        contact_designation: designation.trim() || undefined,
         media,
         is_draft: draft,
       });
       const r = res as { complaint_id?: number; id?: number; complaint_no?: string };
+      clearForm();
       setCreated({ no: r?.complaint_no, id: r?.complaint_id ?? r?.id });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not submit the complaint.");
@@ -142,14 +153,29 @@ function RaiseComplaintPage() {
     }
   };
 
-  const reset = () => {
-    setCreated(null);
+  /** Back to a blank form (site, category and type fall back to the first option again). */
+  function clearForm() {
+    setBuildingId(null);
+    setCategoryId(null);
+    setSubcategoryId(null);
+    setTypeId(null);
     setTitle("");
     setDescription("");
     setArea("");
     setAsset("");
+    setVisit(VISIT_WINDOWS[0]);
+    setContactName(null);
+    setContactPhone(null);
+    setDesignation("");
+    setGpsOn(false);
+    setGps(null);
+    setGpsError(null);
     setUploads([]);
-  };
+    setError(null);
+    if (fileInput.current) fileInput.current.value = "";
+  }
+
+  const reset = () => setCreated(null);
 
   return (
     <>
@@ -180,7 +206,10 @@ function RaiseComplaintPage() {
                     <button
                       key={cat.id}
                       type="button"
-                      onClick={() => setCategoryId(cat.id)}
+                      onClick={() => {
+                        setCategoryId(cat.id);
+                        setSubcategoryId(null);
+                      }}
                       className={cn(
                         "flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-[13px] font-semibold transition",
                         on ? "border-brand-400 bg-brand-50 text-brand-800 ring-4 ring-brand-500/10" : "border-slate-200 text-slate-700 hover:bg-slate-50",
@@ -192,6 +221,32 @@ function RaiseComplaintPage() {
                   );
                 })}
               </div>
+              {subcategories.length > 0 && (
+                <div>
+                  <p className="mb-1.5 text-[13px] font-semibold text-slate-700">
+                    {category?.name} sub-category <span className="font-normal text-slate-500">— optional, tap again to clear</span>
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {subcategories.map((sc) => {
+                      const on = subcategory?.id === sc.id;
+                      return (
+                        <button
+                          key={sc.id}
+                          type="button"
+                          aria-pressed={on}
+                          onClick={() => setSubcategoryId(on ? null : sc.id)}
+                          className={cn(
+                            "rounded-full border px-3 py-1.5 text-[13px] font-medium transition",
+                            on ? "border-brand-400 bg-brand-50 text-brand-800 ring-4 ring-brand-500/10" : "border-slate-200 text-slate-700 hover:bg-slate-50",
+                          )}
+                        >
+                          {sc.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               <Field label="Complaint title" required>
                 <Input placeholder="e.g. Tripping MCB on Assembly Line 3 main panel" value={title} onChange={(e) => setTitle(e.target.value)} />
               </Field>
@@ -307,10 +362,13 @@ function RaiseComplaintPage() {
             <CardHeader title="4. Contact on site" />
             <div className="grid gap-4 px-5 pb-5 sm:grid-cols-2">
               <Field label="Contact person">
-                <Input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder={session?.user.name} />
+                <Input value={contactNameValue} onChange={(e) => setContactName(e.target.value)} placeholder="Name of the person on site" />
               </Field>
               <Field label="Phone">
-                <Input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder={session?.user.phone ?? "+91"} />
+                <Input type="tel" value={contactPhoneValue} onChange={(e) => setContactPhone(e.target.value)} placeholder="+91" />
+              </Field>
+              <Field label="Designation" className="sm:col-span-2">
+                <Input value={designation} onChange={(e) => setDesignation(e.target.value)} placeholder="e.g. Facility Manager" />
               </Field>
             </div>
           </Card>
@@ -322,7 +380,7 @@ function RaiseComplaintPage() {
             <dl className="mt-4 space-y-3 text-sm">
               <div className="flex justify-between gap-3">
                 <dt className="text-slate-500">Category</dt>
-                <dd className="text-right font-semibold text-slate-800">{category?.name ?? "—"}</dd>
+                <dd className="text-right font-semibold text-slate-800">{category?.name ?? "—"}{subcategory && <span className="block text-xs font-medium text-slate-500">{subcategory.name}</span>}</dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-slate-500">Type</dt>

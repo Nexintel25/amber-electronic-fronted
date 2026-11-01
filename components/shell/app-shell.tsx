@@ -18,8 +18,8 @@ import { ROLES, roleFromPath, type RoleKey } from "@/lib/roles";
 import { Avatar, Kbd, LiveDot } from "@/components/ui";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { WorkerShell } from "@/components/shell/worker-shell";
-import { clearSession, useSession } from "@/lib/session";
-import { roleKeyFromApi } from "@/lib/api";
+import { useSession } from "@/lib/session";
+import { api, roleKeyFromApi } from "@/lib/api";
 
 const RoleContext = createContext<RoleKey>("admin");
 export const useRole = () => useContext(RoleContext);
@@ -246,7 +246,7 @@ function Topbar({ role, onMenu }: { role: RoleKey; onMenu: () => void }) {
                 <div className="my-1 h-px bg-slate-100" />
                 <MenuLink href="/profile" icon={UserRound} label="My profile" onClick={() => setOpen(null)} />
                 <div className="my-1 h-px bg-slate-100" />
-                <MenuLink href="/login" icon={LogOut} label="Sign out" danger onClick={clearSession} />
+                <MenuLink href="/login" icon={LogOut} label="Sign out" danger onClick={api.signOut} />
               </Dropdown>
             )}
           </div>

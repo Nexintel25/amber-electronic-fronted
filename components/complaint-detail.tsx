@@ -13,7 +13,6 @@ import {
   Crosshair,
   FileText,
   Flag,
-  Gavel,
   Loader2,
   ThumbsDown,
   ThumbsUp,
@@ -29,10 +28,9 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
-import { inr, penaltyOf } from "@/lib/complaint";
 import { api, fmtDate, statusFromApi, toComplaintFromDetail, type ComplaintDetail as Detail, type MediaItem } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
-import { PENALTY_AFTER_DAYS, PENALTY_PER_DAY, STATUS_META, WORKFLOW } from "@/lib/workflow";
+import { STATUS_META, WORKFLOW } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 import { Avatar, Button, Card, CardHeader, EmptyState, KeyValue, PageSkeleton, PriorityBadge, StatusBadge, Textarea } from "@/components/ui";
 import { WorkflowStepper } from "@/components/workflow-stepper";
@@ -92,6 +90,8 @@ function FeedbackCard({ complaintId, locked }: { complaintId: number; locked: bo
       await api.recordComplaintFeedback(complaintId, satisfied, remarks.trim());
       setDone(true);
       setDoneSatisfied(satisfied);
+      setSatisfied(null);
+      setRemarks("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save your feedback.");
     } finally {
@@ -169,7 +169,6 @@ function Body({ d, onChanged }: { d: Detail; onChanged: () => void }) {
   const step = STATUS_META[c.status].step;
   const hasBefore = step >= 4 && c.status !== "rejected";
   const hasAfter = step >= 5 && c.status !== "rejected";
-  const pen = penaltyOf(c);
   const timeline = buildTimeline(d);
   const before = d.media.filter((m) => (m.type ?? "").toLowerCase().includes("before"));
   const after = d.media.filter((m) => (m.type ?? "").toLowerCase().includes("after"));
@@ -187,11 +186,6 @@ function Body({ d, onChanged }: { d: Detail; onChanged: () => void }) {
             <span className="rounded-lg bg-brand-50 px-2 py-0.5 font-mono text-xs font-bold text-brand-700">{c.id}</span>
             <StatusBadge status={c.status} />
             <PriorityBadge priority={c.priority} />
-            {pen.state !== "Clear" && c.status !== "rejected" && (
-              <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1", pen.overdueDays ? "bg-red-600 text-white ring-red-700/20" : "bg-amber-50 text-amber-700 ring-amber-600/20")}>
-                <Gavel className="size-3" /> {pen.overdueDays ? `Penalty ${inr(pen.amount)}` : `Penalty in ${pen.daysLeft}d`}
-              </span>
-            )}
             {c.slaRisk && (
               <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-700 ring-1 ring-rose-600/15">
                 <TriangleAlert className="size-3" /> SLA at risk
@@ -407,39 +401,28 @@ function Body({ d, onChanged }: { d: Detail; onChanged: () => void }) {
               <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase opacity-80">
                 <Timer className="size-3.5" /> SLA & Deadline
               </p>
-              <p className="mt-2 text-3xl font-bold tabular-nums">{c.status === "closed" ? "Met" : c.slaLeft ?? "—"}</p>
-              <p className="mt-0.5 text-sm opacity-80">{c.status === "closed" ? "Closed within deadline" : c.slaLeft ? "remaining" : "Deadline set once the vendor accepts"}</p>
+              <p className="mt-2 text-3xl font-bold tabular-nums">{c.status === "closed" ? "Closed" : !c.slaLabel ? "No SLA" : (c.slaLeft ?? "—")}</p>
+              <p className="mt-0.5 text-sm opacity-80">
+                {c.status === "closed"
+                  ? `SLA was ${c.slaLabel ?? "not set"}`
+                  : !c.slaLabel
+                    ? "This complaint type has no resolution deadline"
+                    : c.slaLeft?.endsWith("overdue")
+                      ? `past the ${c.slaLabel} SLA`
+                      : c.slaLeft
+                        ? `left of the ${c.slaLabel} SLA`
+                        : "Deadline set once the vendor accepts"}
+              </p>
             </div>
             <dl className="grid grid-cols-2 gap-4 p-5">
               <KeyValue label="Priority"><PriorityBadge priority={c.priority} /></KeyValue>
-              <KeyValue label="Deadline">
-                <span className="flex items-center gap-1 text-[13px]"><CalendarClock className="size-3.5 text-slate-400" />{c.deadline ?? "—"}</span>
-              </KeyValue>
-            </dl>
-          </Card>
-
-          <Card className="overflow-hidden">
-            <div className={cn("p-5", pen.overdueDays ? "bg-gradient-to-br from-red-600 to-red-700 text-white" : pen.state === "At risk" ? "bg-gradient-to-br from-amber-500 to-amber-600 text-white" : "bg-gradient-to-br from-emerald-600 to-emerald-700 text-white")}>
-              <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase opacity-80">
-                <Gavel className="size-3.5" /> {PENALTY_AFTER_DAYS}-day penalty clock
-              </p>
-              <p className="mt-2 text-3xl font-bold tabular-nums">{c.status === "rejected" ? "n/a" : pen.overdueDays ? inr(pen.amount) : `Day ${pen.days}`}</p>
-              <p className="mt-0.5 text-sm opacity-85">
-                {c.status === "rejected"
-                  ? "Rejected complaints carry no penalty"
-                  : pen.overdueDays
-                    ? `${pen.overdueDays} day(s) beyond the window · ${inr(PENALTY_PER_DAY)}/day${c.status === "closed" ? " · levied" : " · still accruing"}`
-                    : c.status === "closed"
-                      ? `Closed on day ${pen.days} — inside the ${PENALTY_AFTER_DAYS}-day window`
-                      : `${pen.daysLeft} day(s) left before the ${inr(PENALTY_PER_DAY)}/day penalty applies`}
-              </p>
-            </div>
-            <div className="p-5">
-              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                <div className={cn("h-full rounded-full", pen.overdueDays ? "bg-red-500" : pen.daysLeft <= 3 ? "bg-amber-500" : "bg-emerald-500")} style={{ width: `${Math.min(100, (pen.days / PENALTY_AFTER_DAYS) * 100)}%` }} />
+              <KeyValue label="SLA">{c.slaLabel ?? "No SLA"}</KeyValue>
+              <div className="col-span-2">
+                <KeyValue label="Deadline">
+                  <span className="flex items-center gap-1 text-[13px]"><CalendarClock className="size-3.5 text-slate-400" />{c.deadline ?? "—"}</span>
+                </KeyValue>
               </div>
-              <p className="mt-2 text-xs text-slate-500">Raised {c.raisedAt.split(",")[0]} · vendor owes completion by day {PENALTY_AFTER_DAYS}. The clock keeps running during rework.</p>
-            </div>
+            </dl>
           </Card>
 
           <Card>

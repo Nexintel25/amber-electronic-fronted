@@ -6,7 +6,7 @@ import { api, type AdminDashboard } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { cn } from "@/lib/utils";
 import { Button, Card, EmptyState, ListSkeleton, PageHeader, Progress } from "@/components/ui";
-import { CreateSiteModal } from "@/components/create-site-modal";
+import { AddOrgBuildingsModal } from "@/components/add-org-buildings-modal";
 import { LiveMap } from "@/components/live-map";
 
 type Site = AdminDashboard["sites"][number];
@@ -27,7 +27,7 @@ export default function SitesPage() {
         description="Multi-site setup — each site has its own vendor mapping and a cap of 20 concurrent users."
         actions={
           <Button onClick={() => setOpen(true)}>
-            <Plus /> Add site
+            <Plus /> Add buildings
           </Button>
         }
       />
@@ -95,14 +95,14 @@ export default function SitesPage() {
           <button onClick={() => setOpen(true)} className="grid min-h-[300px] place-items-center rounded-2xl border-2 border-dashed border-slate-200 text-slate-500 transition hover:border-brand-300 hover:bg-brand-50/30 hover:text-brand-700">
             <span className="text-center">
               <Plus className="mx-auto size-7" />
-              <span className="mt-2 block text-sm font-semibold">Add a new site</span>
+              <span className="mt-2 block text-sm font-semibold">Add buildings</span>
               <span className="block text-xs">Scales with Amber’s operations</span>
             </span>
           </button>
         </div>
       )}
 
-      <CreateSiteModal open={open} onClose={() => setOpen(false)} onCreated={() => { buildings.reload(); stats.reload(); }} />
+      <AddOrgBuildingsModal open={open} onClose={() => setOpen(false)} onCreated={() => { buildings.reload(); stats.reload(); }} />
     </>
   );
 }

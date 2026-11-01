@@ -1,4 +1,4 @@
-import { currentUserId, post } from "./client";
+import { call, currentUserId, post } from "./client";
 import type { Row } from "./shape";
 import type { Building } from "./types";
 
@@ -6,19 +6,24 @@ import type { Building } from "./types";
 export const getBuildings = (search = "", onlyActive = true) =>
   post<Building[]>("complaint-types/getBuildings", { user_id: currentUserId(), only_active: onlyActive ? 1 : 0, search });
 
-/** Creates a site together with its sign-in user. */
-export const createBuildingWithUser = (b: {
-  building_name: string;
-  building_code: string;
-  address: string;
-  city: string;
-  sla_enabled: boolean;
-  user_name: string;
-  user_email: string;
-  user_phone: string;
-  password: string;
-  vendor_id: number | null;
-}) => post<unknown>("buildings/createBuildingWithUser", { ...b, created_by: currentUserId() });
+/** Adds buildings to an existing client organisation (its Complaint Creator and Client Admin get access to them). */
+export const addOrgBuildings = (b: { creator_user_id: number; admin_user_id: number; vendor_id: number | null; code_prefix: string; city: string; buildings: string[] }) =>
+  post<unknown>("buildings/addOrgBuildings", { ...b, created_by: currentUserId() });
+
+/** Super Admin audit trail. Returns the envelope so callers can read `pagination`; `export` returns every matching row. */
+export const getAuditLogs = (f: { search?: string; source?: string; action?: string; actor_id?: number; from_date?: string; to_date?: string; page: number; limit: number; export?: boolean }) =>
+  call<unknown>("buildings/getAuditLogs", {
+    user_id: currentUserId(),
+    search: f.search?.trim() || "",
+    source: f.source || "",
+    action: f.action || "",
+    actor_id: f.actor_id ?? null,
+    from_date: f.from_date || "",
+    to_date: f.to_date || "",
+    page: f.page,
+    limit: f.limit,
+    export: f.export ? 1 : 0,
+  });
 
 /** Full detail of one worker for the Project Manager's monitoring view. */
 export const getPmWorkerDetail = (workerId: number) => post<Row>("buildings/getPmWorkerDetail", { user_id: currentUserId(), worker_id: workerId });
