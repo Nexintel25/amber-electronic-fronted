@@ -3,7 +3,7 @@
 | File | Endpoints |
 | --- | --- |
 | `client.ts` | `fetch` wrapper (`post`, `get`, `put`), `ApiError`, `currentUserId()` |
-| `auth.ts` | `login`, `logout`, `checkSession`, `forgotPassword`, `resetPasswordWithCode`, `resetPassword` (token refresh lives in `client.ts`: `refreshSession`) |
+| `auth.ts` | `login`, `logout`, `checkSession`, `forgotPassword`, `resetPasswordWithCode`, `changePassword`, `resetPassword` (token refresh lives in `client.ts`: `refreshSession`) |
 | `buildings.ts` | `getBuildings`, `addOrgBuildings`, `getAuditLogs` |
 | `vendors.ts` | `getVendors`, `getVendorWorkers` |
 | `users.ts` | `createUser`, `createVendor`, `createClientOrg`, `getAllUsers` |

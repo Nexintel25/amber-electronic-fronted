@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
-import { BarChart3, Briefcase, Building2, CalendarDays, Clock, History, Lock, LogOut, Mail, Monitor, Pencil, Phone, ShieldCheck, Smartphone, Truck, Users } from "lucide-react";
+import { BarChart3, Briefcase, Building2, CalendarDays, Clock, KeyRound, Lock, LogOut, Mail, Monitor, Pencil, Phone, ShieldCheck, Smartphone, Truck, Users } from "lucide-react";
 import { api, fmtDate, roleKeyFromApi, timeAgo, type MyProfile } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { ROLES } from "@/lib/roles";
@@ -11,7 +11,7 @@ import { Avatar, Badge, Button, Card, CardHeader, PageHeader, Skeleton } from "@
 import { useToast } from "@/components/interactive";
 import { UserAvatar } from "@/components/user-avatar";
 import { EditProfileModal } from "@/components/edit-profile-modal";
-import { ProfileHistory } from "@/components/profile-history";
+import { ChangePasswordModal } from "@/components/change-password-modal";
 
 const NONE = "—";
 
@@ -62,8 +62,8 @@ export default function MyProfilePage() {
   const sessions = p?.sessions ?? [];
   const photo = u?.profile_photo ?? session?.user.profile_photo ?? null;
   const company = u?.company_name ?? session?.user.company_name ?? u?.vendor_name ?? null;
-  const isSuperAdmin = role?.key === "superadmin";
   const [editing, setEditing] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
   const toast = useToast();
 
   return (
@@ -86,9 +86,16 @@ export default function MyProfilePage() {
               )}
             </div>
             {me && (
-              <Button variant="secondary" size="sm" className="mt-4" onClick={() => setEditing(true)}>
-                <Pencil /> Edit profile
-              </Button>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
+                  <Pencil /> Edit profile
+                </Button>
+                {role?.key !== "superadmin" && (
+                  <Button variant="secondary" size="sm" onClick={() => setChangingPassword(true)}>
+                    <KeyRound /> Change password
+                  </Button>
+                )}
+              </div>
             )}
           </div>
 
@@ -240,13 +247,6 @@ export default function MyProfilePage() {
             </Card>
           )}
 
-          {isSuperAdmin && (
-            <Card>
-              <CardHeader title="Profile change history" subtitle="Every change to your name, phone, email and photo" icon={History} />
-              <ProfileHistory />
-            </Card>
-          )}
-
           {p && stats.length === 0 && p.buildings.length === 0 && p.contacts.length === 0 && sessions.length === 0 && (
             <Card className="p-8 text-center text-sm text-slate-500">No activity or sites to show yet.</Card>
           )}
@@ -265,6 +265,7 @@ export default function MyProfilePage() {
           }}
         />
       )}
+      {role?.key !== "superadmin" && <ChangePasswordModal open={changingPassword} onClose={() => setChangingPassword(false)} />}
       {toast.node}
     </div>
   );

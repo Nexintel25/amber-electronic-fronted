@@ -102,6 +102,26 @@ export function expireSession() {
   clearSession();
 }
 
+const NOTICE_KEY = "amber-login-notice";
+
+/** A message for the login screen to show once after a sign-out, e.g. "Password changed…". */
+export function setLoginNotice(message: string) {
+  try {
+    sessionStorage.setItem(NOTICE_KEY, message);
+  } catch {}
+}
+
+/** Reads (and clears) the message left by `setLoginNotice`. */
+export function takeLoginNotice(): string | null {
+  try {
+    const v = sessionStorage.getItem(NOTICE_KEY);
+    sessionStorage.removeItem(NOTICE_KEY);
+    return v;
+  } catch {
+    return null;
+  }
+}
+
 /** Whether the last sign-out was an expiry; reading it clears the flag so the notice shows once. */
 export function takeSessionExpired(): boolean {
   try {

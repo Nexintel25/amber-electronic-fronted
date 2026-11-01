@@ -28,7 +28,7 @@ const TOKEN_REJECTED = 1401;
 const SESSION_REVOKED = 1412;
 const EXPIRED_MESSAGE = "Your session has expired. Please sign in again.";
 /** Endpoints called without the stored access token. */
-const PUBLIC_PATHS = ["auth/login", "auth/refresh-token", "auth/change-password"];
+const PUBLIC_PATHS = ["auth/login", "auth/refresh-token", "auth/forgot-password", "auth/forgot-password-confirm"];
 
 async function send<T>(path: string, body: Record<string, unknown>, token: string | undefined, method: Method = "POST") {
   let res: Response;

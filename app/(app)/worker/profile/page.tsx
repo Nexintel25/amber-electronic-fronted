@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { LogOut, Pencil, Star } from "lucide-react";
+import { KeyRound, LogOut, Pencil, Star } from "lucide-react";
 import { api } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { useSession } from "@/lib/session";
 import { useToast } from "@/components/interactive";
 import { UserAvatar } from "@/components/user-avatar";
 import { EditProfileModal } from "@/components/edit-profile-modal";
+import { ChangePasswordModal } from "@/components/change-password-modal";
 import { EmailNotificationsToggle } from "@/components/email-notifications";
 
 const NONE = "—";
@@ -18,6 +19,7 @@ export default function WorkerProfile() {
   const profileReq = useApi(() => api.getMyProfile());
   const profile = profileReq.data;
   const [editing, setEditing] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
   const toast = useToast();
   const me = profile?.user ?? session;
   const st = profile?.stats;
@@ -85,6 +87,13 @@ export default function WorkerProfile() {
 
       <EmailNotificationsToggle />
 
+      <button
+        onClick={() => setChangingPassword(true)}
+        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-white text-[15px] font-semibold text-slate-700 shadow-soft ring-1 ring-slate-200 active:bg-slate-50"
+      >
+        <KeyRound className="size-5" /> Change password
+      </button>
+
       <Link href="/login" onClick={api.signOut} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white text-[15px] font-semibold text-rose-600 shadow-soft ring-1 ring-rose-200 active:bg-rose-50">
         <LogOut className="size-5" /> Sign out
       </Link>
@@ -101,6 +110,7 @@ export default function WorkerProfile() {
           }}
         />
       )}
+      <ChangePasswordModal open={changingPassword} onClose={() => setChangingPassword(false)} />
       {toast.node}
     </div>
   );
