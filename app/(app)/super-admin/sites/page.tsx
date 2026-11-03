@@ -7,7 +7,6 @@ import { useApi } from "@/lib/use-api";
 import { cn } from "@/lib/utils";
 import { Button, Card, EmptyState, ListSkeleton, PageHeader, Progress } from "@/components/ui";
 import { AddOrgBuildingsModal } from "@/components/add-org-buildings-modal";
-import { LiveMap } from "@/components/live-map";
 
 type Site = AdminDashboard["sites"][number];
 
@@ -44,12 +43,6 @@ export default function SitesPage() {
             const full = cap != null && users >= cap;
             return (
               <Card key={b.id} className="overflow-hidden">
-                <LiveMap
-                  className="h-32 rounded-none"
-                  showControls={false}
-                  geofence={{ x: 50, y: 55, r: 18 }}
-                  points={[{ id: String(b.id), x: 50, y: 55, kind: "site", tone: "violet", label: b.name }]}
-                />
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-2">
                     <div>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
   Bell,
@@ -21,6 +21,12 @@ import { WorkerShell } from "@/components/shell/worker-shell";
 import { useSession } from "@/lib/session";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, roleKeyFromApi } from "@/lib/api";
+
+/** Pages the backend "client" role may not see (other Complaint Creator accounts keep them). */
+const CLIENT_HIDDEN = ["/creator", "/reports"];
+const CLIENT_HOME = "/creator/complaints";
+export const isClientRole = (role?: string | null) => role?.toLowerCase() === "client";
+const hiddenForClient = (href: string) => CLIENT_HIDDEN.includes(href);
 
 const RoleContext = createContext<RoleKey>("admin");
 export const useRole = () => useContext(RoleContext);
@@ -69,6 +75,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   // The signed-in account decides the panel; the URL/stored role is only a fallback while the session loads.
   const role = (session ? roleKeyFromApi(session.user.role) : null) ?? pathRole ?? storedRole ?? "admin";
   const def = ROLES[role];
+  const router = useRouter();
+  const isClient = isClientRole(session?.user.role);
+  const blocked = isClient && hiddenForClient(pathname);
+  useEffect(() => {
+    if (blocked) router.replace(CLIENT_HOME);
+  }, [blocked, router]);
+  if (blocked) return null;
 
   if (role === "worker") {
     return (
@@ -120,9 +133,14 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 function Sidebar({ role, pathname }: { role: RoleKey; pathname: string }) {
   const def = ROLES[role];
-  const userName = useSession()?.user.name;
+  const user = useSession()?.user;
+  const userName = user?.name;
+  const isClient = isClientRole(user?.role);
   // One flat list for every role — sections are flattened and duplicate links dropped.
-  const items = def.nav.flatMap((s) => s.items).filter((it, i, all) => all.findIndex((x) => x.href === it.href) === i);
+  const items = def.nav
+    .flatMap((s) => s.items)
+    .filter((it, i, all) => all.findIndex((x) => x.href === it.href) === i)
+    .filter((it) => !(isClient && hiddenForClient(it.href)));
   const isActive = (href: string) =>
     href === def.home || href === "/complaints" ? pathname === href : pathname === href || pathname.startsWith(href + "/");
 

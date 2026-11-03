@@ -69,7 +69,7 @@ export function LoginForm({ notice, onForgot }: { notice?: string; onForgot?: (e
         refresh_token_expires_at: res.refresh_token_expires_at,
         session_id: res.session_id,
       });
-      router.push(ROLES[roleKeyFromApi(res.user.role)].home);
+      router.push(res.user.role.toLowerCase() === "client" ? "/creator/complaints" : ROLES[roleKeyFromApi(res.user.role)].home);
     } catch (err) {
       setErrors({ form: err instanceof Error ? err.message : "Could not sign in." });
       setLoading(false);

@@ -408,3 +408,14 @@ export type AppNotification = {
   is_read: number;
   created_at: string;
 };
+
+export type ClientAdminDashboard = {
+  kpis: AdminDashboard["kpis"] & { my_sites: number };
+  pipeline: AdminDashboard["pipeline"];
+  workers: { worker_id: number; name: string; phone: string | null; vendor_id: number | null; latitude: string | null; longitude: string | null; last_seen: string | null; map_status: string; current_complaint_no: string | null }[];
+  open_complaints: { [k: string]: unknown }[];
+  activity: AdminDashboard["activity"];
+  daily_trend: AdminDashboard["trend"];
+  by_category: { category_id: number; category_name: string; total: number; share_pct: number | string }[];
+  sites: Omit<AdminDashboard["sites"][number], "concurrent_users" | "max_concurrent_users">[];
+};

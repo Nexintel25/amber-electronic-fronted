@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Ellipsis, History, KeyRound, Lock, Search, Truck, TriangleAlert, UserPlus } from "lucide-react";
-import { API_ROLE_BY_LABEL, api, pick, roleKeyFromApi, rowsOf, text, timeText, type Row } from "@/lib/api";
+import { API_ROLE_BY_LABEL, api, pick, rowsOf, text, timeText, type Row } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { cn } from "@/lib/utils";
 import { Avatar, Badge, Button, Card, EmptyState, Input, ListSkeleton, NoDataRow, PageHeader, Select, td, th } from "@/components/ui";
@@ -15,11 +15,28 @@ import { CreateVendorModal } from "@/components/create-vendor-modal";
 import { ResetPasswordModal } from "@/components/reset-password-modal";
 import { ProfileHistory } from "@/components/profile-history";
 import { Modal } from "@/components/interactive";
-import { ROLES, type UserRoleLabel } from "@/lib/roles";
+import { type UserRoleLabel } from "@/lib/roles";
 
 const ROLE_OPTIONS: UserRoleLabel[] = ["Super Admin", "Admin", "Project Manager", "Vendor", "Worker", "Complaint Creator"];
 
+/** Role filter options → the role string the API expects. */
+const FILTER_ROLES: Record<string, string> = { ...API_ROLE_BY_LABEL, "Client Admin": "client_admin" };
+
+/** The role exactly as the account holds it (e.g. Client Admin is not folded into Admin). */
+const ROLE_LABEL: Record<string, string> = {
+  super_admin: "Super Admin",
+  admin: "Admin",
+  client_admin: "Client Admin",
+  client: "Complaint Creator",
+  project_manager: "Project Manager",
+  vendor: "Vendor",
+  worker: "Worker",
+};
+const roleLabelOf = (raw: string) =>
+  !raw ? "—" : ROLE_LABEL[raw.toLowerCase().replace(/[\s-]/g, "_")] ?? raw.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
 const roleTone: Record<string, string> = {
+  "Client Admin": "bg-teal-50 text-teal-700 ring-teal-600/15",
   "Super Admin": "bg-navy-950 text-white ring-navy-900/20",
   Admin: "bg-navy-100 text-navy-800 ring-navy-600/15",
   "Complaint Creator": "bg-sky-50 text-sky-700 ring-sky-600/15",
@@ -60,7 +77,7 @@ export default function UsersPage() {
   }, [q]);
 
   const list = useApi(
-    () => api.getAllUsers({ role: role ? API_ROLE_BY_LABEL[role] : undefined, building_id: site ? Number(site) : undefined, search, page, limit }),
+    () => api.getAllUsers({ role: role ? FILTER_ROLES[role] : undefined, building_id: site ? Number(site) : undefined, search, page, limit }),
     [role, site, search, page, limit],
   );
   const rows = rowsOf(list.data?.data);
@@ -86,7 +103,7 @@ export default function UsersPage() {
           </div>
           <Select value={role} onChange={(e) => { setRole(e.target.value); setPage(1); }} className="w-48">
             <option value="">All roles</option>
-            {ROLE_OPTIONS.map((r) => (
+            {[...ROLE_OPTIONS.slice(0, 2), "Client Admin", ...ROLE_OPTIONS.slice(2)].map((r) => (
               <option key={r}>{r}</option>
             ))}
           </Select>
@@ -120,7 +137,7 @@ export default function UsersPage() {
                 const name = text(pick(u, "name", "user_name", "full_name"));
                 const email = text(pick(u, "email", "user_email"), "");
                 const roleRaw = text(pick(u, "role", "role_name"), "");
-                const roleLabel = roleRaw ? ROLES[roleKeyFromApi(roleRaw)].label : "—";
+                const roleLabel = roleLabelOf(roleRaw);
                 const active = userActive(u);
                 const isPm = roleLabel === "Project Manager";
                 const pmVendors = isPm ? managedVendorNames(u) : [];
@@ -135,7 +152,7 @@ export default function UsersPage() {
                         </div>
                       </div>
                     </td>
-                    <td className={td}><Badge className={roleTone[roleLabel]}>{roleLabel}</Badge></td>
+                    <td className={td}><Badge className={roleTone[roleLabel] ?? "bg-slate-100 text-slate-700 ring-slate-500/15"}>{roleLabel}</Badge></td>
                     <td className={td}>{text(pick(u, "reports_to", "reports_to_name", "created_by_name"))}</td>
                     <td className={td}>{text(pick(u, "building_name", "site_name", "site"))}</td>
                     <td className={td}>

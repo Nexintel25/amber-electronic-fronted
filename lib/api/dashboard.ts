@@ -1,5 +1,5 @@
 import { currentUserId, post } from "./client";
-import type { AdminDashboard, CreatorDashboard, PmDashboard, WorkerDashboard } from "./types";
+import type { AdminDashboard, ClientAdminDashboard, CreatorDashboard, PmDashboard, WorkerDashboard } from "./types";
 
 export const getAdminDashboard = () => post<AdminDashboard>("buildings/getAdminDashboard", { user_id: currentUserId() });
 
@@ -18,3 +18,5 @@ export type PublicOverview = {
   open_by_category: Record<string, unknown>[];
 };
 export const getPublicOverview = () => post<PublicOverview>("complaints/getPublicOverview", {}, { auth: false });
+
+export const getClientAdminDashboard = () => post<ClientAdminDashboard>("complaint-types/getClientAdminDashboard", { user_id: currentUserId() });

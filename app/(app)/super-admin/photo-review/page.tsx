@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { Avatar, Button, Card, Field, NoData, PageHeader, PriorityBadge, Select, Textarea } from "@/components/ui";
 import { Modal, Tabs, useToast } from "@/components/interactive";
 import { GeoPhoto } from "@/components/geo-photo";
-import { LiveMap } from "@/components/live-map";
 
 const NONE: Complaint = {
   id: "—", title: "—", description: "", category: "—", site: "—", location: "—", asset: "—", priority: "Low", status: "pending_verification",
@@ -135,7 +134,7 @@ export default function PhotoReviewPage() {
               </div>
             </Card>
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6">
               <Card className="p-5">
                 <p className="mb-3 text-[15px] font-semibold text-slate-900">Worker’s completion note</p>
                 <div className="flex gap-3">
@@ -145,18 +144,6 @@ export default function PhotoReviewPage() {
                     <p className="mt-1 text-[11px] text-slate-400">{c.workers?.[0]} · {c.updatedAt}</p>
                   </div>
                 </div>
-              </Card>
-              <Card className="p-3">
-                <LiveMap
-                  className="h-44"
-                  showControls={false}
-                  geofence={{ x: 50, y: 50, r: 22 }}
-                  points={[
-                    { id: "pin", x: 50, y: 48, kind: "complaint", tone: "violet", label: "Complaint pin" },
-                    { id: "b", x: 45, y: 55, kind: "worker", tone: "red", label: "Before photos", sub: "—" },
-                    { id: "a", x: 56, y: 44, kind: "worker", tone: "green", label: "After photos", sub: "—" },
-                  ]}
-                />
               </Card>
             </div>
 

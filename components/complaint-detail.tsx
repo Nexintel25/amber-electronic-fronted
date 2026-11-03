@@ -35,7 +35,6 @@ import { cn } from "@/lib/utils";
 import { Avatar, Button, Card, CardHeader, EmptyState, KeyValue, PageSkeleton, PriorityBadge, StatusBadge, Textarea } from "@/components/ui";
 import { WorkflowStepper } from "@/components/workflow-stepper";
 import { GeoPhoto } from "@/components/geo-photo";
-import { LiveMap } from "@/components/live-map";
 import { ComplaintActions } from "@/components/complaint-actions";
 import { RoleGate } from "@/components/role-gate";
 
@@ -428,15 +427,6 @@ function Body({ d, onChanged }: { d: Detail; onChanged: () => void }) {
           <Card>
             <CardHeader title="Location" subtitle={`${c.lat.toFixed(4)}°N, ${c.lng.toFixed(4)}°E`} icon={MapPin} />
             <div className="px-5 pb-5">
-              <LiveMap
-                className="h-48"
-                showControls={false}
-                geofence={{ x: 50, y: 50, r: 18 }}
-                points={[
-                  { id: "c", x: 50, y: 48, kind: "complaint", tone: "red", label: c.id, sub: c.location },
-                  ...(hasBefore ? [{ id: "w", x: 55, y: 55, kind: "worker" as const, tone: "green" as const, label: c.workers?.[0] ?? "Worker", sub: "Checked in · 12 m", live: true }] : []),
-                ]}
-              />
               {hasBefore && (
                 <div className="mt-3 space-y-2">
                   <p className="text-[13px] font-semibold text-slate-700">GPS check-in log</p>

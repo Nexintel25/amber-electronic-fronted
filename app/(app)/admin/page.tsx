@@ -3,16 +3,22 @@
 import Link from "next/link";
 import { BadgeCheck, CircleDashed, ClipboardList, Download, HardHat, Timer, Target, TriangleAlert } from "lucide-react";
 import { api, statusFromApi, timeAgo } from "@/lib/api";
+import { useSession } from "@/lib/session";
+import { ClientAdminDashboard } from "@/components/client-admin-dashboard";
 import { useApi } from "@/lib/use-api";
 import { STATUS_META } from "@/lib/workflow";
 import { cn } from "@/lib/utils";
 import { Button, Card, CardHeader, EmptyState, LinkButton, LiveDot, PageHeader, PageSkeleton, Progress, StatCard, td, th } from "@/components/ui";
 import { Donut, Legend, SERIES, TrendArea } from "@/components/charts";
-import { LiveMap, MapLegend } from "@/components/live-map";
 
 const pct = (n: number | null) => (n == null ? undefined : `${Math.abs(n)}%`);
 
 export default function AdminOverview() {
+  const role = useSession()?.user.role;
+  return role?.toLowerCase() === "client_admin" ? <ClientAdminDashboard /> : <OperationsOverview />;
+}
+
+function OperationsOverview() {
   const { data: d, error, loading, reload } = useApi(() => api.getAdminDashboard());
 
   if (loading) return <PageSkeleton />;
@@ -23,12 +29,6 @@ export default function AdminOverview() {
   const catTotal = d.categories.reduce((a, c) => a + c.total, 0);
   const cats = d.categories.filter((c) => c.total > 0).map((c) => ({ name: c.category_name, value: c.total }));
   const trend = d.trend.map((t) => ({ ...t, day: t.day.slice(5) }));
-
-  // The map is a stylised canvas, so project real coordinates onto it relative to the spread of the complaints.
-  const geo = d.map_complaints.filter((m) => m.latitude && m.longitude);
-  const lats = geo.map((m) => Number(m.latitude));
-  const lngs = geo.map((m) => Number(m.longitude));
-  const norm = (v: number, arr: number[]) => (Math.max(...arr) === Math.min(...arr) ? 50 : 12 + ((v - Math.min(...arr)) / (Math.max(...arr) - Math.min(...arr))) * 76);
 
   return (
     <>
@@ -85,24 +85,6 @@ export default function AdminOverview() {
       </Card>
 
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
-          <CardHeader
-            title="Live tracking"
-            subtitle="Open complaints with a GPS pin"
-          />
-          <div className="px-5 pb-5">
-            <LiveMap
-              className="h-80"
-              points={[
-                ...geo.map((m) => ({ id: `c${m.complaint_id}`, x: norm(Number(m.longitude), lngs), y: 100 - norm(Number(m.latitude), lats), kind: "complaint" as const, tone: "violet" as const, label: m.complaint_no, sub: `${m.title} · ${m.building_name}` })),
-              ]}
-            />
-            <div className="mt-3">
-              <MapLegend items={[{ label: "Complaint", tone: "violet" }]} />
-            </div>
-          </div>
-        </Card>
-
         <Card>
           <CardHeader title="Live activity" subtitle="Real-time events from the field" action={<LiveDot />} />
           <div className="px-3 pb-4">

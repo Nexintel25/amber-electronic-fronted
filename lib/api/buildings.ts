@@ -4,7 +4,10 @@ import type { Building } from "./types";
 
 /** Sites the signed-in user can see. */
 export const getBuildings = (search = "", onlyActive = true) =>
-  post<Building[]>("complaint-types/getBuildings", { user_id: currentUserId(), only_active: onlyActive ? 1 : 0, search });
+  post<Building[]>("complaint-types/getBuildings", { user_id: currentUserId(), only_active: onlyActive ? 1 : 0, search }).then(uniqueById);
+
+/** The endpoint can return the same building more than once; keep the first row per id so list keys stay unique. */
+const uniqueById = (rows: Building[]) => (Array.isArray(rows) ? rows.filter((b, i) => rows.findIndex((x) => x.id === b.id) === i) : rows);
 
 /** Adds buildings to an existing client organisation (its Complaint Creator and Client Admin get access to them). */
 export const addOrgBuildings = (b: { creator_user_id: number; admin_user_id: number; vendor_id: number | null; code_prefix: string; city: string; buildings: string[] }) =>

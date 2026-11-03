@@ -10,7 +10,6 @@ import { WORKER_STATUS, type WorkerStatus } from "@/lib/worker-status";
 import { cn } from "@/lib/utils";
 import { Avatar, Badge, Button, Card, EmptyState, Input, ListSkeleton, LiveDot, NoData, PageHeader } from "@/components/ui";
 import { Tabs } from "@/components/interactive";
-import { LiveMap, MapLegend } from "@/components/live-map";
 
 type W = MapWorker;
 
@@ -59,7 +58,7 @@ export default function MonitoringPage() {
         ]}
       />
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[320px_minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
         <Card className="overflow-hidden xl:self-start">
           <div className="border-b border-slate-100 p-3">
             <div className="relative">
@@ -87,20 +86,6 @@ export default function MonitoringPage() {
               </li>
             ))}
           </ul>
-        </Card>
-
-        <Card className="p-3">
-          <LiveMap
-            className="h-[420px] xl:h-[600px]"
-            selected={sel}
-            onSelect={setSel}
-            points={[
-              ...list.map((x) => ({ id: x.id, x: x.x, y: x.y, kind: "worker" as const, tone: WORKER_STATUS[x.status].tone, label: x.name, sub: `${x.status} · ${x.lastPing}`, live: x.status !== "Offline" })),
-            ]}
-          />
-          <div className="px-2 pt-3">
-            <MapLegend items={[{ label: "On task", tone: "amber" }, { label: "Travelling", tone: "blue" }, { label: "Available", tone: "green" }, { label: "Offline", tone: "slate" }, { label: "Complaint", tone: "violet" }, { label: "SLA risk", tone: "red" }]} />
-          </div>
         </Card>
 
         {(

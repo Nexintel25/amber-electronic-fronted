@@ -7,12 +7,10 @@ import { api, rowsOf, num } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { projector, toWorker } from "@/lib/worker-map";
 import { statusFromApi } from "@/lib/api";
-import { STATUS_META } from "@/lib/workflow";
 import { WORKER_STATUS } from "@/lib/worker-status";
 import { cn } from "@/lib/utils";
 import { Avatar, Card, LiveDot, NoData, PageHeader, Select, StatusBadge } from "@/components/ui";
 import { Tabs } from "@/components/interactive";
-import { LiveMap, MapLegend, type MapPoint } from "@/components/live-map";
 
 export default function LiveTrackingPage() {
   const [layer, setLayer] = useState<"all" | "workers" | "complaints">("all");
@@ -26,15 +24,6 @@ export default function LiveTrackingPage() {
   const proj = projector([...rawWorkers, ...rawComplaints]);
   const workers = rawWorkers.filter((w) => !site || w.site === site).map((w) => ({ ...w, ...proj(w.lat, w.lng) }));
   const complaints = rawComplaints.filter((c) => !["closed", "rejected"].includes(c.status) && (!site || c.building_name === site)).map((c) => ({ ...c, id: c.complaint_no, ref: c.complaint_id, ...proj(c.lat, c.lng) }));
-
-  const points: MapPoint[] = [
-    ...(layer !== "complaints"
-      ? workers.map((w) => ({ id: w.id, x: w.x, y: w.y, kind: "worker" as const, tone: WORKER_STATUS[w.status].tone, label: w.name, sub: `${w.status} · ${w.lastPing}`, live: w.status !== "Offline" }))
-      : []),
-    ...(layer !== "workers"
-      ? complaints.map((c) => ({ id: c.id, x: c.x, y: c.y, kind: "complaint" as const, tone: "violet" as const, label: `${c.id} · ${STATUS_META[c.status].label}`, sub: c.title }))
-      : []),
-  ];
 
   return (
     <>
@@ -67,16 +56,9 @@ export default function LiveTrackingPage() {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <Card className="p-3">
-          <LiveMap className="h-[480px] xl:h-[640px]" points={points} selected={sel} onSelect={setSel} />
-          <div className="px-2 pt-3">
-            <MapLegend items={[{ label: "On task", tone: "amber" }, { label: "Travelling", tone: "blue" }, { label: "Available", tone: "green" }, { label: "Offline", tone: "slate" }, { label: "Open complaint", tone: "violet" }, { label: "SLA risk", tone: "red" }]} />
-          </div>
-        </Card>
-
+      <div className="grid grid-cols-1 gap-6 ">
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {(["On Task", "Travelling", "Available", "Offline"] as const).map((s) => (
               <Card key={s} className="p-3.5">
                 <span className={cn("block size-2.5 rounded-full", WORKER_STATUS[s].dot)} />
