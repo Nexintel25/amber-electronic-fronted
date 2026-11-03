@@ -31,14 +31,14 @@ export function WorkerShell({ pathname, children }: { pathname: string; children
   return (
     <div className="min-h-dvh bg-slate-100">
       <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-slate-50 shadow-soft sm:border-x sm:border-slate-200">
-        <header className="sticky top-0 z-20 bg-navy-950 pt-[env(safe-area-inset-top)] text-white">
-          <div className="flex h-14 items-center gap-3 px-4">
-            <span className="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600">
-              <Zap className="size-4 fill-white text-white" />
+        <header className="sticky top-0 z-20 bg-gradient-to-br from-navy-950 via-navy-900 to-navy-800 pt-[env(safe-area-inset-top)] text-white shadow-lg shadow-navy-950/20">
+          <div className="flex h-16 items-center gap-3 px-4">
+            <span className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-lg shadow-brand-500/30 ring-1 ring-white/20">
+              <Zap className="size-5 fill-white text-white" />
             </span>
             <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate text-[14px] font-bold">{userName || "Complaint Management"}</p>
-              <p className="truncate text-[11px] text-slate-400">Worker Portal · Complaint Management</p>
+              <p className="truncate text-[15px] font-bold tracking-tight">{userName || "Complaint Management"}</p>
+              <p className="truncate text-[11px] font-medium text-slate-400">Worker Portal · Complaint Management</p>
             </div>
             <NotificationsBell role="worker" tone="dark" />
           </div>
@@ -49,18 +49,17 @@ export function WorkerShell({ pathname, children }: { pathname: string; children
           )}
         </header>
 
-        <main className="flex-1 px-4 pt-4 pb-28">{children}</main>
+        <main className="flex-1 px-4 pt-5 pb-32">{children}</main>
 
         <nav
-          className="fixed inset-x-0 bottom-0 z-30 mx-auto grid w-full max-w-md grid-cols-4 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
+          className="fixed inset-x-3 bottom-3 z-30 mx-auto grid max-w-[calc(28rem-1.5rem)] grid-cols-3 rounded-3xl border border-slate-200/80 bg-white/95 p-1.5 shadow-2xl shadow-navy-950/15 backdrop-blur-xl mb-[env(safe-area-inset-bottom)]"
           aria-label="Worker navigation"
         >
           {tabs.map((t) => {
             const on = active(t.href);
             return (
-              <Link key={t.href} href={t.href} className={cn("relative flex min-h-16 flex-col items-center justify-center gap-1 text-[11px] font-semibold", on ? "text-brand-600" : "text-slate-500")}>
-                {on && <span className="absolute top-0 h-0.5 w-10 rounded-b-full bg-brand-500" />}
-                <t.icon className="size-6" />
+              <Link key={t.href} href={t.href} className={cn("flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-2xl text-[11px] font-semibold transition", on ? "bg-brand-50 text-brand-700" : "text-slate-500 active:bg-slate-50")}>
+                <t.icon className={cn("size-[22px]", on && "stroke-[2.4]")} />
                 {t.label}
               </Link>
             );
